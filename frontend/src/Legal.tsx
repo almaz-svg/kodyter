@@ -102,8 +102,8 @@ export function PrivacyPolicy() {
             {isKz
               ? 'Осы Құпиялылық саясаты (бұдан әрі — Саясат) Anasym кондитерлігінің (бұдан әрі — Оператор, мекенжайы: Алматы қ., Байзақов к-сі, 280) anasym-bakery.vercel.app веб-сайтын пайдаланушылардың жеке мәліметтерін жинау, өңдеу және сақтау тәртібін белгілейді.'
               : isEn
-              ? 'This Privacy Policy defines the procedure and rules for collecting, storing, and processing personal data by Anasym Bakery (operator address: Almaty, Baizakov St, 280) when users access and use anasym-bakery.vercel.app.'
-              : 'Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных, которые кондитерская «Anasym» (далее — Оператор, адрес: г. Алматы, ул. Байзакова, 280) получает от физических лиц при использовании сайта anasym-bakery.vercel.app.'}
+              ? 'This Privacy Policy defines the procedure and rules for collecting, storing, and processing personal data by Anasym Bakery (operator address: Taraz, Қолбасшы Қойкелді, 62а) when users access and use anasym-bakery.vercel.app.'
+              : 'Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных, которые кондитерская «Anasym» (далее — Оператор, адрес: г. Тараз, ул. Қолбасшы Қойкелді, 62а) получает от физических лиц при использовании сайта anasym-bakery.vercel.app.'}
           </p>
           <p>
             {isKz
@@ -240,7 +240,7 @@ export function PrivacyPolicy() {
           <p>
             <strong>{isKz ? 'Кондитерлік атауы:' : isEn ? 'Operator:' : 'Кондитерская:'}</strong> Anasym Bakery<br />
             <strong>{isKz ? 'Мекенжайы:' : isEn ? 'Address:' : 'Адрес:'}</strong>{' '}
-            {isKz ? 'Қазақстан Республикасы, Алматы қ., Байзақов к-сі, 280' : isEn ? 'Republic of Kazakhstan, Almaty, Baizakov St, 280' : 'Республика Казахстан, г. Алматы, ул. Байзакова, 280'}<br />
+            {isKz ? 'Қазақстан Республикасы, Тараз қ., Қолбасшы Қойкелді к-сі, 62а' : isEn ? 'Republic of Kazakhstan, Taraz, Қолбасшы Қойкелді, 62а' : 'Республика Казахстан, г. Тараз, ул. Қолбасшы Қойкелді, 62а'}<br />
             <strong>{isKz ? 'Жұмыс уақыты:' : isEn ? 'Working Hours:' : 'Режим работы:'}</strong>{' '}
             {isKz ? 'Дүй–Жек: 08:00–21:00' : isEn ? 'Mon–Sun: 08:00–21:00' : 'Ежедневно: 08:00–21:00'}
           </p>
@@ -370,10 +370,10 @@ export function PublicOffer() {
           </div>
           <p>
             {isKz
-              ? 'Жеткізу Алматы қаласының белгіленген аумағы бойынша келісілген уақыт аралығында орындалады.'
+              ? 'Жеткізу Тараз қаласының белгіленген аумағы бойынша келісілген уақыт аралығында орындалады.'
               : isEn
-              ? 'Delivery is executed across Almaty city within the agreed time window.'
-              : 'Доставка осуществляется в пределах города Алматы в согласованный с клиентом временной интервал.'}
+              ? 'Delivery is executed across Taraz city within the agreed time window.'
+              : 'Доставка осуществляется в пределах города Тараз в согласованный с клиентом временной интервал.'}
           </p>
           <p>
             {isKz
@@ -415,7 +415,7 @@ export function PublicOffer() {
           <p>
             <strong>{isKz ? 'Сатушы:' : isEn ? 'Seller:' : 'Продавец:'}</strong> Кондитерская «Anasym Bakery»<br />
             <strong>{isKz ? 'Өндіріс және дүкен мекенжайы:' : isEn ? 'Bakery Address:' : 'Адрес кондитерской:'}</strong>{' '}
-            {isKz ? 'Қазақстан Республикасы, Алматы қ., Байзақов к-сі, 280' : isEn ? 'Republic of Kazakhstan, Almaty, Baizakov St, 280' : 'Республика Казахстан, г. Алматы, ул. Байзакова, 280'}<br />
+            {isKz ? 'Қазақстан Республикасы, Тараз қ., Қолбасшы Қойкелді к-сі, 62а' : isEn ? 'Republic of Kazakhstan, Taraz, Қолбасшы Қойкелді, 62а' : 'Республика Казахстан, г. Тараз, ул. Қолбасшы Қойкелді, 62а'}<br />
             <strong>{isKz ? 'Жұмыс уақыты:' : isEn ? 'Working Hours:' : 'Режим работы:'}</strong>{' '}
             {isKz ? 'Дүйсенбі – Жексенбі: 08:00 – 21:00' : isEn ? 'Monday – Sunday: 08:00 – 21:00' : 'Понедельник – Воскресенье: 08:00 – 21:00'}
           </p>

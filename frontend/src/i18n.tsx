@@ -628,7 +628,7 @@ const en: Translations = {
   photoCaption:'Craftsmanship in every move',
 
   mapEyebrow:'OUR ADDRESS', mapTitle:'Find Us',
-  mapAddress:'Almaty, Baizakov St., 280',
+  mapAddress:'Taraz, Қолбасшы Қойкелді, 62а',
   mapHours:'Opening Hours', mapHoursValue:'Mon–Sun: 08:00–21:00',
   mapPhone:'Phone',
 
