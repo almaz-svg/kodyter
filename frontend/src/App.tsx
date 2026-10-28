@@ -40,7 +40,27 @@ function Header() {
   const {t} = useI18n();
   const [menu, setMenu] = useState(false);
   const location = useLocation();
+
+  // Close drawer on page route changes
   useEffect(() => setMenu(false), [location]);
+
+  // Lock body scroll and handle Escape key when mobile drawer is open
+  useEffect(() => {
+    if (menu) {
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    const onKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setMenu(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = '';
+      window.removeEventListener('keydown', onKeyDown);
+    };
+  }, [menu]);
+
   const account = roleHome(user?.role);
 
   async function logout() {
@@ -79,32 +99,94 @@ function Header() {
                 <LogOut size={18} />
               </button>
             )}
-            <button className="icon-button menu-toggle" onClick={() => setMenu(!menu)} aria-label={menu ? 'Закрыть меню' : 'Открыть меню'} aria-expanded={menu}>
-              {menu ? <X /> : <Menu />}
+            <button
+              type="button"
+              className={`icon-button menu-toggle ${menu ? 'is-active' : ''}`}
+              onClick={() => setMenu(!menu)}
+              aria-label={menu ? 'Закрыть меню' : 'Открыть меню'}
+              aria-expanded={menu}
+            >
+              <Menu size={24} />
             </button>
           </div>
         </div>
-        {menu && (
-          <nav className="mobile-menu" aria-label="Меню">
-            <NavLink to="/">{t.navHome}</NavLink>
-            <NavLink to="/catalog">{t.navCatalog}</NavLink>
-            <NavLink to="/about">{t.navAbout}</NavLink>
-            <NavLink to="/delivery">{t.navDelivery}</NavLink>
-            <NavLink to="/contacts">{t.navContacts}</NavLink>
-            <NavLink to={user ? account : '/login'}>
-              {user ? `${user.name} · ${t.navAccount}` : t.accountOrLogin}
-            </NavLink>
-            {user && (
-              <button type="button" onClick={() => { logout(); setMenu(false); }}>
-                {t.navLogout}
-              </button>
-            )}
-            <div className="mobile-lang-row">
-              <LangSwitcher />
-            </div>
-          </nav>
-        )}
       </header>
+
+      {/* ── Mobile Side Drawer ────────────────────────────────────────── */}
+      <div
+        className={`mobile-drawer-backdrop ${menu ? 'is-open' : ''}`}
+        onClick={() => setMenu(false)}
+        aria-hidden="true"
+      />
+      <aside
+        className={`mobile-drawer ${menu ? 'is-open' : ''}`}
+        aria-label="Навигация"
+        aria-hidden={!menu}
+      >
+        <div className="mobile-drawer-header">
+          <Logo small />
+          <button
+            type="button"
+            className="icon-button mobile-drawer-close"
+            onClick={() => setMenu(false)}
+            aria-label="Закрыть меню"
+          >
+            <X size={24} />
+          </button>
+        </div>
+
+        <nav className="mobile-drawer-nav" aria-label="Мобильное меню">
+          <NavLink to="/" onClick={() => setMenu(false)}>
+            <span>{t.navHome}</span>
+            <ArrowRight size={17} className="drawer-arrow" />
+          </NavLink>
+          <NavLink to="/catalog" onClick={() => setMenu(false)}>
+            <span>{t.navCatalog}</span>
+            <ArrowRight size={17} className="drawer-arrow" />
+          </NavLink>
+          <NavLink to="/about" onClick={() => setMenu(false)}>
+            <span>{t.navAbout}</span>
+            <ArrowRight size={17} className="drawer-arrow" />
+          </NavLink>
+          <NavLink to="/delivery" onClick={() => setMenu(false)}>
+            <span>{t.navDelivery}</span>
+            <ArrowRight size={17} className="drawer-arrow" />
+          </NavLink>
+          <NavLink to="/contacts" onClick={() => setMenu(false)}>
+            <span>{t.navContacts}</span>
+            <ArrowRight size={17} className="drawer-arrow" />
+          </NavLink>
+
+          <div className="mobile-drawer-divider" />
+
+          <NavLink
+            to={user ? account : '/login'}
+            className="mobile-drawer-account"
+            onClick={() => setMenu(false)}
+          >
+            <UserRound size={19} />
+            <span>{user ? `${user.name} · ${t.navAccount}` : t.accountOrLogin}</span>
+          </NavLink>
+
+          {user && (
+            <button
+              type="button"
+              className="mobile-drawer-logout"
+              onClick={() => { logout(); setMenu(false); }}
+            >
+              <LogOut size={18} />
+              <span>{t.navLogout}</span>
+            </button>
+          )}
+        </nav>
+
+        <div className="mobile-drawer-footer">
+          <div className="mobile-lang-row">
+            <LangSwitcher />
+          </div>
+          <p className="mobile-drawer-address">{t.mapAddress}</p>
+        </div>
+      </aside>
     </>
   );
 }
