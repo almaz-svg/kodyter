@@ -1,0 +1,212 @@
+{
+  "local": [
+    {
+      "categories": [
+        {
+          "contentWidth": 146,
+          "height": 52,
+          "name": "Выпечка",
+          "width": 146
+        },
+        {
+          "contentWidth": 146,
+          "height": 52,
+          "name": "Торты",
+          "width": 146
+        },
+        {
+          "contentWidth": 146,
+          "height": 52,
+          "name": "Десерты",
+          "width": 146
+        },
+        {
+          "contentWidth": 146,
+          "height": 52,
+          "name": "Кейтеринг",
+          "width": 146
+        },
+        {
+          "contentWidth": 146,
+          "height": 79,
+          "name": "Булочки и пирожки",
+          "width": 146
+        }
+      ],
+      "pageWidth": 345,
+      "removedBanner": true,
+      "removedButton": true,
+      "sliderHeight": 292,
+      "sliderScrollHeight": 476,
+      "width": 360
+    },
+    {
+      "categories": [
+        {
+          "contentWidth": 177,
+          "height": 52,
+          "name": "Выпечка",
+          "width": 177
+        },
+        {
+          "contentWidth": 177,
+          "height": 52,
+          "name": "Торты",
+          "width": 177
+        },
+        {
+          "contentWidth": 177,
+          "height": 52,
+          "name": "Десерты",
+          "width": 177
+        },
+        {
+          "contentWidth": 177,
+          "height": 52,
+          "name": "Кейтеринг",
+          "width": 177
+        },
+        {
+          "contentWidth": 177,
+          "height": 79,
+          "name": "Булочки и пирожки",
+          "width": 177
+        }
+      ],
+      "pageWidth": 375,
+      "removedBanner": true,
+      "removedButton": true,
+      "sliderHeight": 292,
+      "sliderScrollHeight": 476,
+      "width": 390
+    },
+    {
+      "categories": [
+        {
+          "contentWidth": 538,
+          "height": 52,
+          "name": "Выпечка",
+          "width": 538
+        },
+        {
+          "contentWidth": 538,
+          "height": 52,
+          "name": "Торты",
+          "width": 538
+        },
+        {
+          "contentWidth": 538,
+          "height": 52,
+          "name": "Десерты",
+          "width": 538
+        },
+        {
+          "contentWidth": 538,
+          "height": 52,
+          "name": "Кейтеринг",
+          "width": 538
+        },
+        {
+          "contentWidth": 538,
+          "height": 52,
+          "name": "Булочки и пирожки",
+          "width": 538
+        }
+      ],
+      "pageWidth": 753,
+      "removedBanner": true,
+      "removedButton": true,
+      "sliderHeight": 292,
+      "sliderScrollHeight": 476,
+      "width": 768
+    },
+    {
+      "categories": [
+        {
+          "contentWidth": 192,
+          "height": 28,
+          "name": "Выпечка",
+          "width": 192
+        },
+        {
+          "contentWidth": 192,
+          "height": 28,
+          "name": "Торты",
+          "width": 192
+        },
+        {
+          "contentWidth": 192,
+          "height": 28,
+          "name": "Десерты",
+          "width": 192
+        },
+        {
+          "contentWidth": 192,
+          "height": 28,
+          "name": "Кейтеринг",
+          "width": 192
+        },
+        {
+          "contentWidth": 192,
+          "height": 55,
+          "name": "Булочки и пирожки",
+          "width": 192
+        }
+      ],
+      "pageWidth": 1351,
+      "removedBanner": true,
+      "removedButton": true,
+      "sliderHeight": 233,
+      "sliderScrollHeight": 233,
+      "width": 1366
+    },
+    {
+      "categories": [
+        {
+          "contentWidth": 217,
+          "height": 28,
+          "name": "Выпечка",
+          "width": 217
+        },
+        {
+          "contentWidth": 217,
+          "height": 28,
+          "name": "Торты",
+          "width": 217
+        },
+        {
+          "contentWidth": 217,
+          "height": 28,
+          "name": "Десерты",
+          "width": 217
+        },
+        {
+          "contentWidth": 217,
+          "height": 28,
+          "name": "Кейтеринг",
+          "width": 217
+        },
+        {
+          "contentWidth": 217,
+          "height": 28,
+          "name": "Булочки и пирожки",
+          "width": 217
+        }
+      ],
+      "pageWidth": 1905,
+      "removedBanner": true,
+      "removedButton": true,
+      "sliderHeight": 222,
+      "sliderScrollHeight": 222,
+      "width": 1920
+    }
+  ],
+  "published": {
+    "categories": 5,
+    "pageWidth": 375,
+    "removedBanner": true,
+    "removedButton": true,
+    "scrollTop": 0,
+    "width": 390
+  }
+}

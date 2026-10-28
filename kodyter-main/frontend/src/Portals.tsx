@@ -1,0 +1,427 @@
+import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+import { ArrowRight, Banknote, Check, ChevronRight, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Truck, UserRound, X } from 'lucide-react';
+import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type CashierSummary } from './lib';
+import './portals.css';
+
+type Props = { user: User; onUserChange: (user: User) => void };
+type Tab = 'orders' | 'products' | 'categories' | 'couriers' | 'cashiers' | 'profile';
+const terminal = (order: Order) => ['DELIVERED', 'CANCELLED'].includes(order.status);
+const dateTime = (value: string) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+const failure = (error: unknown) => error instanceof Error ? error.message : 'Не удалось выполнить запрос. Проверьте подключение и попробуйте ещё раз.';
+const json = (value: unknown, method = 'POST'): RequestInit => ({ method, body: JSON.stringify(value) });
+const localToday = () => {
+  const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Qyzylorda', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(new Date());
+  return ['year', 'month', 'day'].map(type => parts.find(part => part.type === type)?.value).join('-');
+};
+const isPortalDate = (value: string) => {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value) || value < '0001-01-01' || value > '9999-12-31') return false;
+  const parsed = new Date(`${value}T12:00:00Z`);
+  return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
+};
+
+function useRemote<T>(path: string | null, poll = false) {
+  const [data, setData] = useState<T | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const revision = useRef(0);
+  const hasData = useRef(false);
+  const refreshRef = useRef<() => void>(() => {});
+  const retry = useCallback(() => refreshRef.current(), []);
+  const replace = useCallback((value: T) => { revision.current += 1; hasData.current = true; setData(value); setError(''); }, []);
+  useEffect(() => {
+    let alive = true;
+    let running = false;
+    let queued = false;
+    const controller = new AbortController();
+    hasData.current = false;
+    setData(null);
+    setLoading(Boolean(path));
+    setError('');
+    if (!path) return;
+    const fetchData = async () => {
+      if (running) { queued = true; return; }
+      running = true;
+      if (!hasData.current) { setLoading(true); setError(''); }
+      const currentRevision = revision.current;
+      try {
+        const result = await api<T>(path, { signal: controller.signal });
+        if (alive && currentRevision === revision.current) { hasData.current = true; setData(result); setError(''); }
+      } catch (err) {
+        if (alive && currentRevision === revision.current && !controller.signal.aborted) {
+          if (err instanceof ApiError && [401, 403, 404].includes(err.status)) { hasData.current = false; setData(null); }
+          setError(failure(err));
+        }
+      } finally {
+        running = false;
+        if (alive) setLoading(false);
+        if (alive && queued) { queued = false; void fetchData(); }
+      }
+    };
+    refreshRef.current = () => { void fetchData(); };
+    void fetchData();
+    const refreshVisible = () => { if (document.visibilityState === 'visible') void fetchData(); };
+    const timer = poll ? window.setInterval(refreshVisible, 5000) : undefined;
+    if (poll) { window.addEventListener('focus', refreshVisible); document.addEventListener('visibilitychange', refreshVisible); }
+    return () => {
+      alive = false; controller.abort(); refreshRef.current = () => {};
+      if (timer) window.clearInterval(timer);
+      window.removeEventListener('focus', refreshVisible); document.removeEventListener('visibilitychange', refreshVisible);
+    };
+  }, [path, poll]);
+  return { data, loading, error, retry, replace };
+}
+
+function ErrorNotice({ message, retry }: { message: string; retry?: () => void }) {
+  if (!message) return null;
+  return <div className="portal-notice portal-error" role="alert"><span>{message}</span>{retry && <button type="button" onClick={retry}><RefreshCw size={15} /> Повторить</button>}</div>;
+}
+
+function EmptyState({ icon, title, children }: { icon: ReactNode; title: string; children: ReactNode }) {
+  return <div className="portal-empty"><span className="portal-empty-icon">{icon}</span><h3>{title}</h3><p>{children}</p></div>;
+}
+
+function Status({ status }: { status: Order['status'] }) {
+  return <span className={`portal-status status-${status.toLowerCase()}`}><i />{statusLabel[status] || status}</span>;
+}
+
+function useEditorReveal(key: string | number | null) {
+  const ref = useRef<HTMLElement>(null);
+  const trigger = useRef<HTMLElement | null>(null);
+  const opened = useRef(false);
+  useEffect(() => {
+    if (key === null && !opened.current) return;
+    const frame = window.requestAnimationFrame(() => {
+      if (key !== null) {
+        opened.current = true;
+        ref.current?.focus({ preventScroll: true });
+        ref.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
+      } else {
+        opened.current = false;
+        if (trigger.current?.isConnected) {
+          trigger.current.focus({ preventScroll: true });
+          trigger.current.scrollIntoView({ block: 'nearest', behavior: 'instant' });
+        }
+      }
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [key]);
+  return { ref, rememberTrigger: (element: HTMLElement) => { trigger.current = element; } };
+}
+
+export default function Portals({ user, onUserChange }: Props) {
+  const [tab, setTab] = useState<Tab>('orders');
+  const isAdmin = user.role === 'ADMIN';
+  const isCourier = user.role === 'COURIER';
+  const isCashier = user.role === 'CASHIER';
+  const tabs: { value: Tab; name: string; icon: ReactNode }[] = isAdmin
+    ? [{ value: 'orders', name: 'Заказы', icon: <ShoppingBag size={18} /> }, { value: 'products', name: 'Товары', icon: <Package size={18} /> }, { value: 'categories', name: 'Категории', icon: <LayoutGrid size={18} /> }, { value: 'couriers', name: 'Курьеры', icon: <Truck size={18} /> }, { value: 'cashiers', name: 'Кассиры', icon: <Banknote size={18} /> }]
+    : [{ value: 'orders', name: isCourier ? 'Доставки' : isCashier ? 'Заказы и касса' : 'Мои заказы', icon: isCourier ? <Truck size={18} /> : isCashier ? <Banknote size={18} /> : <ShoppingBag size={18} /> }, { value: 'profile', name: 'Личные данные', icon: <UserRound size={18} /> }];
+  return <main className="portal">
+    <div className="portal-heading"><div>
+      <p className="portal-eyebrow">ANASYM / {isAdmin ? 'УПРАВЛЕНИЕ ПЕКАРНЕЙ' : isCourier ? 'КАБИНЕТ КУРЬЕРА' : isCashier ? 'КАБИНЕТ КАССИРА' : 'ЛИЧНЫЙ КАБИНЕТ'}</p>
+      <h1>{isAdmin ? 'Всё под рукой.' : isCourier ? 'Доставляем тепло.' : isCashier ? 'Каждый заказ на виду.' : `Здравствуйте, ${user.name.split(' ')[0] || 'гость'}.`}</h1>
+      <p className="portal-heading-copy">{isAdmin ? 'Заказы, любимая выпечка и команда — в одном месте.' : isCourier ? 'Принимайте свободные заказы и следите за своими доставками.' : isCashier ? 'Новые заказы, полученные наличные и неоплаченные доставки.' : 'Здесь хранятся ваши заказы и маленькие поводы для радости.'}</p>
+    </div><span className="portal-user-chip"><UserRound size={17} />{user.name}</span></div>
+    <nav className={`portal-tabs ${isAdmin ? 'portal-admin-tabs' : ''}`} aria-label="Разделы личного кабинета">{tabs.map(item => <button type="button" key={item.value} className={tab === item.value ? 'active' : ''} aria-current={tab === item.value ? 'page' : undefined} onClick={() => setTab(item.value)}>{item.icon}{item.name}</button>)}</nav>
+    {tab === 'orders' && <OrdersPanel user={user} />}
+    {tab === 'profile' && <Profile user={user} onUserChange={onUserChange} />}
+    {isAdmin && tab === 'products' && <ProductsPanel />}
+    {isAdmin && tab === 'categories' && <CategoriesPanel />}
+    {isAdmin && tab === 'couriers' && <StaffPanel key="couriers" kind="couriers" />}
+    {isAdmin && tab === 'cashiers' && <StaffPanel key="cashiers" kind="cashiers" />}
+  </main>;
+}
+function Profile({ user, onUserChange }: Props) {
+  const [name, setName] = useState(user.name);
+  const [phone, setPhone] = useState(user.phone || '');
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [saved, setSaved] = useState(false);
+  const save = async (event: FormEvent) => {
+    event.preventDefault(); setBusy(true); setError(''); setSaved(false);
+    try { const updated = await api<User>('/auth/profile/', json({ name: name.trim(), phone: phone.trim() }, 'PATCH')); onUserChange(updated); setName(updated.name); setPhone(updated.phone || ''); setSaved(true); }
+    catch (err) { setError(failure(err)); }
+    finally { setBusy(false); }
+  };
+  return <section className="portal-profile portal-card"><div className="portal-section-title"><div><p className="portal-eyebrow">ВАШ ПРОФИЛЬ</p><h2>Давайте познакомимся</h2></div><UserRound size={27} /></div><form onSubmit={save} className="portal-form"><fieldset className="portal-form-fields" disabled={busy}><label>Имя<input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} required maxLength={120} autoComplete="name" /></label><label>Телефон<input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setSaved(false); }} maxLength={30} autoComplete="tel" /></label><label>Электронная почта<input type="email" value={user.email} readOnly /><small>Почта используется для входа в аккаунт.</small></label><ErrorNotice message={error} />{saved && <p className="portal-success" role="status"><Check size={17} /> Личные данные сохранены.</p>}<button className="portal-button" disabled={busy || !name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить изменения'}<ArrowRight size={17} /></button></fieldset></form></section>;
+}
+
+function PaymentStatusLabel({ order }: { order: Order }) {
+  return <span className={`portal-status ${order.payment_status === 'PAID' ? 'status-delivered' : 'status-unpaid'}`}><Banknote size={12} />{order.payment_status === 'PAID' ? 'Оплачено наличными' : 'Не оплачено'}</span>;
+}
+
+function OrdersPanel({ user }: { user: User }) {
+  const [filters, setFilters] = useState({ status: '', date: '', courier: '', search: '' });
+  const [dateInput, setDateInput] = useState(filters.date);
+  const [dateInvalid, setDateInvalid] = useState(false);
+  const [search, setSearch] = useState('');
+  const [selected, setSelected] = useState<number | null>(null);
+  const [view, setView] = useState<'available' | 'active' | 'history'>('available');
+  const [claiming, setClaiming] = useState<number | null>(null);
+  const claimLock = useRef(false);
+  const [claimError, setClaimError] = useState('');
+  const [notice, setNotice] = useState('');
+  const isAdmin = user.role === 'ADMIN';
+  const isCourier = user.role === 'COURIER';
+  const isCashier = user.role === 'CASHIER';
+  const isStaff = isAdmin || isCourier || isCashier;
+  const requestDate = isPortalDate(filters.date) ? filters.date : '';
+  const params = new URLSearchParams(Object.entries({ ...filters, date: requestDate }).filter(([, value]) => value));
+  const remote = useRemote<Order[]>(`/orders/?${params.toString()}`, true);
+  const available = useRemote<AvailableOrder[]>(isCourier ? '/courier/available-orders/' : null, true);
+  const couriers = useRemote<User[]>(isAdmin ? '/admin/couriers/' : null, true);
+  const summaryDate = requestDate || localToday();
+  const summary = useRemote<CashierSummary>(isCashier ? `/cashier/summary/?date=${summaryDate}` : null, true);
+  useEffect(() => { const timer = window.setTimeout(() => setFilters(value => ({ ...value, search })), 350); return () => window.clearTimeout(timer); }, [search]);
+  const allOrders = remote.data || [];
+  const orders = isCourier ? allOrders.filter(order => terminal(order) === (view === 'history')) : allOrders;
+  const active = allOrders.filter(order => !terminal(order)).length;
+  const showAvailable = isCourier && view === 'available';
+  useEffect(() => { setSelected(null); }, [filters.status, filters.date, filters.courier, filters.search]);
+  useEffect(() => { if (remote.data && selected !== null && !remote.data.some(order => order.id === selected)) setSelected(null); }, [remote.data, selected]);
+  const updateFilter = (key: keyof typeof filters, value: string) => setFilters(current => ({ ...current, [key]: value }));
+  const changeDate = (event: ChangeEvent<HTMLInputElement>) => {
+    const { value, validity } = event.currentTarget;
+    const valid = !validity.badInput && (!value || isPortalDate(value));
+    setDateInput(value); setDateInvalid(!valid);
+    if (valid) updateFilter('date', value);
+  };
+  const refresh = () => { remote.retry(); available.retry(); summary.retry(); if (isAdmin) couriers.retry(); };
+  const claim = async (order: AvailableOrder) => {
+    if (claimLock.current) return;
+    claimLock.current = true; setClaiming(order.id); setClaimError(''); setNotice('');
+    try {
+      const updated = await api<Order>(`/orders/${order.id}/claim/`, json({}));
+      remote.replace([updated, ...(remote.data || []).filter(item => item.id !== updated.id)]);
+      available.replace((available.data || []).filter(item => item.id !== updated.id));
+      setView('active'); setSelected(updated.id); setNotice(`Заказ №${updated.number} принят. Он появился в ваших доставках.`);
+      refresh();
+    } catch (err) {
+      setClaimError(failure(err));
+      if (err instanceof ApiError && err.status === 409) available.replace((available.data || []).filter(item => item.id !== order.id));
+      refresh();
+    } finally { claimLock.current = false; setClaiming(null); }
+  };
+  const chooseView = (next: typeof view) => { setView(next); setSelected(null); setClaimError(''); setNotice(''); };
+  return <section aria-label={isCourier ? 'Ваши доставки' : isCashier ? 'Касса и заказы' : 'Ваши заказы'}>
+    {isCashier && <section className="portal-cash-summary" aria-label="Сводка кассы">
+      <div className="portal-section-title"><div><p className="portal-eyebrow">НАЛИЧНЫЕ ПОД КОНТРОЛЕМ</p><h2>Касса за {new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${summaryDate}T12:00:00Z`))}</h2></div><Banknote size={26} /></div>
+      <ErrorNotice message={summary.error} retry={summary.retry} />
+      {summary.loading ? <p role="status" className="portal-help">Загружаем сводку кассы…</p> : summary.data && <div className="portal-summary-grid">
+        <article><span>Получено наличными за день</span><strong>{money(summary.data.cash_received)}</strong><small>Оплаченных заказов: {summary.data.paid_count}</small></article>
+        <article><span>Доставлены, но ещё не оплачены</span><strong>{money(summary.data.unpaid_delivered_total)}</strong><small>За все дни · заказов: {summary.data.unpaid_delivered_count}</small></article>
+      </div>}
+      <p className="portal-help">В кассе отражаются только подтверждённые наличные. Для сводки за другой день выберите дату ниже.</p>
+    </section>}
+    <div className="portal-section-title"><div><p className="portal-eyebrow">{isCourier ? 'ДОСТАВКА ANASYM' : 'СВЕЖЕЕ И ВОВРЕМЯ'}</p><h2>{isCourier ? showAvailable ? 'Доступные заказы' : view === 'history' ? 'История доставок' : 'Мои активные доставки' : isAdmin || isCashier ? 'Все заказы' : 'Ваши заказы'}<span className="portal-count">{showAvailable ? available.data?.length || 0 : orders.length}</span></h2></div><div className="portal-refresh"><span><i />Обновляем каждые 5 секунд</span><button className="portal-icon-button" type="button" onClick={refresh} aria-label="Обновить заказы"><RefreshCw size={18} /></button></div></div>
+    {isCourier && <div className="portal-segment portal-courier-tabs" aria-label="Разделы доставок">
+      <button type="button" className={view === 'available' ? 'active' : ''} aria-pressed={view === 'available'} onClick={() => chooseView('available')}>Доступные <span>{available.data?.length || 0}</span></button>
+      <button type="button" className={view === 'active' ? 'active' : ''} aria-pressed={view === 'active'} onClick={() => chooseView('active')}>Мои активные <span>{active}</span></button>
+      <button type="button" className={view === 'history' ? 'active' : ''} aria-pressed={view === 'history'} onClick={() => chooseView('history')}>История <span>{allOrders.length - active}</span></button>
+    </div>}
+    {(isAdmin || isCashier) && <div className={`portal-filters ${isCashier ? 'portal-cashier-filters' : ''}`}>
+      <label className="portal-search"><Search size={18} /><input aria-label="Поиск по номеру заказа или телефону" placeholder="Номер заказа или телефон" value={search} onChange={e => setSearch(e.target.value)} /></label>
+      <label><span>Статус</span><select value={filters.status} onChange={e => updateFilter('status', e.target.value)}><option value="">Все статусы</option>{[...statusSteps, 'CANCELLED'].map(status => <option key={status} value={status}>{statusLabel[status]}</option>)}</select></label>
+      <label><span>Дата</span><input type="date" min="0001-01-01" max="9999-12-31" aria-label="Дата заказа и сводки кассы" aria-invalid={dateInvalid || undefined} aria-describedby={dateInvalid ? 'portal-date-error' : undefined} value={dateInput} onChange={changeDate} />{dateInvalid && <small id="portal-date-error" className="portal-danger-text">Укажите существующую дату с годом от 0001 до 9999. Последний выбранный фильтр сохранён.</small>}</label>
+      {isAdmin && <label><span>Курьер</span><select value={filters.courier} onChange={e => updateFilter('courier', e.target.value)}><option value="">Все курьеры</option>{couriers.data?.map(courier => <option key={courier.id} value={courier.id}>{courier.name}{!courier.is_active ? ' (заблокирован)' : ''}</option>)}</select></label>}
+      {(Object.values(filters).some(Boolean) || dateInvalid) && <button type="button" className="portal-text-button" onClick={() => { setFilters({ status: '', date: '', courier: '', search: '' }); setDateInput(''); setDateInvalid(false); setSearch(''); }}>Сбросить</button>}
+    </div>}
+    <ErrorNotice message={claimError} />
+    {notice && <p className="portal-success" role="status"><Check size={17} />{notice}</p>}
+    {showAvailable ? <>
+      <p className="portal-queue-note">Эти заказы видят все активные курьеры. Заказ закрепляется за тем, кто первым нажмёт «Принять заказ».</p>
+      <ErrorNotice message={available.error} retry={available.retry} />
+      {available.loading ? <div className="portal-loading" role="status"><RefreshCw size={22} /> Загружаем доступные заказы…</div> : available.data && <div className="portal-available-grid">
+        {available.data.length ? available.data.map(order => <article className="portal-available-card" key={order.id}>
+          <div className="portal-order-card-top"><strong>Заказ №{order.number}</strong><Truck size={19} /></div>
+          <p className="portal-order-date">{dateTime(order.created_at)}</p><Status status={order.status} />
+          <p className="portal-queue-address"><MapPin size={17} /><span>{order.address}</span></p>
+          <ul className="portal-queue-items">{order.items.map((item, index) => <li key={`${item.name}-${index}`}><span>{item.name}</span><b>{item.quantity} шт.</b></li>)}</ul>
+          <div className="portal-order-card-bottom"><span>{order.items_count} шт.</span><strong>{money(order.total)}</strong></div>
+          <button type="button" className="portal-button" disabled={claiming !== null} onClick={() => void claim(order)}>{claiming === order.id ? 'Принимаем…' : 'Принять заказ'}<ArrowRight size={17} /></button>
+          <p className="portal-help">Контакты получателя откроются после принятия заказа.</p>
+        </article>) : <EmptyState icon={<Truck size={32} />} title="Свободных заказов пока нет">Новый заказ появится здесь автоматически, как только покупатель оформит его.</EmptyState>}
+      </div>}
+    </> : <>
+      <ErrorNotice message={remote.error} retry={remote.retry} />{isAdmin && <ErrorNotice message={couriers.error} retry={couriers.retry} />}
+      {remote.loading ? <div className="portal-loading" role="status"><RefreshCw size={22} /> Загружаем заказы…</div> : remote.data && <div className={`portal-orders-layout ${selected ? 'has-selection' : ''} ${!orders.length && !selected ? 'portal-empty-layout' : ''}`}>
+        <div className="portal-order-list">{orders.length ? orders.map(order => <button type="button" key={order.id} className={`portal-order-card ${selected === order.id ? 'selected' : ''}`} aria-pressed={selected === order.id} onClick={() => setSelected(order.id)}>
+          <div className="portal-order-card-top"><strong>Заказ №{order.number}</strong><ChevronRight size={19} /></div><div className="portal-order-date">{dateTime(order.created_at)}</div>
+          <div className="portal-order-badges"><Status status={order.status} /><PaymentStatusLabel order={order} /></div>
+          {isStaff && <p className="portal-order-recipient">{order.recipient_name}<span>{order.address}</span></p>}
+          <div className="portal-order-card-bottom"><span>{order.items.reduce((sum, item) => sum + item.quantity, 0)} шт.</span><strong>{money(order.total)}</strong></div>
+        </button>) : <EmptyState icon={isCourier ? <Truck size={32} /> : <ShoppingBag size={32} />} title={isCourier ? view === 'history' ? 'Доставки ещё впереди' : 'Пока нет активных доставок' : isAdmin || isCashier ? 'Заказы не найдены' : 'Здесь будет ваша история'}>{isCourier ? view === 'history' ? 'Завершённые доставки появятся здесь.' : 'Откройте доступные заказы и примите подходящую доставку.' : isAdmin || isCashier ? 'Измените фильтры или дождитесь нового заказа.' : <>Выберите что-нибудь к чаю — и первый заказ появится здесь. <a href="/catalog">Перейти в каталог <ArrowRight size={15} /></a></>}</EmptyState>}</div>
+        {selected ? <OrderDetail key={selected} id={selected} user={user} couriers={couriers.data || []} onChange={refresh} onClose={() => setSelected(null)} /> : orders.length > 0 && <div className="portal-detail-placeholder"><ShoppingBag size={34} strokeWidth={1.3} /><h3>Всё о вашем заказе</h3><p>Выберите заказ, чтобы увидеть состав, адрес и историю статусов.</p></div>}
+      </div>}
+    </>}
+  </section>;
+}
+function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; user: User; couriers: User[]; onChange: () => void; onClose: () => void }) {
+  const remote = useRemote<Order>(`/orders/${id}/`, true);
+  const [error, setError] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState('');
+  const [cancel, setCancel] = useState(false);
+  const [reason, setReason] = useState('');
+  const [problem, setProblem] = useState('');
+  const [courier, setCourier] = useState('');
+  const [paymentConfirm, setPaymentConfirm] = useState(false);
+  const paymentKey = useRef<string | null>(null);
+  const mutationLock = useRef(false);
+  const assignmentChanged = useRef(false);
+  const detailRef = useRef<HTMLElement>(null);
+  const order = remote.data;
+  useEffect(() => {
+    const frame = window.requestAnimationFrame(() => {
+      const bounds = detailRef.current?.getBoundingClientRect();
+      if (bounds && (bounds.top < 0 || bounds.top > window.innerHeight - 120)) detailRef.current?.scrollIntoView({ block: 'start', behavior: 'instant' });
+    });
+    return () => window.cancelAnimationFrame(frame);
+  }, [id]);
+  useEffect(() => { if (order && !assignmentChanged.current) setCourier(order.courier ? String(order.courier) : ''); }, [order]);
+  useEffect(() => { if (order?.payment_status === 'PAID') { setPaymentConfirm(false); setError(''); } }, [order?.payment_status]);
+  const mutate = async (suffix: string, payload: unknown, success: string) => {
+    if (mutationLock.current) return;
+    mutationLock.current = true;
+    setBusy(true); setError(''); setNotice('');
+    try {
+      const updated = await api<Order>(`/orders/${id}/${suffix}/`, json(payload));
+      remote.replace(updated); setNotice(success);
+      if (suffix === 'assign') assignmentChanged.current = false;
+      if (suffix === 'problem') setProblem('');
+      if (suffix === 'payment') setPaymentConfirm(false);
+      if (updated.status === 'CANCELLED') { setCancel(false); setReason(''); }
+      onChange();
+    }
+    catch (err) { setError(failure(err)); if (err instanceof ApiError && [403, 404, 409].includes(err.status)) { remote.retry(); onChange(); } }
+    finally { mutationLock.current = false; setBusy(false); }
+  };
+  if (!order) return <article ref={detailRef} className="portal-card portal-order-detail"><div className="portal-section-title"><h3>Заказ</h3><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={19} /></button></div>{remote.loading && <p role="status">Загружаем детали…</p>}<ErrorNotice message={remote.error} retry={remote.retry} /></article>;
+  const isAdmin = user.role === 'ADMIN';
+  const isCourier = user.role === 'COURIER';
+  const isCashier = user.role === 'CASHIER';
+  const nextStatuses: Record<string, string> = isAdmin ? { NEW: 'CONFIRMED', CONFIRMED: 'PREPARING', PREPARING: 'READY' } : isCourier ? { READY: 'HANDED_OVER', HANDED_OVER: 'IN_TRANSIT', IN_TRANSIT: 'DELIVERED' } : {};
+  const next = nextStatuses[order.status];
+  const nextLabels: Record<string, string> = { CONFIRMED: 'Подтвердить заказ', PREPARING: 'Начать приготовление', READY: 'Заказ готов', HANDED_OVER: 'Забрать заказ из пекарни', IN_TRANSIT: 'Начать доставку', DELIVERED: 'Подтвердить доставку' };
+  return <article ref={detailRef} className="portal-card portal-order-detail"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2></div><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} /></button></div><Status status={order.status} /><ErrorNotice message={remote.error} retry={remote.retry} />
+    <section className="portal-detail-section"><h3><ShoppingBag size={17} /> Что в заказе</h3><ul className="portal-order-items">{order.items.map(item => <li key={item.id}>{item.image && <img src={item.image} alt="" loading="lazy" />}<div><strong>{item.name}</strong><span>{item.quantity} × {money(item.price)}</span></div><b>{money(Number(item.price) * item.quantity)}</b></li>)}</ul><dl className="portal-totals"><div><dt>Выпечка</dt><dd>{money(order.subtotal)}</dd></div><div><dt>Доставка</dt><dd>{Number(order.delivery_fee) ? money(order.delivery_fee) : 'Бесплатно'}</dd></div><div className="portal-total"><dt>Итого</dt><dd>{money(order.total)}</dd></div></dl></section>
+    <section className="portal-detail-section"><h3><MapPin size={17} /> Куда доставить</h3><p><strong>{order.recipient_name}</strong></p><a className="portal-phone" href={`tel:${order.phone}`}><Phone size={14} />{order.phone}</a><p className="portal-address">{order.address}</p>{order.comment && <div className="portal-comment"><span>Комментарий к заказу</span><p>{order.comment}</p></div>}{order.courier_name && <p className="portal-courier-name"><Truck size={16} /> Курьер: {order.courier_name}</p>}</section>
+    {order.cancellation_reason && <div className="portal-notice portal-error"><div><strong>Причина отмены</strong><p>{order.cancellation_reason}</p></div></div>}
+    <section className="portal-detail-section portal-payment"><h3><Banknote size={17} /> Оплата заказа</h3><PaymentStatusLabel order={order} />{order.payment_status === 'PAID' ? <p className="portal-payment-receipt">Получено наличными: <strong>{money(order.total)}</strong>{order.paid_at && <span>{dateTime(order.paid_at)}{order.paid_by_name ? ` · ${order.paid_by_name}` : ''}</span>}</p> : <p className="portal-help">{order.status === 'CANCELLED' ? 'Заказ отменён, оплата не требуется.' : `К оплате наличными: ${money(order.total)}. Получение наличных подтверждает кассир или администратор после доставки.`}</p>}</section>
+    <section className="portal-detail-section"><h3><Clock3 size={17} /> История заказа</h3><ol className="portal-timeline">{order.status_history.length ? order.status_history.map((entry, index) => <li key={entry.id} className={index === order.status_history.length - 1 ? 'current' : ''}><span className="portal-timeline-dot"><Check size={10} /></span><div><strong>{statusLabel[entry.to_status] || entry.to_status}</strong><span>{dateTime(entry.created_at)}{(isAdmin || isCourier || isCashier) && entry.actor_name ? ` · ${entry.actor_name}` : ''}</span></div></li>) : <li className="current"><span className="portal-timeline-dot" /><div><strong>{statusLabel[order.status]}</strong><span>{dateTime(order.created_at)}</span></div></li>}</ol></section>
+    {(isAdmin || isCourier || isCashier) && <div className="portal-order-actions"><ErrorNotice message={error} />{notice && <p className="portal-success" role="status"><Check size={17} />{notice}</p>}
+      {(isAdmin || isCashier) && order.status === 'DELIVERED' && order.payment_status !== 'PAID' && (paymentConfirm ? <form className="portal-payment-confirm" onSubmit={event => { event.preventDefault(); paymentKey.current ||= crypto.randomUUID(); void mutate('payment', { method: 'CASH', idempotency_key: paymentKey.current }, 'Оплата наличными подтверждена. Сумма учтена в кассе.'); }}><h3>Подтвердите получение наличных</h3><p>За заказ №{order.number} получена полная сумма <strong>{money(order.total)}</strong>?</p><p className="portal-help">Сумма заказа фиксирована. Подтвердите только после получения денег.</p><div className="portal-form-actions"><button className="portal-button" disabled={busy}>{busy ? 'Сохраняем…' : 'Подтвердить получение'}<Banknote size={17} /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setPaymentConfirm(false)}>Отмена</button></div></form> : <button type="button" className="portal-button portal-next" disabled={busy} onClick={() => { setPaymentConfirm(true); setError(''); setNotice(''); }}>Отметить оплату наличными<Banknote size={17} /></button>)}
+      {isCourier && ['NEW', 'CONFIRMED', 'PREPARING'].includes(order.status) && <p className="portal-waiting"><Clock3 size={19} /><span>Заказ закреплён за вами. Ожидайте, пока пекарня подготовит его к выдаче.</span></p>}
+      {isAdmin && ['NEW', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status) && <form className="portal-assign" onSubmit={event => { event.preventDefault(); void mutate('assign', { courier_id: Number(courier) }, 'Курьер назначен.'); }}><label>Курьер<select disabled={busy} value={courier} onChange={event => { assignmentChanged.current = true; setCourier(event.target.value); }} required><option value="">Выберите курьера</option>{couriers.filter(person => person.is_active || person.id === order.courier).map(person => <option value={person.id} key={person.id} disabled={!person.is_active}>{person.name}{!person.is_active ? ' (заблокирован)' : ''}</option>)}</select></label><button className="portal-button portal-button-small" disabled={busy || !courier || Number(courier) === order.courier}>Назначить</button></form>}
+      {next && <button className="portal-button portal-next" disabled={busy || (next === 'HANDED_OVER' && !order.courier)} onClick={() => void mutate('transition', { status: next }, 'Статус заказа обновлён.')}>{busy ? 'Сохраняем…' : nextLabels[next]}<ArrowRight size={17} /></button>}
+      {next === 'HANDED_OVER' && !order.courier && <p className="portal-help">Для передачи заказа сначала назначьте курьера.</p>}
+      {isAdmin && !terminal(order) && (cancel ? <form className="portal-form portal-cancel" onSubmit={event => { event.preventDefault(); if (reason.trim()) void mutate('transition', { status: 'CANCELLED', reason: reason.trim() }, 'Заказ отменён.'); }}><label>Причина отмены<textarea disabled={busy} value={reason} onChange={e => setReason(e.target.value)} required maxLength={2000} placeholder="Укажите причину — её увидит покупатель" /></label><div className="portal-form-actions"><button className="portal-button portal-button-danger" disabled={busy || !reason.trim()}>Подтвердить отмену</button><button className="portal-text-button" type="button" disabled={busy} onClick={() => setCancel(false)}>Не отменять</button></div></form> : <button className="portal-text-button portal-danger-text" disabled={busy} onClick={() => setCancel(true)}>Отменить заказ</button>)}
+      {isCourier && !terminal(order) && <form className="portal-form portal-problem" onSubmit={event => { event.preventDefault(); if (problem.trim()) void mutate('problem', { message: problem.trim() }, 'Сообщение о проблеме отправлено администратору.'); }}><label>Возникла проблема?<textarea disabled={busy} value={problem} onChange={e => setProblem(e.target.value)} required maxLength={2000} placeholder="Например, получатель не отвечает на звонок" /></label><button className="portal-button portal-button-outline" disabled={busy || !problem.trim()}>Сообщить администратору</button></form>}
+      {!!order.problems.length && <section className="portal-problems"><h3>Сообщения о доставке</h3>{order.problems.map(item => <div className="portal-comment" key={item.id}><span>{dateTime(item.created_at)} · {item.actor_name}</span><p>{item.message}</p></div>)}</section>}
+    </div>}
+  </article>;
+}
+
+type ProductDraft = { name: string; category: string; description: string; image: string; price: string; weight: string; ingredients: string; allergens: string; is_visible: boolean; is_available: boolean };
+const newProduct: ProductDraft = { name: '', category: '', description: '', image: '', price: '', weight: '', ingredients: '', allergens: '', is_visible: true, is_available: true };
+function ProductsPanel() {
+  const remote = useRemote<Product[]>('/admin/products/');
+  const categories = useRemote<Category[]>('/admin/categories/');
+  const [editing, setEditing] = useState<Product | 'new' | null>(null);
+  const editor = useEditorReveal(editing === 'new' ? 'new' : editing?.id ?? null);
+  const [draft, setDraft] = useState<ProductDraft>(newProduct);
+  const [search, setSearch] = useState('');
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const start = (product: Product | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(product); setError(''); setNotice(''); setDraft(product === 'new' ? { ...newProduct, category: String(categories.data?.[0]?.id || '') } : { ...product, category: String(product.category), price: String(product.price) }); };
+  const field = (key: keyof ProductDraft, value: string | boolean) => setDraft(current => ({ ...current, [key]: value }));
+  const save = async (event: FormEvent) => {
+    event.preventDefault(); setError(''); setBusy(true);
+    try { await api(`/admin/products/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), category: Number(draft.category) }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Товар сохранён.'); remote.retry(); }
+    catch (err) { setError(failure(err)); }
+    finally { setBusy(false); }
+  };
+  const toggle = async (product: Product, key: 'is_visible' | 'is_available') => {
+    setError(''); setBusy(true); setNotice('');
+    try { await api(`/admin/products/${product.id}/`, json({ [key]: !product[key] }, 'PATCH')); remote.retry(); }
+    catch (err) { setError(failure(err)); }
+    finally { setBusy(false); }
+  };
+  const products = (remote.data || []).filter(product => product.name.toLocaleLowerCase('ru').includes(search.toLocaleLowerCase('ru')));
+  return <section><div className="portal-section-title"><div><p className="portal-eyebrow">ВИТРИНА ПЕКАРНИ</p><h2>Наша выпечка <span className="portal-count">{remote.data?.length || 0}</span></h2></div><button className="portal-button" disabled={busy} onClick={event => start('new', event.currentTarget)}><Plus size={17} /> Добавить товар</button></div><ErrorNotice message={remote.error} retry={remote.retry} /><ErrorNotice message={categories.error} retry={categories.retry} />{!editing && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} />{notice}</p>}
+    {editing && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{editing === 'new' ? 'Новый товар' : `Редактировать: ${editing.name}`}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть редактирование товара" onClick={() => setEditing(null)}><X size={20} /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Название<input value={draft.name} onChange={e => field('name', e.target.value)} required maxLength={160} /></label><label>Категория<select value={draft.category} onChange={e => field('category', e.target.value)} required><option value="">Выберите категорию</option>{categories.data?.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label><label>Цена, ₸<input type="number" min="0" step="0.01" value={draft.price} onChange={e => field('price', e.target.value)} required /></label><label>Вес или объём<input value={draft.weight} onChange={e => field('weight', e.target.value)} placeholder="120 г" maxLength={80} /></label><label className="portal-wide">Ссылка на изображение<input type="text" value={draft.image} onChange={e => field('image', e.target.value)} placeholder="https://… или /images/…" maxLength={500} /></label><label className="portal-wide">Описание<textarea value={draft.description} onChange={e => field('description', e.target.value)} maxLength={5000} /></label><label>Состав<textarea value={draft.ingredients} onChange={e => field('ingredients', e.target.value)} maxLength={3000} /></label><label>Аллергены<textarea value={draft.allergens} onChange={e => field('allergens', e.target.value)} placeholder="Глютен, молоко, яйца" maxLength={2000} /></label></div><div className="portal-checks"><label><input type="checkbox" checked={draft.is_visible} onChange={e => field('is_visible', e.target.checked)} /> Показывать в каталоге</label><label><input type="checkbox" checked={draft.is_available} onChange={e => field('is_available', e.target.checked)} /> Доступен для заказа</label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || !draft.name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить товар'}<Check size={17} /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setEditing(null)}>Отмена</button></div></fieldset></form></section>}
+    <label className="portal-search portal-product-search"><Search size={18} /><input aria-label="Найти товар по названию" placeholder="Найти любимую выпечку" value={search} onChange={e => setSearch(e.target.value)} /></label>
+    {remote.loading ? <p className="portal-loading" role="status">Загружаем товары…</p> : remote.data && <div className="portal-products">{products.length ? products.map(product => <article className={`portal-product ${!product.is_visible ? 'is-hidden' : ''}`} key={product.id}><div className="portal-product-image">{product.image ? <img src={product.image} alt={product.name} loading="lazy" /> : <Package size={36} />}{!product.is_available && <span>Нет в наличии</span>}</div><div className="portal-product-content"><p>{categories.data?.find(category => category.id === product.category)?.name || 'Категория'}</p><h3>{product.name}</h3><div className="portal-product-price"><strong>{money(product.price)}</strong><span>{product.weight}</span></div><div className="portal-product-actions"><button className="portal-text-button" disabled={busy} onClick={event => start(product, event.currentTarget)}><Pencil size={15} />Изменить</button><button className="portal-icon-button" disabled={busy} onClick={() => void toggle(product, 'is_visible')} aria-label={`${product.is_visible ? 'Скрыть' : 'Показать'} товар «${product.name}»`} title={product.is_visible ? 'Скрыть из каталога' : 'Показать в каталоге'}>{product.is_visible ? <Eye size={17} /> : <EyeOff size={17} />}</button></div><button className="portal-stock-toggle" disabled={busy} onClick={() => void toggle(product, 'is_available')}><i className={product.is_available ? 'available' : ''} />{product.is_available ? 'В наличии · убрать' : 'Нет в наличии · вернуть'}</button>{!product.is_visible && <p className="portal-help">Скрыт из каталога</p>}</div></article>) : <EmptyState icon={<Package size={30} />} title="Товары не найдены">{search ? 'Попробуйте другое название.' : 'Добавьте первый товар, чтобы наполнить витрину.'}</EmptyState>}</div>}
+  </section>;
+}
+
+type CategoryDraft = { name: string; slug: string; description: string; image: string; is_visible: boolean };
+const newCategory: CategoryDraft = { name: '', slug: '', description: '', image: '', is_visible: true };
+function CategoriesPanel() {
+  const remote = useRemote<Category[]>('/admin/categories/');
+  const [editing, setEditing] = useState<Category | 'new' | null>(null);
+  const editor = useEditorReveal(editing === 'new' ? 'new' : editing?.id ?? null);
+  const [draft, setDraft] = useState(newCategory);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const [busy, setBusy] = useState(false);
+  const save = async (event: FormEvent) => {
+    event.preventDefault(); setError(''); setBusy(true);
+    try { await api(`/admin/categories/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), slug: draft.slug.trim() }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Категория сохранена.'); remote.retry(); }
+    catch (err) { setError(failure(err)); }
+    finally { setBusy(false); }
+  };
+  const start = (category: Category | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(category); setDraft(category === 'new' ? newCategory : category); setError(''); setNotice(''); };
+  const toggle = async (category: Category) => {
+    setError(''); setBusy(true);
+    try { await api(`/admin/categories/${category.id}/`, json({ is_visible: !category.is_visible }, 'PATCH')); remote.retry(); }
+    catch (err) { setError(failure(err)); }
+    finally { setBusy(false); }
+  };
+  return <section><div className="portal-section-title"><div><p className="portal-eyebrow">ПОРЯДОК НА ВИТРИНЕ</p><h2>Категории</h2></div><button className="portal-button" disabled={busy} onClick={event => start('new', event.currentTarget)}><Plus size={17} /> Добавить категорию</button></div><ErrorNotice message={remote.error} retry={remote.retry} />{!editing && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} />{notice}</p>}
+    {editing && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{editing === 'new' ? 'Новая категория' : 'Редактировать категорию'}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть редактирование категории" onClick={() => setEditing(null)}><X size={20} /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Название<input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} required maxLength={120} /></label><label>Адрес категории<input value={draft.slug} onChange={e => setDraft({ ...draft, slug: e.target.value })} required pattern="[a-z0-9_\-]+" placeholder="croissants" maxLength={50} /><small>Латинские буквы, цифры, дефис или подчёркивание.</small></label><label className="portal-wide">Описание<textarea value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} maxLength={3000} /></label><label className="portal-wide">Ссылка на изображение<input value={draft.image} onChange={e => setDraft({ ...draft, image: e.target.value })} placeholder="https://… или /images/…" maxLength={500} /></label></div><div className="portal-checks"><label><input type="checkbox" checked={draft.is_visible} onChange={e => setDraft({ ...draft, is_visible: e.target.checked })} /> Показывать в каталоге</label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || !draft.name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить категорию'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setEditing(null)}>Отмена</button></div></fieldset></form></section>}
+    {remote.loading ? <p className="portal-loading" role="status">Загружаем категории…</p> : remote.data && <div className="portal-manage-list">{remote.data?.length ? remote.data.map(category => <article className="portal-manage-row" key={category.id}><div className="portal-category-image">{category.image ? <img src={category.image} alt="" /> : <LayoutGrid size={23} />}</div><div className="portal-manage-main"><h3>{category.name}</h3><p>{category.description || `/${category.slug}`}</p><span className="portal-help">{category.is_visible ? 'Видна в каталоге' : 'Скрыта из каталога'}</span></div><div className="portal-row-actions"><button className="portal-icon-button" disabled={busy} aria-label={`Изменить категорию «${category.name}»`} onClick={event => start(category, event.currentTarget)}><Pencil size={18} /></button><button className="portal-icon-button" disabled={busy} aria-label={`${category.is_visible ? 'Скрыть' : 'Показать'} категорию «${category.name}»`} onClick={() => void toggle(category)}>{category.is_visible ? <Eye size={18} /> : <EyeOff size={18} />}</button></div></article>) : <EmptyState icon={<LayoutGrid size={30} />} title="Первая категория ждёт">Добавьте категории, чтобы покупателям было проще найти любимую выпечку.</EmptyState>}</div>}
+  </section>;
+}
+
+function StaffPanel({ kind }: { kind: 'couriers' | 'cashiers' }) {
+  const isCashier = kind === 'cashiers';
+  const endpoint = `/admin/${kind}/`;
+  const remote = useRemote<User[]>(endpoint);
+  const [adding, setAdding] = useState(false);
+  const editor = useEditorReveal(adding ? 'new' : null);
+  const [draft, setDraft] = useState({ name: '', email: '', phone: '', password: '' });
+  const [busy, setBusy] = useState(false);
+  const lock = useRef(false);
+  const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
+  const staffTitle = isCashier ? 'Кассиры' : 'Курьеры';
+  const addLabel = isCashier ? 'Добавить кассира' : 'Добавить курьера';
+  const save = async (event: FormEvent) => {
+    event.preventDefault();
+    if (lock.current) return;
+    lock.current = true; setError(''); setBusy(true);
+    try {
+      const created = await api<User>(endpoint, json({ ...draft, name: draft.name.trim(), email: draft.email.trim(), phone: draft.phone.trim() }));
+      remote.replace([...(remote.data || []), created]); setAdding(false); setDraft({ name: '', email: '', phone: '', password: '' });
+      setNotice(isCashier ? 'Кассир добавлен в команду.' : 'Курьер добавлен в команду.'); remote.retry();
+    } catch (err) { setError(failure(err)); }
+    finally { lock.current = false; setBusy(false); }
+  };
+  const toggle = async (person: User) => {
+    if (lock.current) return;
+    lock.current = true; setError(''); setBusy(true); setNotice('');
+    try {
+      const updated = await api<User>(`${endpoint}${person.id}/`, json({ is_active: !person.is_active }, 'PATCH'));
+      remote.replace((remote.data || []).map(item => item.id === updated.id ? updated : item));
+      setNotice(person.is_active ? 'Доступ сотрудника заблокирован.' : 'Доступ сотрудника восстановлен.'); remote.retry();
+    } catch (err) { setError(failure(err)); }
+    finally { lock.current = false; setBusy(false); }
+  };
+  return <section><div className="portal-section-title"><div><p className="portal-eyebrow">НАША КОМАНДА</p><h2>{staffTitle} <span className="portal-count">{remote.data?.length || 0}</span></h2></div><button className="portal-button" disabled={busy} onClick={event => { editor.rememberTrigger(event.currentTarget); setAdding(true); setError(''); setNotice(''); }}><Plus size={17} />{addLabel}</button></div><ErrorNotice message={remote.error} retry={remote.retry} />{!adding && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} />{notice}</p>}
+    {isCashier && <p className="portal-queue-note">Кассир видит все заказы и подтверждает получение наличных за доставленные заказы.</p>}
+    {adding && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{isCashier ? 'Новый кассир' : 'Новый курьер'}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть форму нового сотрудника" onClick={() => setAdding(false)}><X size={20} /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Имя<input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} required maxLength={120} autoComplete="off" /></label><label>Телефон<input type="tel" value={draft.phone} onChange={e => setDraft({ ...draft, phone: e.target.value })} required maxLength={30} autoComplete="off" /></label><label>Электронная почта<input type="email" value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} required maxLength={254} autoComplete="off" /></label><label>Пароль для входа<input type="password" value={draft.password} onChange={e => setDraft({ ...draft, password: e.target.value })} required minLength={10} maxLength={128} autoComplete="new-password" /><small>Не менее 10 символов. Передайте пароль сотруднику лично.</small></label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || !draft.name.trim()}>{busy ? 'Добавляем…' : addLabel}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setAdding(false)}>Отмена</button></div></fieldset></form></section>}
+    {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><a href={`tel:${person.phone}`}>{person.phone}</a></div><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button></div></article>) : <EmptyState icon={isCashier ? <Banknote size={30} /> : <Truck size={30} />} title={isCashier ? 'Добавьте первого кассира' : 'Соберите команду доставки'}>{isCashier ? 'Создайте отдельный аккаунт для учёта полученных наличных.' : 'Добавьте курьера, чтобы он мог принимать заказы из общей очереди.'}</EmptyState>}</div>}
+  </section>;
+}

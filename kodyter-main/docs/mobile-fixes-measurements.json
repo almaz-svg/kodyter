@@ -1,0 +1,178 @@
+{
+  "home": [
+    {
+      "buttonMinimum": 44,
+      "buttonsAligned": true,
+      "descriptionsClipped": false,
+      "heroHeight": 344.8000183105469,
+      "heroSource": "http://127.0.0.1:5173/images/croissant.webp",
+      "heroWidth": 344.8000183105469,
+      "scrollWidth": 345,
+      "width": 360
+    },
+    {
+      "buttonMinimum": 44,
+      "buttonsAligned": true,
+      "descriptionsClipped": false,
+      "heroHeight": 375.2000122070313,
+      "heroSource": "http://127.0.0.1:5173/images/croissant.webp",
+      "heroWidth": 375.2000122070313,
+      "scrollWidth": 375,
+      "width": 390
+    },
+    {
+      "buttonMinimum": 44,
+      "buttonsAligned": true,
+      "descriptionsClipped": false,
+      "heroHeight": 584.7999877929688,
+      "heroSource": "http://127.0.0.1:5173/images/croissant.webp",
+      "heroWidth": 584.7999877929688,
+      "scrollWidth": 585,
+      "width": 600
+    },
+    {
+      "buttonMinimum": 44,
+      "buttonsAligned": true,
+      "descriptionsClipped": false,
+      "heroHeight": 512.2125244140625,
+      "heroSource": "http://127.0.0.1:5173/images/hero.webp",
+      "heroWidth": 752.7999877929688,
+      "scrollWidth": 753,
+      "width": 768
+    },
+    {
+      "buttonMinimum": 44,
+      "buttonsAligned": true,
+      "descriptionsClipped": false,
+      "heroHeight": 559.2374877929688,
+      "heroSource": "http://127.0.0.1:5173/images/hero.webp",
+      "heroWidth": 1351.2000732421875,
+      "scrollWidth": 1351,
+      "width": 1366
+    },
+    {
+      "buttonMinimum": 44,
+      "buttonsAligned": true,
+      "descriptionsClipped": false,
+      "heroHeight": 620,
+      "heroSource": "http://127.0.0.1:5173/images/hero.webp",
+      "heroWidth": 1904.800048828125,
+      "scrollWidth": 1905,
+      "width": 1920
+    }
+  ],
+  "portals": [
+    {
+      "brokenImages": 0,
+      "documentWidth": 345,
+      "overflow": false,
+      "page": "admin",
+      "width": 360
+    },
+    {
+      "brokenImages": 0,
+      "documentWidth": 375,
+      "overflow": false,
+      "page": "admin",
+      "width": 390
+    },
+    {
+      "brokenImages": 0,
+      "documentWidth": 753,
+      "overflow": false,
+      "page": "admin",
+      "width": 768
+    },
+    {
+      "brokenImages": 0,
+      "documentWidth": 1351,
+      "overflow": false,
+      "page": "admin",
+      "width": 1366
+    },
+    {
+      "brokenImages": 0,
+      "documentWidth": 1905,
+      "overflow": false,
+      "page": "admin",
+      "width": 1920
+    },
+    {
+      "clientWidth": 345,
+      "documentWidth": 345,
+      "overflow": false,
+      "page": "courier",
+      "width": 360
+    },
+    {
+      "clientWidth": 345,
+      "documentWidth": 345,
+      "overflow": false,
+      "page": "courier",
+      "width": 360
+    },
+    {
+      "clientWidth": 753,
+      "documentWidth": 753,
+      "overflow": false,
+      "page": "courier",
+      "width": 768
+    },
+    {
+      "clientWidth": 1351,
+      "documentWidth": 1351,
+      "overflow": false,
+      "page": "courier",
+      "width": 1366
+    },
+    {
+      "clientWidth": 1905,
+      "documentWidth": 1905,
+      "overflow": false,
+      "page": "courier",
+      "width": 1920
+    },
+    {
+      "clientWidth": 375,
+      "documentWidth": 375,
+      "overflow": false,
+      "page": "courier",
+      "width": 390
+    },
+    {
+      "clientWidth": 345,
+      "documentWidth": 345,
+      "overflow": false,
+      "page": "cashier",
+      "width": 360
+    },
+    {
+      "clientWidth": 375,
+      "documentWidth": 375,
+      "overflow": false,
+      "page": "cashier",
+      "width": 390
+    },
+    {
+      "clientWidth": 753,
+      "documentWidth": 753,
+      "overflow": false,
+      "page": "cashier",
+      "width": 768
+    },
+    {
+      "clientWidth": 1351,
+      "documentWidth": 1351,
+      "overflow": false,
+      "page": "cashier",
+      "width": 1366
+    },
+    {
+      "clientWidth": 1905,
+      "documentWidth": 1905,
+      "overflow": false,
+      "page": "cashier",
+      "width": 1920
+    }
+  ]
+}

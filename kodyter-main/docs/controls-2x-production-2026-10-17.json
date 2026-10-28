@@ -1,0 +1,30 @@
+[
+  {
+    "buy": {
+      "font": "24px",
+      "height": 88,
+      "icon": 34
+    },
+    "filter": {
+      "font": "20px",
+      "height": 72,
+      "width": 185.33750915527344
+    },
+    "pageWidth": 1905,
+    "width": 1920
+  },
+  {
+    "buy": {
+      "font": "24px",
+      "height": 88,
+      "icon": 34
+    },
+    "filter": {
+      "font": "22px",
+      "height": 88,
+      "width": 185.15000915527344
+    },
+    "pageWidth": 375,
+    "width": 390
+  }
+]

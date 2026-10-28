@@ -1,0 +1,124 @@
+{
+  "run_id": "bad9f60c641f",
+  "started_at": "2026-10-16T17:00:22.938070+00:00",
+  "api_base": "https://anasym-bakery.vercel.app",
+  "result": "PASS",
+  "order": {
+    "id": 1,
+    "number": "AN-929B533B23F3",
+    "status": "DELIVERED",
+    "total": "2390.00",
+    "payment_status": "PAID"
+  },
+  "checks": [
+    {
+      "name": "demo_environment",
+      "passed": true
+    },
+    {
+      "name": "four_demo_credentials_present",
+      "passed": true
+    },
+    {
+      "name": "login_customer",
+      "passed": true
+    },
+    {
+      "name": "login_admin",
+      "passed": true
+    },
+    {
+      "name": "login_courier",
+      "passed": true
+    },
+    {
+      "name": "login_cashier",
+      "passed": true
+    },
+    {
+      "name": "available_product",
+      "passed": true
+    },
+    {
+      "name": "created_order_total",
+      "passed": true
+    },
+    {
+      "name": "created_order_new",
+      "passed": true
+    },
+    {
+      "name": "immediate_admin_visibility",
+      "passed": true
+    },
+    {
+      "name": "immediate_cashier_visibility",
+      "passed": true
+    },
+    {
+      "name": "immediate_courier_pool_visibility",
+      "passed": true
+    },
+    {
+      "name": "cashier_catalog_access_denied",
+      "passed": true
+    },
+    {
+      "name": "courier_claim",
+      "passed": true
+    },
+    {
+      "name": "claimed_order_removed_from_pool",
+      "passed": true
+    },
+    {
+      "name": "claimed_order_in_courier_queue",
+      "passed": true
+    },
+    {
+      "name": "transition_confirmed",
+      "passed": true
+    },
+    {
+      "name": "transition_preparing",
+      "passed": true
+    },
+    {
+      "name": "transition_ready",
+      "passed": true
+    },
+    {
+      "name": "transition_handed_over",
+      "passed": true
+    },
+    {
+      "name": "transition_in_transit",
+      "passed": true
+    },
+    {
+      "name": "transition_delivered",
+      "passed": true
+    },
+    {
+      "name": "cash_payment_recorded",
+      "passed": true
+    },
+    {
+      "name": "cash_summary_increment",
+      "passed": true
+    },
+    {
+      "name": "unpaid_summary_decrement",
+      "passed": true
+    },
+    {
+      "name": "payment_retry_same_record",
+      "passed": true
+    },
+    {
+      "name": "payment_retry_no_extra_cash",
+      "passed": true
+    }
+  ],
+  "finished_at": "2026-10-16T17:02:28.202880+00:00"
+}

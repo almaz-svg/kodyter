@@ -1,0 +1,32 @@
+[
+  {
+    "clientWidth": 345,
+    "documentWidth": 345,
+    "overflow": false,
+    "width": 360
+  },
+  {
+    "clientWidth": 375,
+    "documentWidth": 375,
+    "overflow": false,
+    "width": 390
+  },
+  {
+    "clientWidth": 753,
+    "documentWidth": 753,
+    "overflow": false,
+    "width": 768
+  },
+  {
+    "clientWidth": 1351,
+    "documentWidth": 1351,
+    "overflow": false,
+    "width": 1366
+  },
+  {
+    "clientWidth": 1905,
+    "documentWidth": 1905,
+    "overflow": false,
+    "width": 1920
+  }
+]

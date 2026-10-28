@@ -1,0 +1,203 @@
+{
+  "date": "2026-10-17",
+  "local": "http://127.0.0.1:5174/",
+  "measurements": [
+    {
+      "cards": [
+        {
+          "height": 88,
+          "text": "Выпечка",
+          "top": -1584,
+          "width": 277
+        },
+        {
+          "height": 88,
+          "text": "Торты",
+          "top": -1584,
+          "width": 277
+        },
+        {
+          "height": 88,
+          "text": "Десерты",
+          "top": -1584,
+          "width": 277
+        },
+        {
+          "height": 88,
+          "text": "Кейтеринг",
+          "top": -1584,
+          "width": 277
+        },
+        {
+          "height": 88,
+          "text": "Булочки и пирожки",
+          "top": -1584,
+          "width": 277
+        }
+      ],
+      "documentWidth": 345,
+      "scrollTop": 0,
+      "scrollWidth": 1432,
+      "viewport": 305,
+      "width": 360
+    },
+    {
+      "cards": [
+        {
+          "height": 88,
+          "text": "Выпечка",
+          "top": -1564,
+          "width": 300
+        },
+        {
+          "height": 88,
+          "text": "Торты",
+          "top": -1564,
+          "width": 300
+        },
+        {
+          "height": 88,
+          "text": "Десерты",
+          "top": -1564,
+          "width": 300
+        },
+        {
+          "height": 88,
+          "text": "Кейтеринг",
+          "top": -1564,
+          "width": 300
+        },
+        {
+          "height": 88,
+          "text": "Булочки и пирожки",
+          "top": -1564,
+          "width": 300
+        }
+      ],
+      "documentWidth": 375,
+      "scrollTop": 0,
+      "scrollWidth": 1548,
+      "viewport": 335,
+      "width": 390
+    },
+    {
+      "cards": [
+        {
+          "height": 88,
+          "text": "Выпечка",
+          "top": -1338,
+          "width": 300
+        },
+        {
+          "height": 88,
+          "text": "Торты",
+          "top": -1338,
+          "width": 300
+        },
+        {
+          "height": 88,
+          "text": "Десерты",
+          "top": -1338,
+          "width": 300
+        },
+        {
+          "height": 88,
+          "text": "Кейтеринг",
+          "top": -1338,
+          "width": 300
+        },
+        {
+          "height": 88,
+          "text": "Булочки и пирожки",
+          "top": -1338,
+          "width": 300
+        }
+      ],
+      "documentWidth": 753,
+      "scrollTop": 0,
+      "scrollWidth": 1548,
+      "viewport": 697,
+      "width": 768
+    },
+    {
+      "cards": [
+        {
+          "height": 233,
+          "text": "Выпечка",
+          "top": -897,
+          "width": 222
+        },
+        {
+          "height": 233,
+          "text": "Торты",
+          "top": -897,
+          "width": 222
+        },
+        {
+          "height": 233,
+          "text": "Десерты",
+          "top": -897,
+          "width": 222
+        },
+        {
+          "height": 233,
+          "text": "Кейтеринг",
+          "top": -897,
+          "width": 222
+        },
+        {
+          "height": 233,
+          "text": "Булочки и пирожки",
+          "top": -897,
+          "width": 222
+        }
+      ],
+      "documentWidth": 1351,
+      "scrollTop": 0,
+      "scrollWidth": 1176,
+      "viewport": 1176,
+      "width": 1366
+    },
+    {
+      "cards": [
+        {
+          "height": 222,
+          "text": "Выпечка",
+          "top": -834,
+          "width": 247
+        },
+        {
+          "height": 222,
+          "text": "Торты",
+          "top": -834,
+          "width": 247
+        },
+        {
+          "height": 222,
+          "text": "Десерты",
+          "top": -834,
+          "width": 247
+        },
+        {
+          "height": 222,
+          "text": "Кейтеринг",
+          "top": -834,
+          "width": 247
+        },
+        {
+          "height": 222,
+          "text": "Булочки и пирожки",
+          "top": -834,
+          "width": 247
+        }
+      ],
+      "documentWidth": 1905,
+      "scrollTop": 0,
+      "scrollWidth": 1298,
+      "viewport": 1298,
+      "width": 1920
+    }
+  ],
+  "keyboardLastCardFullyVisible": true,
+  "partialCardPointerClick": "PASS: /catalog?category=2"
+}

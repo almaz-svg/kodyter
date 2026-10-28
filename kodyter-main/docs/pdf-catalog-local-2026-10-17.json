@@ -1,0 +1,67 @@
+{
+  "target": "local",
+  "new_photos": [
+    {
+      "id": 9,
+      "name": "Шоколадное пирожное с клубникой",
+      "image": "/images/catalog/pdf-01-956a02cedc.webp",
+      "price": "1290.00"
+    },
+    {
+      "id": 10,
+      "name": "Капкейк с клубникой",
+      "image": "/images/catalog/pdf-02-7e18cf4491.webp",
+      "price": "990.00"
+    },
+    {
+      "id": 11,
+      "name": "Мини-круассаны с начинкой",
+      "image": "/images/catalog/pdf-03-41fe2cd89c.webp",
+      "price": "2490.00"
+    },
+    {
+      "id": 12,
+      "name": "Круассан с клубникой",
+      "image": "/images/catalog/pdf-04-ac49568f1a.webp",
+      "price": "1390.00"
+    },
+    {
+      "id": 13,
+      "name": "Капкейк с карамелью",
+      "image": "/images/catalog/pdf-05-1248d30955.webp",
+      "price": "1090.00"
+    },
+    {
+      "id": 14,
+      "name": "Пирожное с кремом и клубникой",
+      "image": "/images/catalog/pdf-06-455a7b718c.webp",
+      "price": "1290.00"
+    },
+    {
+      "id": 15,
+      "name": "Тарт с шоколадным декором",
+      "image": "/images/catalog/pdf-07-8185a28a39.webp",
+      "price": "5900.00"
+    },
+    {
+      "id": 16,
+      "name": "Фруктовый пирог",
+      "image": "/images/catalog/pdf-08-65ac09840d.webp",
+      "price": "6900.00"
+    },
+    {
+      "id": 17,
+      "name": "Ассорти канапе",
+      "image": "/images/catalog/pdf-09-f0d12cede6.webp",
+      "price": "2990.00"
+    },
+    {
+      "id": 18,
+      "name": "Пирожное с глазурью",
+      "image": "/images/catalog/pdf-10-3b8a508d30.webp",
+      "price": "1290.00"
+    }
+  ],
+  "products_after": 18,
+  "existing_products_preserved": true
+}

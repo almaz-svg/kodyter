@@ -1,0 +1,14 @@
+**/node_modules
+**/.venv
+**/.uv-cache
+**/.npm-cache
+**/__pycache__
+.git
+.env
+**/.env
+.secrets
+backups
+**/db.sqlite3
+**/dist
+test-results
+site
