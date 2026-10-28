@@ -1,3 +1,5 @@
+import { useState, useEffect, useRef } from 'react';
+import type { ImgHTMLAttributes } from 'react';
 import { ArrowRight, Minus, Plus, LoaderCircle, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { money } from './lib';
@@ -6,6 +8,7 @@ import { useShop } from './store';
 import { useI18n } from './i18n';
 
 export function Logo({ small = false }: { small?: boolean }) {
+  const { t } = useI18n();
   return (
     <Link to="/" className={`brand ${small ? 'brand-small' : ''}`} aria-label="Anasym — на главную">
       <img
@@ -13,7 +16,80 @@ export function Logo({ small = false }: { small?: boolean }) {
         alt="Anasym"
         className={`brand-logo-img ${small ? 'brand-logo-img-small' : ''}`}
       />
+      <span className="brand-text">
+        <span className="brand-name">Anasym</span>
+        <span className="brand-sub">{t.brandSub}</span>
+      </span>
     </Link>
+  );
+}
+
+const TRANSPARENT_PIXEL = 'data:image/svg+xml,%3Csvg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1 1"%3E%3C/svg%3E';
+
+export interface LazyImageProps extends ImgHTMLAttributes<HTMLImageElement> {
+  src: string;
+  alt?: string;
+  placeholder?: string;
+}
+
+export function LazyImage({
+  src,
+  alt = '',
+  className = '',
+  placeholder = TRANSPARENT_PIXEL,
+  ...props
+}: LazyImageProps) {
+  const [inView, setInView] = useState(false);
+  const [isLoaded, setIsLoaded] = useState(false);
+  const imgRef = useRef<HTMLImageElement | null>(null);
+
+  useEffect(() => {
+    const el = imgRef.current;
+    if (!el) return;
+
+    if (typeof IntersectionObserver === 'undefined') {
+      setInView(true);
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          if (entry.isIntersecting) {
+            setInView(true);
+            observer.unobserve(entry.target);
+            break;
+          }
+        }
+      },
+      {
+        rootMargin: '250px 0px 250px 0px',
+      }
+    );
+
+    observer.observe(el);
+
+    return () => {
+      observer.disconnect();
+    };
+  }, []);
+
+  return (
+    <img
+      ref={imgRef}
+      src={inView ? src : placeholder}
+      alt={alt}
+      loading="lazy"
+      decoding="async"
+      className={`lazy-image ${inView && isLoaded ? 'is-loaded' : 'is-loading'} ${className}`.trim()}
+      onLoad={(e) => {
+        if (inView && src) {
+          setIsLoaded(true);
+        }
+        props.onLoad?.(e);
+      }}
+      {...props}
+    />
   );
 }
 
@@ -66,7 +142,7 @@ export function ProductCard({ product }: { product: Product }) {
   return (
     <article className="product-card">
       <Link to={`/product/${product.id}`} className="product-image">
-        <img src={product.image || '/images/croissant.webp'} alt={product.name} loading="lazy" />
+        <LazyImage src={product.image || '/images/croissant.webp'} alt={product.name} />
         {!product.is_available && <span className="availability">{t.soonAvail}</span>}
       </Link>
       <div className="product-copy">

@@ -5,6 +5,7 @@ export type Lang = 'kz' | 'ru' | 'en';
 
 export interface Translations {
   /* Header / Nav */
+  brandSub: string;
   navHome: string;
   navCatalog: string;
   navAbout: string;
@@ -250,6 +251,7 @@ export interface Translations {
 }
 
 const kz: Translations = {
+  brandSub:'КОНДИТЕРЛІК',
   navHome:'Басты бет', navCatalog:'Каталог', navAbout:'Біз туралы',
   navDelivery:'Жеткізу', navContacts:'Байланыс',
   navAccount:'Жеке кабинет', navLogin:'Кіру', navLogout:'Шығу',
@@ -424,6 +426,7 @@ const kz: Translations = {
 };
 
 const ru: Translations = {
+  brandSub:'КОНДИТЕРСКАЯ',
   navHome:'Главная', navCatalog:'Каталог', navAbout:'О нас',
   navDelivery:'Доставка', navContacts:'Контакты',
   navAccount:'Личный кабинет', navLogin:'Войти', navLogout:'Выйти',
@@ -598,6 +601,7 @@ const ru: Translations = {
 };
 
 const en: Translations = {
+  brandSub:'CONFECTIONERY',
   navHome:'Home', navCatalog:'Catalog', navAbout:'About',
   navDelivery:'Delivery', navContacts:'Contacts',
   navAccount:'My Account', navLogin:'Sign in', navLogout:'Sign out',

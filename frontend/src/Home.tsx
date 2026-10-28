@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import {ArrowRight, Heart, Leaf, ChefHat, Croissant} from 'lucide-react';
 import {api} from './lib';
 import type {Category, Product} from './lib';
-import {Branch, Ornament, ProductCard, ErrorBox} from './ui';
+import {Branch, Ornament, ProductCard, ErrorBox, LazyImage} from './ui';
 import CategorySlider from './CategorySlider';
 import MapSection from './MapSection';
 import {useI18n} from './i18n';
@@ -126,7 +126,7 @@ export default function Home() {
       {/* ── About ─────────────────────────────────────────────────────── */}
       <section className="about-section" id="about">
         <div className="about-photo">
-          <img src="/images/baker.webp" alt={t.photoCaption} loading="lazy" />
+          <LazyImage src="/images/baker.webp" alt={t.photoCaption} />
           <span className="photo-caption">{t.photoCaption}</span>
         </div>
         <div className="about-copy">

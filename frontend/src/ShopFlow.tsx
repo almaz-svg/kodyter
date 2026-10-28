@@ -5,7 +5,7 @@ import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,LockKeyh
 import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey} from './lib';
 import type {Product,Order,User} from './lib';
 import {useShop} from './store';
-import {Qty,ErrorBox,Loading} from './ui';
+import {Qty,ErrorBox,Loading,LazyImage} from './ui';
 import {useI18n} from './i18n';
 
 /* ── Cart ─────────────────────────────────────────────────────────────── */
@@ -24,7 +24,7 @@ export function Cart() {
           <div className="cart-list">
             {cart.map(({product:p, quantity:n}) => (
               <article className="cart-row" key={p.id}>
-                <Link to={`/product/${p.id}`}><img src={p.image} alt={p.name}/></Link>
+                <Link to={`/product/${p.id}`}><LazyImage src={p.image} alt={p.name}/></Link>
                 <div className="cart-info">
                   <Link to={`/product/${p.id}`}><h3>{p.name}</h3></Link>
                   <span>{money(p.price)}{p.weight ? ` · ${p.weight}` : ''}</span>
@@ -105,7 +105,7 @@ export function Auth() {
   return (
     <main className="auth-page">
       <div className="auth-art">
-        <img src="/images/baker.webp" alt={t.authH2}/>
+        <LazyImage src="/images/baker.webp" alt={t.authH2}/>
         <div>
           <span className="eyebrow gold">{t.authWelcome}</span>
           <h2>{t.authH2}</h2>
@@ -312,7 +312,7 @@ export function Checkout() {
             </button>
             {cart.map(x => (
               <div className="checkout-item" key={x.product.id}>
-                <img src={x.product.image} alt=""/>
+                <LazyImage src={x.product.image} alt={x.product.name}/>
                 <div>
                   <span>{x.product.name}</span>
                   <small>{x.quantity} × {money(x.product.price)}</small>

@@ -4,7 +4,7 @@ import {ArrowLeft,ArrowRight,Search,ShoppingBag,Leaf,Truck} from 'lucide-react';
 import {api,money} from './lib';
 import type {Product,Category} from './lib';
 import {useShop} from './store';
-import {ProductCard,Loading,ErrorBox,Qty,CatalogCartSummary} from './ui';
+import {ProductCard,Loading,ErrorBox,Qty,CatalogCartSummary,LazyImage} from './ui';
 import {useI18n} from './i18n';
 
 export function Catalog() {
@@ -97,7 +97,7 @@ export function ProductPage() {
       {error ? <ErrorBox message={error}/> : !product ? <Loading/> : (
         <div className="product-detail">
           <div className="detail-image">
-            <img src={product.image||'/images/croissant.webp'} alt={product.name}/>
+            <LazyImage src={product.image || '/images/croissant.webp'} alt={product.name} />
           </div>
           <div className="detail-copy">
             <span className="eyebrow">{t.catalogEyebrow}</span>

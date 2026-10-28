@@ -2,6 +2,7 @@ import {useEffect, useId, useRef, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {ArrowLeft, ArrowRight, ArrowUpRight} from 'lucide-react';
 import type {Category} from './lib';
+import {LazyImage} from './ui';
 import './category-slider.css';
 
 const fallbackImages = ['/images/croissant.webp', '/images/cake.webp', '/images/tart.webp', '/images/buns.webp', '/images/catering.webp'];
@@ -53,7 +54,7 @@ export default function CategorySlider({categories}: {categories: Category[]}) {
        event.currentTarget.scrollIntoView({block: 'nearest', inline: 'center', behavior: 'instant'});
       }
      }}>
-      <img src={category.image || fallbackImages[index % fallbackImages.length]} alt="" loading="lazy" width={160} height={160}/>
+      <LazyImage src={category.image || fallbackImages[index % fallbackImages.length]} alt={category.name} width={160} height={160}/>
       <span className="category-slide-name">{category.name}</span>
       <ArrowUpRight size={20} aria-hidden="true"/>
      </Link>

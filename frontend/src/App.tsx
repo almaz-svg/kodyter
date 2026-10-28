@@ -10,7 +10,7 @@ import {ShopProvider,useShop} from './store';
 import {I18nProvider,useI18n} from './i18n';
 import type {Lang} from './i18n';
 import {api,roleHome} from './lib';
-import {Logo,Loading,ErrorBox,Ornament} from './ui';
+import {Logo,Loading,ErrorBox,Ornament,LazyImage} from './ui';
 import {PrivacyPolicy,PublicOffer,CookieConsent} from './Legal';
 
 /* ── Language Switcher ────────────────────────────────────────────────── */
@@ -199,7 +199,7 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
       <Ornament />
       {type === 'about' ? (
         <div className="info-two">
-          <img src="/images/baker.webp" alt={t.infoAboutH2} />
+          <LazyImage src="/images/baker.webp" alt={t.infoAboutH2} />
           <div>
             <h2>{t.infoAboutH2}</h2>
             <p>{t.infoAboutP1}</p>

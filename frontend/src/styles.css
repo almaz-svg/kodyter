@@ -203,10 +203,32 @@
 .footer-legal-links a:hover{color:var(--gold)}
 .footer-sep{opacity:.4}
 
-/* ── Brand Logo Image ────────────────────────────────────────────────────── */
-.brand-logo-img{height:56px;width:auto;object-fit:contain;display:block}
-.brand-logo-img-small{height:40px}
-@media(max-width:1100px){.brand-logo-img{height:48px}}
-@media(max-width:600px){.brand-logo-img{height:42px}}
+/* ── Brand Logo & Text ───────────────────────────────────────────────────── */
+.brand{display:inline-flex;align-items:center;gap:14px;color:var(--gold);flex-shrink:0;text-decoration:none}
+.brand-logo-img{height:52px;width:auto;object-fit:contain;display:block}
+.brand-logo-img-small{height:38px}
+.brand-text{display:flex;flex-direction:column;justify-content:center;line-height:1}
+.brand-name{display:block;font-family:var(--serif);font-size:34px;line-height:0.95;letter-spacing:-0.5px;color:var(--gold);font-weight:500}
+.brand-sub{display:block;font-size:8.5px;font-weight:600;letter-spacing:2.2px;text-transform:uppercase;margin-top:4px;color:#eeddb7;opacity:.9}
+.brand-small .brand-name{font-size:24px}
+.brand-small .brand-sub{font-size:7px;letter-spacing:1.5px}
+
+@media(max-width:1100px){
+  .brand-logo-img{height:46px}
+  .brand-name{font-size:30px}
+  .brand-sub{font-size:7.5px;letter-spacing:1.8px}
+}
+@media(max-width:600px){
+  .brand{gap:10px}
+  .brand-logo-img{height:40px}
+  .brand-name{font-size:24px}
+  .brand-sub{font-size:6.8px;letter-spacing:1.4px}
+}
+
+/* ── Lazy Image on Scroll ─────────────────────────────────────────────────── */
+.lazy-image{opacity:0;transition:opacity .35s ease-in-out;will-change:opacity}
+.lazy-image.is-loaded{opacity:1}
+.product-image,.category-img,.detail-image,.portal-product-image,.portal-category-image{background-color:#e7dfd1}
+
 
 
