@@ -2,9 +2,9 @@ import {useEffect, useRef} from 'react';
 import {MapPin, Clock, Phone} from 'lucide-react';
 import {useI18n} from './i18n';
 
-// Almaty, Baizakov St 280 — approximate coordinates
-const LAT = 43.2385;
-const LNG = 76.8895;
+// Taraz, Konaev St 62a — coordinates
+const LAT = 42.8925;
+const LNG = 71.3679;
 
 export default function MapSection() {
   const mapRef = useRef<HTMLDivElement>(null);

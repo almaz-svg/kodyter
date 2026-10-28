@@ -100,10 +100,10 @@ export function PrivacyPolicy() {
           </div>
           <p>
             {isKz
-              ? 'Осы Құпиялылық саясаты (бұдан әрі — Саясат) Anasym кондитерлігінің (бұдан әрі — Оператор, мекенжайы: Алматы қ., Байзақов к-сі, 280) anasym-bakery.vercel.app веб-сайтын пайдаланушылардың жеке мәліметтерін жинау, өңдеу және сақтау тәртібін белгілейді.'
+              ? 'Осы Құпиялылық саясаты (бұдан әрі — Саясат) Anasym кондитерлігінің (бұдан әрі — Оператор, мекенжайы: Тараз қ., Қонаев к-сі, 62а) anasym-bakery.vercel.app веб-сайтын пайдаланушылардың жеке мәліметтерін жинау, өңдеу және сақтау тәртібін белгілейді.'
               : isEn
-              ? 'This Privacy Policy defines the procedure and rules for collecting, storing, and processing personal data by Anasym Bakery (operator address: Taraz, Қолбасшы Қойкелді, 62а) when users access and use anasym-bakery.vercel.app.'
-              : 'Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных, которые кондитерская «Anasym» (далее — Оператор, адрес: г. Тараз, ул. Қолбасшы Қойкелді, 62а) получает от физических лиц при использовании сайта anasym-bakery.vercel.app.'}
+              ? 'This Privacy Policy defines the procedure and rules for collecting, storing, and processing personal data by Anasym Bakery (operator address: Taraz, Konaev St, 62a) when users access and use anasym-bakery.vercel.app.'
+              : 'Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных, которые кондитерская «Anasym» (далее — Оператор, адрес: г. Тараз, ул. Конаева, 62а) получает от физических лиц при использовании сайта anasym-bakery.vercel.app.'}
           </p>
           <p>
             {isKz
@@ -240,7 +240,7 @@ export function PrivacyPolicy() {
           <p>
             <strong>{isKz ? 'Кондитерлік атауы:' : isEn ? 'Operator:' : 'Кондитерская:'}</strong> Anasym Bakery<br />
             <strong>{isKz ? 'Мекенжайы:' : isEn ? 'Address:' : 'Адрес:'}</strong>{' '}
-            {isKz ? 'Қазақстан Республикасы, Тараз қ., Қолбасшы Қойкелді к-сі, 62а' : isEn ? 'Republic of Kazakhstan, Taraz, Қолбасшы Қойкелді, 62а' : 'Республика Казахстан, г. Тараз, ул. Қолбасшы Қойкелді, 62а'}<br />
+            {isKz ? 'Қазақстан Республикасы, Тараз қ., Қонаев к-сі, 62а' : isEn ? 'Republic of Kazakhstan, Taraz, Konaev St, 62a' : 'Республика Казахстан, г. Тараз, ул. Конаева, 62а'}<br />
             <strong>{isKz ? 'Жұмыс уақыты:' : isEn ? 'Working Hours:' : 'Режим работы:'}</strong>{' '}
             {isKz ? 'Дүй–Жек: 08:00–21:00' : isEn ? 'Mon–Sun: 08:00–21:00' : 'Ежедневно: 08:00–21:00'}
           </p>
@@ -415,7 +415,7 @@ export function PublicOffer() {
           <p>
             <strong>{isKz ? 'Сатушы:' : isEn ? 'Seller:' : 'Продавец:'}</strong> Кондитерская «Anasym Bakery»<br />
             <strong>{isKz ? 'Өндіріс және дүкен мекенжайы:' : isEn ? 'Bakery Address:' : 'Адрес кондитерской:'}</strong>{' '}
-            {isKz ? 'Қазақстан Республикасы, Тараз қ., Қолбасшы Қойкелді к-сі, 62а' : isEn ? 'Republic of Kazakhstan, Taraz, Қолбасшы Қойкелді, 62а' : 'Республика Казахстан, г. Тараз, ул. Қолбасшы Қойкелді, 62а'}<br />
+            {isKz ? 'Қазақстан Республикасы, Тараз қ., Қонаев к-сі, 62а' : isEn ? 'Republic of Kazakhstan, Taraz, Konaev St, 62a' : 'Республика Казахстан, г. Тараз, ул. Конаева, 62а'}<br />
             <strong>{isKz ? 'Жұмыс уақыты:' : isEn ? 'Working Hours:' : 'Режим работы:'}</strong>{' '}
             {isKz ? 'Дүйсенбі – Жексенбі: 08:00 – 21:00' : isEn ? 'Monday – Sunday: 08:00 – 21:00' : 'Понедельник – Воскресенье: 08:00 – 21:00'}
           </p>

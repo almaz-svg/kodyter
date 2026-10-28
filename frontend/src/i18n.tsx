@@ -282,7 +282,7 @@ const kz: Translations = {
   photoCaption:'Мастерство в каждом движении',
 
   mapEyebrow:'МЕКЕН-ЖАЙЫМЫЗ', mapTitle:'Бізді табыңыз',
-  mapAddress:'Алматы қ., Байзақов к-сі, 280',
+  mapAddress:'Тараз қ., Қонаев к-сі, 62а',
   mapHours:'Жұмыс уақыты', mapHoursValue:'Дүй–Жек: 08:00–21:00',
   mapPhone:'Телефон',
 
@@ -320,7 +320,7 @@ const kz: Translations = {
   infoPaymentP2:'Тапсырыс рәсімделгеннен кейін кабинетте пайда болады. Әкімші растап дайындаған соң, тағайындалған курьер жеткізу мәртебесін жаңартады.',
   infoContactsTitle:'Байланыста боламыз',
   infoAddressH2:'Мекен-жай және жұмыс уақыты',
-  infoAddressP:'Алматы қ., Байзақов к-сі, 280. Дүй–Жек: 08:00–21:00',
+  infoAddressP:'Тараз қ., Қонаев к-сі, 62а. Дүй–Жек: 08:00–21:00',
   infoOrderH2:'Онлайн тапсырыс беру',
   infoOrderP:'Бұйымды таңдаңыз, себетке қосыңыз және оңай онлайн тапсырыс беріңіз.',
   infoOrderButton:'Каталогқа өту',
@@ -457,7 +457,7 @@ const ru: Translations = {
   photoCaption:'Мастерство в каждом движении',
 
   mapEyebrow:'НАШ АДРЕС', mapTitle:'Найдите нас',
-  mapAddress:'г. Алматы, ул. Байзакова, 280',
+  mapAddress:'г. Тараз, ул. Конаева, 62а',
   mapHours:'Часы работы', mapHoursValue:'Пн–Вс: 08:00–21:00',
   mapPhone:'Телефон',
 
@@ -495,7 +495,7 @@ const ru: Translations = {
   infoPaymentP2:'После оформления заказ появится в кабинете. Когда администратор подтвердит и подготовит его, назначенный курьер обновит статус доставки.',
   infoContactsTitle:'Будем на связи',
   infoAddressH2:'Адрес и часы работы',
-  infoAddressP:'г. Алматы, ул. Байзакова, 280. Пн–Вс: 08:00–21:00',
+  infoAddressP:'г. Тараз, ул. Конаева, 62а. Пн–Вс: 08:00–21:00',
   infoOrderH2:'Заказать онлайн',
   infoOrderP:'Выберите любимую выпечку, добавьте в корзину и оформите заказ онлайн.',
   infoOrderButton:'Перейти в каталог',
@@ -632,7 +632,7 @@ const en: Translations = {
   photoCaption:'Craftsmanship in every move',
 
   mapEyebrow:'OUR ADDRESS', mapTitle:'Find Us',
-  mapAddress:'Taraz, Қолбасшы Қойкелді, 62а',
+  mapAddress:'Taraz, Konaev St, 62a',
   mapHours:'Opening Hours', mapHoursValue:'Mon–Sun: 08:00–21:00',
   mapPhone:'Phone',
 
@@ -670,7 +670,7 @@ const en: Translations = {
   infoPaymentP2:'After checkout the order appears in your account. Once the admin confirms and prepares it, the assigned courier will update the delivery status.',
   infoContactsTitle:'Get in touch',
   infoAddressH2:'Address & Hours',
-  infoAddressP:'Almaty, Baizakov St, 280. Mon–Sun: 08:00–21:00',
+  infoAddressP:'Taraz, Konaev St, 62a. Mon–Sun: 08:00–21:00',
   infoOrderH2:'Order Online',
   infoOrderP:'Pick your favourite pastries, add them to your cart, and place your order online.',
   infoOrderButton:'Go to Catalog',
