@@ -8,16 +8,11 @@ import {useI18n} from './i18n';
 export function Logo({small=false}:{small?:boolean}){
   return (
     <Link to="/" className={`brand ${small?'brand-small':''}`} aria-label="Anasym — на главную">
-      <svg className="brand-mark" viewBox="0 0 60 60" fill="none" aria-hidden="true">
-        <circle cx="30" cy="30" r="26" stroke="currentColor" strokeWidth="1.5"/>
-        <circle cx="30" cy="30" r="21" stroke="currentColor" strokeWidth="1"/>
-        <path d="M17 9v42m9-48v54m9-54v54m9-48v42M9 17h42M3 26h54M3 35h54M9 44h42" stroke="currentColor" strokeWidth="3"/>
-        <path d="M15 22h7v7h-7zm14 14h7v7h-7zm7-21h7v7h-7z" fill="#07382c"/>
-      </svg>
-      <span>
-        <span className="brand-name">Anasym</span>
-        <span className="brand-sub">АВТОРСКАЯ КОНДИТЕРСКАЯ</span>
-      </span>
+      <img
+        src="/images/Logo.png"
+        alt="Anasym"
+        className={`brand-logo-img ${small?'brand-logo-img-small':''}`}
+      />
     </Link>
   );
 }

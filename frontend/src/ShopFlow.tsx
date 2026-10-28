@@ -135,7 +135,17 @@ export function Auth() {
               {mode !== 'reset' && (
                 <label>{t.authPassword}<input name="password" type="password" autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?10:1} placeholder={mode==='register'?t.authNewPasswordPlaceholder:t.authPasswordPlaceholder}/></label>
               )}
-              {mode==='register' && <small className="muted">{t.authRegisterNote}</small>}
+              {mode==='register' && (
+                <>
+                  <small className="muted">{t.authRegisterNote}</small>
+                  <p className="auth-legal-consent">
+                    {t.authLegalNotice}{' '}
+                    <Link to="/terms" target="_blank">{t.footerTerms}</Link>{' '}
+                    {t.and}{' '}
+                    <Link to="/privacy" target="_blank">{t.footerPrivacy}</Link>.
+                  </p>
+                </>
+              )}
               <button className="button button-green full-width" disabled={busy}>
                 {busy ? t.authButtonBusy : mode==='login' ? t.authButtonLogin : mode==='register' ? t.authButtonRegister : t.authButtonReset}
                 <ArrowRight size={18}/>
@@ -335,6 +345,12 @@ export function Checkout() {
               <ArrowRight size={17}/>
             </button>
             <p className="summary-note"><ShieldCheck size={16}/>{t.checkoutPayNote}</p>
+            <p className="checkout-legal-consent">
+              {t.checkoutLegalNotice}{' '}
+              <Link to="/terms" target="_blank">{t.footerTerms}</Link>{' '}
+              {t.and}{' '}
+              <Link to="/privacy" target="_blank">{t.footerPrivacy}</Link>.
+            </p>
           </aside>
         </form>
       )}

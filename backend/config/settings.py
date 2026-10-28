@@ -115,4 +115,4 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Anasym <noreply@example.in
 PASSWORD_RESET_TIMEOUT = 3600
 PASSWORD_RESET_ENABLED = os.getenv('PASSWORD_RESET_ENABLED', 'true').lower() == 'true'
 DELIVERY_FEE = Decimal(os.getenv('DELIVERY_FEE', '1500.00'))
-DEMO_MODE = os.getenv('DEMO_MODE', 'true').lower() == 'true'
+DEMO_MODE = os.getenv('DEMO_MODE', 'false').lower() == 'true'

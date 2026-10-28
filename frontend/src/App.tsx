@@ -11,6 +11,7 @@ import {I18nProvider,useI18n} from './i18n';
 import type {Lang} from './i18n';
 import {api,roleHome} from './lib';
 import {Logo,Loading,ErrorBox,Ornament} from './ui';
+import {PrivacyPolicy,PublicOffer,CookieConsent} from './Legal';
 
 /* ── Language Switcher ────────────────────────────────────────────────── */
 function LangSwitcher() {
@@ -133,8 +134,11 @@ function Footer() {
         </div>
         <div className="container footer-bottom">
           <span>© {new Date().getFullYear()} Anasym</span>
-          <span>{t.footerDemo}</span>
-          <Link to="/privacy">{t.footerPrivacy}</Link>
+          <div className="footer-legal-links">
+            <Link to="/privacy">{t.footerPrivacy}</Link>
+            <span className="footer-sep">·</span>
+            <Link to="/terms">{t.footerTerms}</Link>
+          </div>
         </div>
       </footer>
       <nav className="bottom-nav" aria-label="Мобильная навигация">
@@ -268,9 +272,11 @@ function Shell() {
           {['/account','/admin','/courier','/cashier'].map(path => (
             <Route key={path} path={path} element={<Protected><Account /></Protected>} />
           ))}
-          {(['about','delivery','contacts','privacy'] as const).map(type => (
+          {(['about','delivery','contacts'] as const).map(type => (
             <Route key={type} path={`/${type}`} element={<Info type={type} />} />
           ))}
+          <Route path="/privacy" element={<PrivacyPolicy />} />
+          <Route path="/terms" element={<PublicOffer />} />
           <Route path="*" element={
             <main className="container page empty-state">
               <h1>{t.notFound}</h1>
@@ -280,6 +286,7 @@ function Shell() {
         </Routes>
       </div>
       {!isAuthPage && <Footer />}
+      <CookieConsent />
     </>
   );
 }
