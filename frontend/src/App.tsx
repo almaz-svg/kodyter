@@ -18,18 +18,16 @@ function LangSwitcher() {
   const {lang, setLang, t} = useI18n();
   const langs: Lang[] = ['kz','ru','en'];
   const labels: Record<Lang,string> = {kz: t.langKz, ru: t.langRu, en: t.langEn};
+  const next = langs[(langs.indexOf(lang) + 1) % langs.length];
   return (
     <div className="lang-switcher" aria-label="Language / Тіл / Язык">
-      {langs.map(l => (
-        <button
-          key={l}
-          className={l === lang ? 'lang-btn lang-active' : 'lang-btn'}
-          onClick={() => setLang(l)}
-          aria-pressed={l === lang}
-        >
-          {labels[l]}
-        </button>
-      ))}
+      <button
+        className="lang-btn lang-active"
+        onClick={() => setLang(next)}
+        title={labels[next]}
+      >
+        {labels[lang]}
+      </button>
     </div>
   );
 }

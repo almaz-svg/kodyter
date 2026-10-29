@@ -1,92 +1,146 @@
-# Anasym — MVP кондитерской
+# Anasym — кондитерская
 
-Опубликованная витрина: **[anasym-bakery.vercel.app](https://anasym-bakery.vercel.app)**. Настройка и обновление: [Vercel + Supabase](docs/vercel-deployment.md). [Отчёт публикации и 27 проверок заказа](docs/vercel-verification-2026-10-16.md).
+Интернет-магазин кондитерской с личным кабинетом и рабочими местами для персонала.
 
-React + TypeScript, Django REST Framework и PostgreSQL. Витрина, корзина, оформление с оплатой при получении, личный кабинет, рабочие места администратора, курьера и кассира. Интерфейс на русском, цены в KZT. Товары, цены, составы, контакты и учётные записи в начальном наполнении демонстрационные.
+- Витрина: [anasym-bakery.vercel.app](https://anasym-bakery.vercel.app)
+- Стек: React + TypeScript (Vite), Django REST Framework, PostgreSQL (SQLite для локальной разработки)
+- Интерфейс на русском, цены в тенге (KZT)
 
-## Запуск через Docker
+Товары, цены, составы, контакты и учётные записи в начальном наполнении демонстрационные.
 
-Нужны Docker Engine / Docker Desktop с запущенным Linux engine, Docker Compose v2 и PowerShell 7 (на Windows подходят также команды Windows PowerShell 5.1).
+## Возможности
 
-Из корня проекта:
+- **Покупатель:** регистрация и вход, корзина, оформление заказа с оплатой при получении, история заказов.
+- **Администратор** (`/admin`): каталог и категории, очередь заказов с фильтрами, смена статусов, назначение курьеров.
+- **Курьер** (`/courier`): общая очередь свободных заказов, принятие заказа, свои доставки, сообщения о проблемах.
+- **Кассир** (`/cashier`): все заказы, состояние оплаты, учёт наличных после доставки.
+
+Права проверяются на стороне API. Сессия хранится в HttpOnly cookie, изменение данных требует CSRF-токен. Онлайн-оплата не подключена.
+
+## Структура
+
+```
+backend/     Django-приложение (API, модели, миграции, тесты)
+frontend/    React-приложение (Vite)
+deploy/      Nginx и Caddy для развёртывания с HTTPS
+scripts/     Скрипты запуска, остановки, настройки и резервного копирования (PowerShell)
+docs/        Документация: API, администратор, развёртывание, отчёты
+```
+
+## Быстрый старт (Windows, локально)
+
+Нужны Python 3.12+ и Node.js 22.
+
+```powershell
+# 1. Зависимости бэкенда
+python -m venv backend/.venv
+./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
+
+# 2. Зависимости фронтенда
+npm --prefix frontend ci
+
+# 3. Настройки
+Copy-Item backend/.env.example backend/.env
+# Заполните в backend/.env как минимум DJANGO_SECRET_KEY.
+
+# 4. Запуск с SQLite и демонстрационными данными
+./scripts/launch.ps1 -UseSqlite -SeedDemo
+```
+
+После запуска откройте [http://127.0.0.1:5173](http://127.0.0.1:5173). Проверка API: `http://127.0.0.1:5173/api/health/`.
+
+Остановка: `./scripts/stop.ps1`.
+
+### Параметры `launch.ps1`
+
+| Параметр | Назначение |
+| --- | --- |
+| `-UseSqlite` | Локальная база `backend/db.sqlite3`. Без него нужен `DATABASE_URL` в `backend/.env` (PostgreSQL). |
+| `-SeedDemo` | Заполнить демонстрационными данными. Существующие пароли не меняются. |
+| `-BackendPort`, `-FrontendPort` | Порты, по умолчанию 8000 и 5173. Нужны, если порты заняты. |
+| `-PythonExecutable`, `-NodeExecutable`, `-PostgresBin` | Пути к интерпретаторам и PostgreSQL, если они не в PATH. |
+
+Скрипт выполняет миграции, запускает процессы в фоне и пишет журналы в `.secrets/logs`. Режим `-UseSqlite` не переписывает `backend/.env`.
+
+### Локально с PostgreSQL
+
+Укажите `DATABASE_URL` в `backend/.env` (спецсимволы в пароле — в URL-кодировке), затем запустите `./scripts/launch.ps1 -SeedDemo`. Если PostgreSQL установлен не в `C:/Program Files/PostgreSQL/18/bin`, передайте `-PostgresBin`.
+
+Тестам нужно право CREATEDB у пользователя базы.
+
+## Запуск в Docker
+
+Нужны Docker Desktop (Linux engine) с Compose v2.
 
 ```powershell
 ./scripts/setup-env.ps1
 docker compose up -d --build
 docker compose exec --user root backend python manage.py seed_demo
-docker compose ps
 ```
 
-Открыть [http://localhost:8080](http://localhost:8080). Проверка API: [http://localhost:8080/api/health/](http://localhost:8080/api/health/).
+Откройте [http://localhost:8080](http://localhost:8080). Проверка API: `http://localhost:8080/api/health/`.
 
-Случайные пароли четырёх ролей записываются в `.secrets/demo-accounts.txt`; файл не попадает в Git. Откройте его локально. Для отдельной новой базы добавляется новый блок доступов; используйте последний блок для этой среды. Повторный `seed_demo` не меняет существующие пароли. Наполнение не запускается автоматически при каждом старте. Команда наполнения выполняется от root только для записи файла в примонтированный каталог; само приложение работает без root. Скрипт настройки сохраняет уже существующий `.env`.
+- Случайные пароли демо-ролей записываются в `.secrets/demo-accounts.txt`. Файл не попадает в Git.
+- `seed_demo` не запускается автоматически при старте; повторный запуск не меняет существующие пароли.
+- Данные PostgreSQL хранятся в томе `postgres_data`. `docker compose down` их сохраняет, `down -v` удаляет.
+- Порт 8080 привязан к loopback. Браузер обращается к API через Nginx.
 
-PostgreSQL хранит данные в томе `postgres_data`. `docker compose down` сохраняет тома. Команда `down -v` удаляет их и для обычной остановки не нужна. База и Django доступны только внутри Docker; браузер обращается к API через Nginx. Порт 8080 привязан к loopback.
+## Настройки
 
-## Локальный запуск с PostgreSQL
+Основные переменные в `backend/.env` (полный список — в `backend/.env.example`):
 
-В текущей среде настроен отдельный PostgreSQL 18 на `127.0.0.1:55432`. Данные находятся в `.secrets/postgres-data`, подключение — в `backend/.env`. Существующий системный кластер PostgreSQL не используется. Миграции и демонстрационные данные перенесены в эту базу; пароли сохранены приватно.
+| Переменная | Описание |
+| --- | --- |
+| `DJANGO_SECRET_KEY` | Секретный ключ Django. Обязателен. |
+| `DEBUG` | `true` только для разработки. |
+| `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS` | Домены и origin'ы, с которых открывается сайт. |
+| `DATABASE_URL` | Подключение к PostgreSQL. Если пусто, нужен `-UseSqlite`. |
+| `FRONTEND_URL` | Адрес фронтенда; используется в ссылках (например, восстановления пароля). |
+| `DELIVERY_FEE` | Стоимость доставки. |
+| `DEMO_MODE` | Демо-маркировка интерфейса. Сам по себе не меняет содержимое базы. |
+| `PASSWORD_RESET_ENABLED` | Восстановление пароля. Включайте только с настроенной почтой. |
+| `EMAIL_BACKEND` и `EMAIL_*` | Почта. Консольный backend подходит только для разработки. |
 
-Для повторного запуска достаточно `./scripts/launch.ps1`. Скрипт использует настройки `backend/.env` и не подменяет их корневым Docker `.env`. Если этот изолированный кластер остановлен, скрипт запустит его. Открыть [http://localhost:5173](http://localhost:5173). Остановка: `./scripts/stop.ps1`.
-
-Если порты 8000/5173 заняты другим проектом, используйте `./scripts/launch.ps1 -BackendPort 8001 -FrontendPort 5174` и откройте [http://127.0.0.1:5174](http://127.0.0.1:5174). Именно этот адрес используется для продолжения проверки 16 октября. Скрипт настраивает API-прокси и адрес ссылок восстановления пароля, изолирует cookies Anasym по порту и проверяет API через фронтенд. Посторонние процессы не останавливаются. Перед сменой портов уже запущенного Anasym выполните `./scripts/stop.ps1`; два запуска не могут перезаписать запись управления процессами.
-
-Для новой машины нужны Python 3.12+, Node.js 22, PostgreSQL и зависимости:
-
-```powershell
-python -m venv backend/.venv
-./backend/.venv/Scripts/python.exe -m pip install -r backend/requirements.txt
-node "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js" --prefix frontend ci
-Copy-Item backend/.env.example backend/.env
-# Настройте backend/.env: секрет Django, DATABASE_URL и параметры локального HTTP.
-./scripts/launch.ps1 -SeedDemo
-```
-
-Если `python` отсутствует в PATH, используйте полный путь к Python для первой команды. В текущей среде доступен `C:/Users/Lenovo/.cache/codex-runtimes/codex-primary-runtime/dependencies/python/python.exe`. Путь к npm CLI приведён для стандартной установки Node.js на Windows; при другой установке замените его. Этот вызов обходит неисправную оболочку `npm`.
-
-Скрипт использует `backend/.venv/Scripts/python.exe` и настоящий `node.exe` из PATH; доступны параметры `-PythonExecutable`, `-NodeExecutable` и `-PostgresBin`. Он выполняет миграции, запускает процессы скрыто, проверяет HTTP и записывает журналы в `.secrets/logs`. Наполнение выполняется только с `-SeedDemo`; существующие пароли сохраняются. Уже занятые порты 8000/5173 скрипт не освобождает автоматически.
-
-Остановка проверяет идентичность записанных процессов и завершает также их дочерние процессы. PostgreSQL останавливается только если именно этот запуск поднял кластер; ранее работавшая база остаётся включённой. Каталог и идентификатор процесса базы проверяются перед остановкой.
-
-SQLite доступен только явно: `./scripts/launch.ps1 -UseSqlite` (при первом наполнении добавить `-SeedDemo`). Это отдельная локальная база `backend/db.sqlite3`; её проверка не подтверждает конкурентное поведение PostgreSQL. Режим не переписывает `backend/.env`.
-
-## Роли и проверка
-
-- Покупатель: регистрация и вход, корзина, повторное подтверждение при изменении цены, оформление, история и карточка своего заказа.
-- Администратор: `/admin`, каталог и категории, очередь и фильтры заказов, статусы, назначение курьера и управление его доступом.
-- Курьер: `/courier`, общая очередь свободных заказов, принятие одного заказа, свои доставки и сообщения о проблеме.
-
-- Кассир: `/cashier`, все заказы, состояние оплаты и учёт наличных после доставки.
-
-Права проверяются API. Сессия хранится в HttpOnly cookie; изменение данных требует CSRF-токена. Возврат из платёжного сервиса не реализован: предусмотрена оплата при получении. Онлайн-оплата не подключена.
-
-Команды проверок:
+## Тесты и проверки
 
 ```powershell
 ./backend/.venv/Scripts/python.exe backend/manage.py test
-node "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js" --prefix frontend test
-node "C:/Program Files/nodejs/node_modules/npm/bin/npm-cli.js" --prefix frontend run build
+npm --prefix frontend test
+npm --prefix frontend run build
 docker compose config --quiet
 docker compose exec backend python manage.py check
 docker compose exec backend python manage.py test shop.tests.PostgresConcurrencyTests --verbosity 2
 ```
 
-В текущей среде API-тесты выполнены на настоящем PostgreSQL, включая два одновременных запроса с одним ключом оформления и проверку единственного сохранённого заказа. Последняя команда запускает этот сценарий в Docker; на SQLite он пропускается. Локальная команда `backend/manage.py test` использует подключение из `backend/.env`; тестовому пользователю базы требуется право CREATEDB. Успех тестов отдельно не означает, что выполнен полный приёмочный сценарий в браузере или проверен Docker. Результаты фактически проведённых испытаний и ограничения передаются вместе с MVP.
+Тесты конкурентности (`PostgresConcurrencyTests`) проверяют два одновременных запроса с одним ключом оформления и сохранение единственного заказа. На SQLite они пропускаются, поэтому проверяйте их на PostgreSQL.
 
-## Развёртывание с HTTPS
+Успешные тесты не заменяют приёмку в браузере и проверку Docker-сборки.
 
-Для отдельного проекта `anasym-bakery` на Vercel и базы Supabase подготовлена [инструкция настройки, публикации и обновления](docs/vercel-deployment.md). В ней описаны секреты окружения, миграции, защита таблиц, резервные копии и проверки после развёртывания. Публичный адрес — [https://anasym-bakery.vercel.app](https://anasym-bakery.vercel.app); результаты полного сценария заказа фиксируются отдельно.
+## Развёртывание
 
-### Альтернативный вариант: сервер с Docker
+### Vercel + Supabase
 
-Конфигурация Docker/Caddy остаётся отдельным способом размещения на собственном сервере:
+Инструкция: [docs/vercel-deployment.md](docs/vercel-deployment.md). Там описаны переменные окружения, миграции, защита таблиц и резервные копии.
 
-1. Указать реальный домен в DNS на адрес сервера; открыть TCP 80/443 и при необходимости UDP 443.
-2. Выполнить `scripts/setup-env.ps1` один раз. В `.env` задать `DOMAIN=ваш-домен`, `ALLOWED_HOSTS=ваш-домен,localhost,127.0.0.1`, `CSRF_TRUSTED_ORIGINS=https://ваш-домен`, `FRONTEND_URL=https://ваш-домен`. Сохранить `FRONTEND_BIND=127.0.0.1` и `DEBUG=false`.
-3. Настроить настоящий SMTP: `EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend`, сервер, порт, пользователя, пароль, TLS и адрес отправителя. До подключения и проверки внешней почты установить `PASSWORD_RESET_ENABLED=false`. Консольная отправка подходит только для локальной проверки.
-4. Запустить `docker compose -f docker-compose.yml -f deploy/compose.https.yml up -d --build`. Caddy получает сертификат для реального домена и направляет запросы в Nginx. Настройки защищённых cookie, доверенного proxy и HTTPS применяются overlay.
-5. Выполнить миграции/проверки, создать рабочие учётные записи, проверить доставку писем и все роли через HTTPS. Не переносить демонстрационные пароли в рабочую среду. Для обновлений всегда повторять команду с обоими Compose-файлами.
+### Свой сервер с Docker и HTTPS
 
-Перед коммерческим запуском нужны подтверждённые товары, цены, вес, состав и аллергены, адреса и контакты, зона/стоимость доставки, правила отмены и возврата, данные продавца и тексты согласий. Заменить демонстрационное наполнение и установить `DEMO_MODE=false`. Флаг отключает демо-маркировку и сам по себе не меняет содержимое базы.
+1. Направьте домен на сервер и откройте TCP 80 и 443.
+2. Выполните `scripts/setup-env.ps1`. В `.env` задайте `DOMAIN`, `ALLOWED_HOSTS`, `CSRF_TRUSTED_ORIGINS=https://ваш-домен` и `FRONTEND_URL=https://ваш-домен`. Оставьте `FRONTEND_BIND=127.0.0.1` и `DEBUG=false`.
+3. Настройте SMTP (`EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend` и параметры сервера). Пока почта не проверена, держите `PASSWORD_RESET_ENABLED=false`.
+4. Запустите:
+   ```powershell
+   docker compose -f docker-compose.yml -f deploy/compose.https.yml up -d --build
+   ```
+   Caddy получит сертификат для домена и направит запросы в Nginx.
+5. Создайте рабочие учётные записи и проверьте все роли через HTTPS. Демо-пароли в рабочую среду не переносите.
 
-Подробности: [последние исправления и проверки — 16 октября](docs/stability-report-2026-10-16.md), [первоначальный отчёт MVP](docs/acceptance-report.md), [руководство администратора](docs/admin-guide.md), [резервное копирование](docs/backup-restore.md), [API](docs/api-contract.md).
+Перед коммерческим запуском нужно: подтверждённые товары, цены, вес, состав и аллергены; адреса и контакты; зона и стоимость доставки; правила отмены и возврата; реквизиты продавца; тексты согласий. Затем установите `DEMO_MODE=false` и замените демонстрационное наполнение.
+
+## Документация
+
+- [API](docs/api-contract.md)
+- [Руководство администратора](docs/admin-guide.md)
+- [Резервное копирование и восстановление](docs/backup-restore.md)
+- [Развёртывание на Vercel и Supabase](docs/vercel-deployment.md)
+- [Отчёт MVP](docs/acceptance-report.md)
+- [Последние исправления и проверки](docs/stability-report-2026-10-16.md)
