@@ -27,6 +27,7 @@ urlpatterns = [
     path('admin/cashiers/', catalog.AdminCashiers.as_view()),
     path('admin/cashiers/<int:pk>/', catalog.AdminCashier.as_view()),
     path('courier/available-orders/', staff.AvailableOrders.as_view()),
+    path('admin/overview/', staff.AdminOverview.as_view()),
     path('cashier/summary/', staff.CashierSummary.as_view()),
     path('orders/', orders.Orders.as_view()),
     path('orders/<int:pk>/', orders.OrderDetail.as_view()),

@@ -10,7 +10,7 @@ from rest_framework.views import APIView
 
 from .models import Order, Payment
 from .order_views import Conflict, order_response
-from .security import IsCashierOrAdmin, IsCourier, lock_active_actor
+from .security import IsAdmin, IsCashierOrAdmin, IsCourier, lock_active_actor
 from .serializers import AvailableOrderSerializer, PaymentRequestSerializer
 
 
@@ -66,6 +66,20 @@ class ReceivePayment(APIView):
         except IntegrityError:
             raise Conflict('Эта оплата уже зарегистрирована. Обновите список заказов.')
         return order_response(order, status=201)
+
+
+class AdminOverview(APIView):
+    """Counts for the admin's 'needs attention' block. Each count matches a status filter in the orders list."""
+    permission_classes = [IsAdmin]
+
+    def get(self, request):
+        orders = Order.objects.all()
+        return Response({
+            'new': orders.filter(status='NEW').count(),
+            'unassigned': orders.filter(courier__isnull=True, status__in=AVAILABLE_STATUSES).count(),
+            'on_the_way': orders.filter(status__in=('HANDED_OVER', 'IN_TRANSIT')).count(),
+            'unpaid_delivered': orders.filter(status='DELIVERED', payment__isnull=True).count(),
+        })
 
 
 class CashierSummary(APIView):

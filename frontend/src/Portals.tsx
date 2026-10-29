@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { ArrowRight, Banknote, Check, ChevronRight, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Truck, UserRound, X } from 'lucide-react';
-import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type CashierSummary } from './lib';
+import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type CashierSummary, type AdminOverview } from './lib';
 import { LazyImage } from './ui';
 import './portals.css';
 
@@ -120,8 +120,8 @@ export default function Portals({ user, onUserChange }: Props) {
   return <main className="portal">
     <div className="portal-heading"><div>
       <p className="portal-eyebrow">ANASYM / {isAdmin ? 'УПРАВЛЕНИЕ ПЕКАРНЕЙ' : isCourier ? 'КАБИНЕТ КУРЬЕРА' : isCashier ? 'КАБИНЕТ КАССИРА' : 'ЛИЧНЫЙ КАБИНЕТ'}</p>
-      <h1>{isAdmin ? 'Всё под рукой.' : isCourier ? 'Доставляем тепло.' : isCashier ? 'Каждый заказ на виду.' : `Здравствуйте, ${user.name.split(' ')[0] || 'гость'}.`}</h1>
-      <p className="portal-heading-copy">{isAdmin ? 'Заказы, любимая выпечка и команда — в одном месте.' : isCourier ? 'Принимайте свободные заказы и следите за своими доставками.' : isCashier ? 'Новые заказы, полученные наличные и неоплаченные доставки.' : 'Здесь хранятся ваши заказы и маленькие поводы для радости.'}</p>
+      <h1>{isAdmin ? 'Панель управления' : isCourier ? 'Ваши доставки' : isCashier ? 'Касса и заказы' : `Здравствуйте, ${user.name.split(' ')[0] || 'гость'}.`}</h1>
+      <p className="portal-heading-copy">{isAdmin ? 'Заказы, товары, категории и сотрудники. Всё, что нужно для работы сайта, — здесь.' : isCourier ? 'Выберите свободный заказ в разделе «Доступные» или посмотрите свои активные доставки.' : isCashier ? 'Заказы и наличные, полученные за доставки. Сводка кассы — за выбранный день.' : 'Здесь видно все ваши заказы и их статус.'}</p>
     </div><span className="portal-user-chip"><UserRound size={17} />{user.name}</span></div>
     <nav className={`portal-tabs ${isAdmin ? 'portal-admin-tabs' : ''}`} aria-label="Разделы личного кабинета">{tabs.map(item => <button type="button" key={item.value} className={tab === item.value ? 'active' : ''} aria-current={tab === item.value ? 'page' : undefined} onClick={() => setTab(item.value)}>{item.icon}{item.name}</button>)}</nav>
     {tab === 'orders' && <OrdersPanel user={user} />}
@@ -173,6 +173,7 @@ function OrdersPanel({ user }: { user: User }) {
   const couriers = useRemote<User[]>(isAdmin ? '/admin/couriers/' : null, true);
   const summaryDate = requestDate || localToday();
   const summary = useRemote<CashierSummary>(isCashier ? `/cashier/summary/?date=${summaryDate}` : null, true);
+  const overview = useRemote<AdminOverview>(isAdmin ? '/admin/overview/' : null, true);
   useEffect(() => { const timer = window.setTimeout(() => setFilters(value => ({ ...value, search })), 350); return () => window.clearTimeout(timer); }, [search]);
   const allOrders = remote.data || [];
   const orders = isCourier ? allOrders.filter(order => terminal(order) === (view === 'history')) : allOrders;
@@ -187,7 +188,7 @@ function OrdersPanel({ user }: { user: User }) {
     setDateInput(value); setDateInvalid(!valid);
     if (valid) updateFilter('date', value);
   };
-  const refresh = () => { remote.retry(); available.retry(); summary.retry(); if (isAdmin) couriers.retry(); };
+  const refresh = () => { remote.retry(); available.retry(); summary.retry(); if (isAdmin) { couriers.retry(); overview.retry(); } };
   const claim = async (order: AvailableOrder) => {
     if (claimLock.current) return;
     claimLock.current = true; setClaiming(order.id); setClaimError(''); setNotice('');
@@ -205,6 +206,16 @@ function OrdersPanel({ user }: { user: User }) {
   };
   const chooseView = (next: typeof view) => { setView(next); setSelected(null); setClaimError(''); setNotice(''); };
   return <section aria-label={isCourier ? 'Ваши доставки' : isCashier ? 'Касса и заказы' : 'Ваши заказы'}>
+    {isAdmin && <section className="portal-cash-summary portal-attention" aria-label="Что требует внимания">
+      <div className="portal-section-title"><div><p className="portal-eyebrow">СЕГОДНЯ НА ПЕКАРНЕ</p><h2>Что требует внимания</h2></div><ShoppingBag size={26} /></div>
+      <ErrorNotice message={overview.error} retry={overview.retry} />
+      {overview.loading ? <p role="status" className="portal-help">Считаем заказы…</p> : overview.data && <div className="portal-summary-grid portal-attention-grid">
+        <article><span>Новые заказы</span><strong>{overview.data.new}</strong><small>Ждут подтверждения. Откройте заказ и нажмите «Подтвердить заказ».</small></article>
+        <article><span>Без курьера</span><strong>{overview.data.unassigned}</strong><small>Заказы, которые ещё не принял курьер. Назначьте курьера в карточке заказа или дождитесь, пока курьер примет сам.</small></article>
+        <article><span>В пути</span><strong>{overview.data.on_the_way}</strong><small>Переданы курьеру или уже едут к клиенту.</small></article>
+        <article><span>Доставлены, не оплачены</span><strong>{overview.data.unpaid_delivered}</strong><small>Ждут отметки о наличных. Отметить может администратор или кассир.</small></article>
+      </div>}
+    </section>}
     {isCashier && <section className="portal-cash-summary" aria-label="Сводка кассы">
       <div className="portal-section-title"><div><p className="portal-eyebrow">НАЛИЧНЫЕ ПОД КОНТРОЛЕМ</p><h2>Касса за {new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${summaryDate}T12:00:00Z`))}</h2></div><Banknote size={26} /></div>
       <ErrorNotice message={summary.error} retry={summary.retry} />
@@ -422,6 +433,7 @@ function StaffPanel({ kind }: { kind: 'couriers' | 'cashiers' }) {
   };
   return <section><div className="portal-section-title"><div><p className="portal-eyebrow">НАША КОМАНДА</p><h2>{staffTitle} <span className="portal-count">{remote.data?.length || 0}</span></h2></div><button className="portal-button" disabled={busy} onClick={event => { editor.rememberTrigger(event.currentTarget); setAdding(true); setError(''); setNotice(''); }}><Plus size={17} />{addLabel}</button></div><ErrorNotice message={remote.error} retry={remote.retry} />{!adding && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} />{notice}</p>}
     {isCashier && <p className="portal-queue-note">Кассир видит все заказы и подтверждает получение наличных за доставленные заказы.</p>}
+    {!isCashier && <p className="portal-queue-note">Курьер входит под своим аккаунтом, видит общую очередь заказов и сам принимает их. Назначить курьера вручную можно в карточке заказа. Заблокированный курьер не видит очередь.</p>}
     {adding && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{isCashier ? 'Новый кассир' : 'Новый курьер'}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть форму нового сотрудника" onClick={() => setAdding(false)}><X size={20} /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Имя<input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} required maxLength={120} autoComplete="off" /></label><label>Телефон<input type="tel" value={draft.phone} onChange={e => setDraft({ ...draft, phone: e.target.value })} required maxLength={30} autoComplete="off" /></label><label>Электронная почта<input type="email" value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} required maxLength={254} autoComplete="off" /></label><label>Пароль для входа<input type="password" value={draft.password} onChange={e => setDraft({ ...draft, password: e.target.value })} required minLength={10} maxLength={128} autoComplete="new-password" /><small>Не менее 10 символов. Передайте пароль сотруднику лично.</small></label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || !draft.name.trim()}>{busy ? 'Добавляем…' : addLabel}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setAdding(false)}>Отмена</button></div></fieldset></form></section>}
     {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><a href={`tel:${person.phone}`}>{person.phone}</a></div><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button></div></article>) : <EmptyState icon={isCashier ? <Banknote size={30} /> : <Truck size={30} />} title={isCashier ? 'Добавьте первого кассира' : 'Соберите команду доставки'}>{isCashier ? 'Создайте отдельный аккаунт для учёта полученных наличных.' : 'Добавьте курьера, чтобы он мог принимать заказы из общей очереди.'}</EmptyState>}</div>}
   </section>;

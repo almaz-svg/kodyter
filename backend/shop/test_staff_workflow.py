@@ -175,6 +175,20 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         from .models import Payment
         self.assertEqual(Payment.objects.count(), 2)
 
+    def test_admin_overview_counts_match_what_needs_attention(self):
+        self.make_order(status='NEW')
+        self.make_order(status='PREPARING')
+        self.make_order(status='READY', courier=self.couriers[0])
+        self.make_order(status='IN_TRANSIT', courier=self.couriers[0])
+        self.make_order(status='DELIVERED', courier=self.couriers[0])
+        self.make_order(status='CANCELLED')
+        self.client.force_authenticate(self.admin)
+        response = self.client.get('/api/admin/overview/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.data, {'new': 1, 'unassigned': 2, 'on_the_way': 1, 'unpaid_delivered': 1})
+        self.client.force_authenticate(self.cashier)
+        self.assertEqual(self.client.get('/api/admin/overview/').status_code, 403)
+
     def test_summary_uses_local_payment_day_and_all_outstanding_delivered_orders(self):
         paid = self.make_order(status='DELIVERED')
         unpaid = self.make_order(status='DELIVERED', total='3500.00')
