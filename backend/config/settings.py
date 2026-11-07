@@ -15,10 +15,14 @@ if not IS_VERCEL:
     load_dotenv(BASE_DIR / '.env')
 DEBUG = os.getenv('DEBUG', 'false').lower() == 'true'
 TESTING = 'test' in sys.argv
+if DEBUG and (IS_VERCEL or os.getenv('DJANGO_ENV') == 'production'):
+    raise ImproperlyConfigured('DEBUG must be false in production; unset DEBUG or set it to false.')
 SECRET_KEY = os.getenv('DJANGO_SECRET_KEY', 'test-only-secret-key-not-for-deployment' if TESTING else '')
 if not SECRET_KEY:
     raise ImproperlyConfigured('Set DJANGO_SECRET_KEY in backend/.env or the environment.')
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver').split(',')
+if not DEBUG and not TESTING and (len(SECRET_KEY) < 50 or SECRET_KEY.startswith('test-only')):
+    raise ImproperlyConfigured('DJANGO_SECRET_KEY must be at least 50 random characters outside DEBUG.')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'localhost,127.0.0.1,testserver' if TESTING else 'localhost,127.0.0.1').split(',')
 CSRF_TRUSTED_ORIGINS = [v for v in os.getenv('CSRF_TRUSTED_ORIGINS', 'http://localhost:5173,http://127.0.0.1:5173,http://localhost:8080').split(',') if v]
 vercel_hosts = {}
 if IS_VERCEL:
@@ -31,11 +35,15 @@ if IS_VERCEL:
             origin = f'https://{host}'
             if origin not in CSRF_TRUSTED_ORIGINS:
                 CSRF_TRUSTED_ORIGINS.append(origin)
-INSTALLED_APPS = ['django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'rest_framework', 'shop']
-MIDDLEWARE = ['django.middleware.security.SecurityMiddleware', 'django.contrib.sessions.middleware.SessionMiddleware', 'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware', 'django.contrib.auth.middleware.AuthenticationMiddleware', 'django.middleware.clickjacking.XFrameOptionsMiddleware']
+INSTALLED_APPS = ['django.contrib.auth', 'django.contrib.contenttypes', 'django.contrib.sessions', 'rest_framework', 'corsheaders', 'shop']
+MIDDLEWARE = ['corsheaders.middleware.CorsMiddleware', 'django.middleware.security.SecurityMiddleware', 'shop.security.SecurityHeadersMiddleware', 'django.contrib.sessions.middleware.SessionMiddleware', 'django.middleware.common.CommonMiddleware', 'django.middleware.csrf.CsrfViewMiddleware', 'django.contrib.auth.middleware.AuthenticationMiddleware', 'django.middleware.clickjacking.XFrameOptionsMiddleware']
 ROOT_URLCONF = 'config.urls'
 WSGI_APPLICATION = 'config.wsgi.application'
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+# The API accepts JSON only and no file uploads; 1 MB bounds every request body (DRF honours this limit too).
+DATA_UPLOAD_MAX_MEMORY_SIZE = int(os.getenv('DATA_UPLOAD_MAX_MEMORY_SIZE', str(1024 * 1024)))
+FILE_UPLOAD_MAX_MEMORY_SIZE = DATA_UPLOAD_MAX_MEMORY_SIZE
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 500
 AUTH_USER_MODEL = 'shop.User'
 AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator'},
@@ -83,7 +91,9 @@ REST_FRAMEWORK = {
     'EXCEPTION_HANDLER': 'shop.security.api_exception_handler',
     'DEFAULT_RENDERER_CLASSES': ['rest_framework.renderers.JSONRenderer'],
     'DEFAULT_PARSER_CLASSES': ['shop.parsers.ObjectJSONParser'],
-    'DEFAULT_THROTTLE_RATES': {'auth': '60/hour'},
+    # Global limits protect catalog and order endpoints; auth keeps its stricter scope.
+    'DEFAULT_THROTTLE_CLASSES': ['rest_framework.throttling.AnonRateThrottle', 'rest_framework.throttling.UserRateThrottle'],
+    'DEFAULT_THROTTLE_RATES': {'anon': '120/minute', 'user': '600/minute', 'auth': '60/hour'},
     'NUM_PROXIES': int(os.getenv('TRUSTED_PROXY_COUNT', '0')),
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
 }
@@ -92,10 +102,15 @@ SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'sessionid')
 CSRF_COOKIE_NAME = os.getenv('CSRF_COOKIE_NAME', 'csrftoken')
 SESSION_COOKIE_SAMESITE = 'Lax'
 CSRF_COOKIE_SAMESITE = 'Lax'
+# Absolute session lifetime of 12 hours; a staff shift fits inside this window.
+SESSION_COOKIE_AGE = int(os.getenv('SESSION_COOKIE_AGE', '43200'))
+SESSION_EXPIRE_AT_BROWSER_CLOSE = True
 SESSION_COOKIE_SECURE = os.getenv('COOKIE_SECURE', 'false' if DEBUG or TESTING else 'true').lower() == 'true'
 CSRF_COOKIE_SECURE = SESSION_COOKIE_SECURE
 SECURE_SSL_REDIRECT = os.getenv('SECURE_SSL_REDIRECT', 'false').lower() == 'true'
 SECURE_CONTENT_TYPE_NOSNIFF = True
+SECURE_REFERRER_POLICY = 'strict-origin-when-cross-origin'
+SECURE_CROSS_ORIGIN_OPENER_POLICY = 'same-origin'
 X_FRAME_OPTIONS = 'DENY'
 SECURE_HSTS_SECONDS = int(os.getenv('SECURE_HSTS_SECONDS', '0'))
 SECURE_HSTS_INCLUDE_SUBDOMAINS = SECURE_HSTS_SECONDS > 0
@@ -104,6 +119,12 @@ if os.getenv('TRUST_PROXY', 'false').lower() == 'true':
     SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
 frontend_default = f"https://{vercel_hosts['VERCEL_PROJECT_PRODUCTION_URL']}" if 'VERCEL_PROJECT_PRODUCTION_URL' in vercel_hosts else 'http://localhost:5173'
 FRONTEND_URL = (os.getenv('FRONTEND_URL') or frontend_default).rstrip('/')
+# Production traffic is same-origin through the proxy; cross-origin access is opt-in per origin.
+CORS_ALLOW_ALL_ORIGINS = False
+CORS_ALLOWED_ORIGINS = [v.strip().rstrip('/') for v in os.getenv('CORS_ALLOWED_ORIGINS', '').split(',') if v.strip()]
+CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_METHODS = ['DELETE', 'GET', 'PATCH', 'POST', 'PUT', 'OPTIONS']
+CORS_ALLOW_HEADERS = ['accept', 'content-type', 'x-csrftoken']
 EMAIL_BACKEND = os.getenv('EMAIL_BACKEND', 'django.core.mail.backends.console.EmailBackend' if DEBUG or TESTING else 'django.core.mail.backends.smtp.EmailBackend')
 EMAIL_HOST = os.getenv('EMAIL_HOST', '')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', '587'))

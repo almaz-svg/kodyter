@@ -1,7 +1,46 @@
+import re
+from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework.authentication import SessionAuthentication
 from rest_framework.exceptions import AuthenticationFailed, PermissionDenied
 from rest_framework.permissions import BasePermission
 from .models import User
+
+MARKUP_PATTERN = re.compile(r'[<>]')
+# Catalog images are static files under /images/ or /media/ (or an https URL).
+# SVG is excluded on purpose: it can carry scripts.
+IMAGE_PATH_PATTERN = re.compile(r'/(images|media)/[A-Za-z0-9_\-/]+\.(webp|png|jpe?g)')
+IMAGE_URL_PATTERN = re.compile(r'https://[A-Za-z0-9.\-]+(/[A-Za-z0-9_\-./%]*)?\.(webp|png|jpe?g)')
+IMAGE_MAX_LENGTH = 500
+
+def reject_markup(value):
+    """Free text is rendered as plain text; markup characters are refused before storage."""
+    if isinstance(value, str) and MARKUP_PATTERN.search(value):
+        raise DjangoValidationError('Используйте только обычный текст, без символов < и >.')
+    return value
+
+def validate_image_reference(value):
+    """Accept only an image path or image URL; blank means no photo."""
+    if value in ('', None):
+        return value
+    if len(value) > IMAGE_MAX_LENGTH or '..' in value:
+        raise DjangoValidationError('Укажите путь к фотографии длиной не более 500 символов, без "..".')
+    if not (IMAGE_PATH_PATTERN.fullmatch(value) or IMAGE_URL_PATTERN.fullmatch(value)):
+        raise DjangoValidationError('Фотография должна быть файлом .webp, .png или .jpg из /images/ или /media/.')
+    return value
+
+class SecurityHeadersMiddleware:
+    """Adds headers that API responses need beyond Django's defaults."""
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        response = self.get_response(request)
+        response.setdefault('Content-Security-Policy', "default-src 'none'; frame-ancestors 'none'; base-uri 'none'")
+        response.setdefault('Permissions-Policy', 'camera=(), microphone=(), geolocation=(), payment=()')
+        if request.path.startswith('/api/'):
+            # Account, order and cashier data must not be kept by browsers or shared caches.
+            response.setdefault('Cache-Control', 'no-store')
+        return response
 
 def lock_active_actor(user, roles):
     """Revalidate a session under a user lock after waiting for an order lock."""

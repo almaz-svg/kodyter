@@ -3,6 +3,19 @@ from django.core.exceptions import ValidationError as DjangoValidationError
 from rest_framework import serializers
 import re
 from .models import User, Category, Product, Order, OrderItem, StatusHistory, Problem
+from .security import reject_markup, validate_image_reference
+from decimal import Decimal
+
+class MarkupFreeMixin:
+    """Refuses HTML-like text in every submitted string field, before it reaches the database."""
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        for value in attrs.values():
+            try:
+                reject_markup(value)
+            except DjangoValidationError as exc:
+                raise serializers.ValidationError(exc.messages)
+        return attrs
 
 class PartialUpdateMixin:
     def update(self, instance, validated_data):
@@ -13,13 +26,13 @@ class PartialUpdateMixin:
             instance.save(update_fields=list(validated_data))
         return instance
 
-class UserSerializer(PartialUpdateMixin, serializers.ModelSerializer):
+class UserSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['id', 'name', 'email', 'phone', 'role', 'is_active']
         read_only_fields = ['id', 'email', 'role', 'is_active']
 
-class RegisterSerializer(serializers.Serializer):
+class RegisterSerializer(MarkupFreeMixin, serializers.Serializer):
     name = serializers.CharField(max_length=120)
     email = serializers.EmailField(max_length=254)
     phone = serializers.CharField(max_length=30, required=False, allow_blank=True)
@@ -32,24 +45,27 @@ class RegisterSerializer(serializers.Serializer):
         return value
 
     def validate(self, data):
+        data = super().validate(data)
         try:
             validate_password(data['password'], User(email=data['email'], name=data['name']))
         except DjangoValidationError as exc:
             raise serializers.ValidationError({'password': list(exc.messages)})
         return data
 
-class CategorySerializer(PartialUpdateMixin, serializers.ModelSerializer):
+class CategorySerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
     class Meta:
         model = Category
         fields = ['id', 'name', 'slug', 'description', 'image', 'is_visible']
+        extra_kwargs = {'image': {'validators': [validate_image_reference]}}
 
-class ProductSerializer(PartialUpdateMixin, serializers.ModelSerializer):
-    price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+class ProductSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
     class Meta:
         model = Product
         fields = ['id', 'category', 'name', 'description', 'image', 'price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible']
+        extra_kwargs = {'image': {'validators': [validate_image_reference]}}
 
-class CourierUpdateSerializer(PartialUpdateMixin, serializers.ModelSerializer):
+class CourierUpdateSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
     class Meta:
         model = User
         fields = ['name', 'phone', 'is_active']
@@ -112,7 +128,7 @@ class CheckoutItemSerializer(serializers.Serializer):
     quantity = serializers.IntegerField(min_value=1, max_value=99)
     expected_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
 
-class CheckoutSerializer(serializers.Serializer):
+class CheckoutSerializer(MarkupFreeMixin, serializers.Serializer):
     recipient_name = serializers.CharField(max_length=120)
     phone = serializers.CharField(max_length=30)
     address = serializers.CharField(max_length=500, min_length=5)

@@ -12,6 +12,7 @@ from rest_framework import serializers
 from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from .security import reject_markup
 from .models import Order, OrderItem, Product, User, StatusHistory, Problem
 from .serializers import CheckoutSerializer, OrderSerializer
 from .security import lock_active_actor
@@ -99,7 +100,8 @@ class Orders(APIView):
             product = products.get(item['product_id'])
             if not product or not product.is_visible or not product.category.is_visible or not product.is_available:
                 raise Conflict('Один из товаров больше недоступен. Обновите корзину перед оформлением.')
-            if product.price != item['expected_price']:
+            # Server prices are authoritative; a zero or negative price is never orderable.
+            if product.price <= 0 or product.price != item['expected_price']:
                 raise Conflict('Цена товара изменилась. Обновите корзину и подтвердите новую сумму.')
             subtotal += product.price * item['quantity']
         order = Order.objects.create(customer=actor, recipient_name=data['recipient_name'], phone=data['phone'], address=data['address'], comment=data['comment'], subtotal=subtotal, delivery_fee=settings.DELIVERY_FEE, total=subtotal + settings.DELIVERY_FEE, idempotency_key=data['idempotency_key'], request_fingerprint=fingerprint)
@@ -166,6 +168,6 @@ class ReportProblem(APIView):
         if request.user.role not in ('ADMIN', 'COURIER'):
             raise PermissionDenied('Сообщение о проблеме доступно курьеру и администратору.')
         actor = lock_active_actor(request.user, ('ADMIN', 'COURIER'))
-        message = serializers.CharField(max_length=2000).run_validation(request.data.get('message'))
+        message = serializers.CharField(max_length=2000, validators=[reject_markup]).run_validation(request.data.get('message'))
         Problem.objects.create(order=order, message=message, actor=actor, actor_name=actor.name)
         return order_response(order, status=201)
