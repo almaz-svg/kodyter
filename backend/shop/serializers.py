@@ -107,6 +107,37 @@ class OrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name']
         read_only_fields = fields
 
+class CustomerStatusHistorySerializer(serializers.ModelSerializer):
+    # No actor_name: customers see when the status changed, not which employee changed it.
+    class Meta:
+        model = StatusHistory
+        fields = ['id', 'from_status', 'to_status', 'created_at']
+        read_only_fields = fields
+
+class CustomerProblemSerializer(serializers.ModelSerializer):
+    # No actor_name: the courier's or admin's name stays internal.
+    class Meta:
+        model = Problem
+        fields = ['id', 'message', 'created_at']
+        read_only_fields = fields
+
+class CustomerOrderSerializer(serializers.ModelSerializer):
+    """Order view for the customer who placed it. Staff identities and the cashier's receipt details are left out."""
+    items = OrderItemSerializer(many=True, read_only=True)
+    status_history = CustomerStatusHistorySerializer(many=True, read_only=True)
+    problems = CustomerProblemSerializer(many=True, read_only=True)
+    courier_name = serializers.CharField(source='courier.name', default=None, read_only=True)
+    payment_status = serializers.SerializerMethodField()
+    paid_at = serializers.DateTimeField(source='payment.paid_at', default=None, read_only=True)
+
+    def get_payment_status(self, order):
+        return 'PAID' if getattr(order, 'payment', None) else 'UNPAID'
+
+    class Meta:
+        model = Order
+        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at']
+        read_only_fields = fields
+
 class AvailableItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem

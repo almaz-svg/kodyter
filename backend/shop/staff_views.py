@@ -35,12 +35,12 @@ class ClaimOrder(APIView):
         if order is None:
             raise Conflict('Заказ уже принят другим курьером или больше недоступен.')
         if order.courier_id == actor.pk:
-            return order_response(order)
+            return order_response(order, request.user)
         if order.courier_id is not None or order.status not in AVAILABLE_STATUSES:
             raise Conflict('Заказ уже принят другим курьером или больше недоступен.')
         order.courier = actor
         order.save(update_fields=['courier'])
-        return order_response(order)
+        return order_response(order, request.user)
 
 
 class ReceivePayment(APIView):
@@ -56,7 +56,7 @@ class ReceivePayment(APIView):
         if Payment.objects.filter(idempotency_key=data['idempotency_key']).exclude(order=order).exists():
             raise Conflict('Этот ключ оплаты уже использован для другого заказа. Обновите список заказов.')
         if Payment.objects.filter(order=order).exists():
-            return order_response(order)
+            return order_response(order, request.user)
         if order.status != 'DELIVERED':
             raise Conflict('Оплату можно принять только после доставки заказа.')
         try:
@@ -65,7 +65,7 @@ class ReceivePayment(APIView):
                 Payment.objects.create(order=order, amount=order.total, method=data['method'], idempotency_key=data['idempotency_key'], paid_by=actor, paid_by_name=actor.name)
         except IntegrityError:
             raise Conflict('Эта оплата уже зарегистрирована. Обновите список заказов.')
-        return order_response(order, status=201)
+        return order_response(order, request.user, status=201)
 
 
 class AdminOverview(APIView):

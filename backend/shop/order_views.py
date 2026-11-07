@@ -14,7 +14,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .security import reject_markup
 from .models import Order, OrderItem, Product, User, StatusHistory, Problem
-from .serializers import CheckoutSerializer, OrderSerializer
+from .serializers import CheckoutSerializer, CustomerOrderSerializer, OrderSerializer
 from .security import lock_active_actor
 
 class Conflict(APIException):
@@ -33,10 +33,14 @@ def locked_order(user, pk):
     # Lock only the order: courier is nullable and PostgreSQL cannot lock an outer join.
     return get_object_or_404(scoped_orders(user).select_for_update(of=('self',)), pk=pk)
 
-def order_response(order, status=200):
+def order_serializer_for(user):
+    # Customers get the customer view; staff roles keep the full view with actor names.
+    return CustomerOrderSerializer if user.role == 'CUSTOMER' else OrderSerializer
+
+def order_response(order, user, status=200):
     # Mutations may have populated prefetch caches before adding a history/problem row.
     order = Order.objects.select_related('courier', 'payment').prefetch_related('items', 'status_history', 'problems').get(pk=order.pk)
-    return Response(OrderSerializer(order).data, status=status)
+    return Response(order_serializer_for(user)(order).data, status=status)
 
 class Orders(APIView):
     def get(self, request):
@@ -72,7 +76,7 @@ class Orders(APIView):
                     orders = orders.annotate(phone_digits=phone_digits)
                     query |= Q(phone_digits__contains=digits)
             orders = orders.filter(query)
-        return Response(OrderSerializer(orders, many=True).data)
+        return Response(order_serializer_for(request.user)(orders, many=True).data)
 
     @transaction.atomic
     def post(self, request):
@@ -89,7 +93,7 @@ class Orders(APIView):
         if existing:
             if existing.request_fingerprint != fingerprint:
                 return Response({'detail': 'Этот ключ оформления уже использован для другого содержимого заказа.', 'code': 'IDEMPOTENCY_CONFLICT', 'order_id': existing.pk, 'number': existing.number}, status=409)
-            return order_response(existing)
+            return order_response(existing, request.user)
         if data['expected_delivery_fee'] != settings.DELIVERY_FEE:
             raise Conflict('Стоимость доставки изменилась. Обновите корзину и подтвердите новую сумму.')
         items = data['items']
@@ -109,12 +113,12 @@ class Orders(APIView):
         order = Order.objects.create(customer=actor, recipient_name=data['recipient_name'], phone=data['phone'], address=data['address'], comment=data['comment'], subtotal=subtotal, delivery_fee=settings.DELIVERY_FEE, total=subtotal + settings.DELIVERY_FEE, idempotency_key=data['idempotency_key'], request_fingerprint=fingerprint)
         OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=products[item['product_id']].price, image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
         StatusHistory.objects.create(order=order, from_status='', to_status='NEW', actor=actor, actor_name=actor.name)
-        return order_response(order, status=201)
+        return order_response(order, request.user, status=201)
 
 class OrderDetail(APIView):
     def get(self, request, pk):
         order = get_object_or_404(scoped_orders(request.user), pk=pk)
-        return Response(OrderSerializer(order).data)
+        return Response(order_serializer_for(request.user)(order).data)
 
 class Transition(APIView):
     @transaction.atomic
@@ -144,7 +148,7 @@ class Transition(APIView):
         order.status = target
         order.save(update_fields=['status', 'cancellation_reason'])
         StatusHistory.objects.create(order=order, from_status=old, to_status=target, actor=actor, actor_name=actor.name)
-        return order_response(order)
+        return order_response(order, request.user)
 
 class Assign(APIView):
     @transaction.atomic
@@ -161,7 +165,7 @@ class Assign(APIView):
             raise serializers.ValidationError({'courier_id': 'Выберите активного курьера.'})
         order.courier = courier
         order.save(update_fields=['courier'])
-        return order_response(order)
+        return order_response(order, request.user)
 
 class ReportProblem(APIView):
     @transaction.atomic
@@ -172,4 +176,4 @@ class ReportProblem(APIView):
         actor = lock_active_actor(request.user, ('ADMIN', 'COURIER'))
         message = serializers.CharField(max_length=2000, validators=[reject_markup]).run_validation(request.data.get('message'))
         Problem.objects.create(order=order, message=message, actor=actor, actor_name=actor.name)
-        return order_response(order, status=201)
+        return order_response(order, request.user, status=201)
