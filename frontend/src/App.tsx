@@ -216,9 +216,9 @@ function Footer() {
           </div>
           <div className="footer-links">
             <Link to="/catalog">{t.navCatalog}</Link>
-            <Link to="/about">{t.footerHistory}</Link>
-            <Link to="/delivery">{t.footerDelivery}</Link>
-            <Link to="/contacts">{t.navContacts}</Link>
+            {!courier && <Link to="/about">{t.footerHistory}</Link>}
+            {!courier && <Link to="/delivery">{t.footerDelivery}</Link>}
+            {!courier && <Link to="/contacts">{t.navContacts}</Link>}
           </div>
           <div className="footer-note">
             <Heart size={22} strokeWidth={1} aria-hidden="true" />

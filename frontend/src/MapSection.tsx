@@ -12,10 +12,13 @@ export default function MapSection() {
   const {t} = useI18n();
 
   useEffect(() => {
-    if (mapInstance.current || !mapRef.current) return;
-    let L: typeof import('leaflet');
+    // React StrictMode runs this effect twice in development. The first run's import can resolve after its cleanup,
+    // so a cancelled run must not create a map: two maps on one container throw "Map container is already initialized".
+    let cancelled = false;
     import('leaflet').then(mod => {
-      L = mod.default;
+      const container = mapRef.current;
+      if (cancelled || !container || mapInstance.current) return;
+      const L = mod.default;
       // Fix leaflet default icon path issues with bundlers
       // @ts-expect-error leaflet internals
       delete L.Icon.Default.prototype._getIconUrl;
@@ -24,7 +27,7 @@ export default function MapSection() {
         iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
         shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
       });
-      const map = L.map(mapRef.current!, {
+      const map = L.map(container, {
         center: [LAT, LNG],
         zoom: 16,
         scrollWheelZoom: false,
@@ -41,6 +44,7 @@ export default function MapSection() {
       mapInstance.current = map;
     });
     return () => {
+      cancelled = true;
       if (mapInstance.current) {
         (mapInstance.current as {remove: () => void}).remove();
         mapInstance.current = null;
