@@ -65,7 +65,7 @@
 
 | ID | Что | Где | Статус |
 |---|---|---|---|
-| BUG-01 | Ошибка `Map container is already initialized` на главной. `StrictMode` запускает эффект дважды, оба запуска создают карту после асинхронного импорта | `frontend/src/main.tsx`, `frontend/src/MapSection.tsx` | [факт] воспроизведено в скриншотах 2026-11-07 |
+| BUG-01 | Ошибка `Map container is already initialized` на главной. `StrictMode` запускает эффект дважды, оба запуска создают карту после асинхронного импорта | `frontend/src/main.tsx`, `frontend/src/MapSection.tsx` | [факт] воспроизведено в скриншотах 2026-11-07. **Исправлено 2026-11-08:** отмена эффекта флагом `cancelled`, карта создаётся один раз. Проверено: в dev и в собранной версии нет `pageerror`, одна карта, 8 тайлов, всплывающая подсказка. Ошибка проявлялась только в dev (StrictMode). |
 | BUG-02 | Лишний `@import` Leaflet в середине `styles.css`. Vite предупреждает, стили уже импортируются в `main.tsx` | `frontend/src/styles.css:112` | [факт] предупреждение в `.secrets/logs/frontend-error.log`; игнорирование браузером — [не проверено] в Edge |
 | BUG-03 | `-SeedDemo` падает при `DEMO_MODE=false` (значение по умолчанию в `.env.example`) | `scripts/launch.ps1`, `README.md`, `backend/.env.example` | [факт] воспроизведено 2026-11-07 |
 | BUG-04 | Интервал опроса кабинетов 5 с, в документации 15 с | `frontend/src/Portals.tsx:64`, `docs/implementation-plan.md` | [факт] |
