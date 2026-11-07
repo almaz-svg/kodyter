@@ -83,15 +83,15 @@ function Header() {
           </nav>
           <div className="header-actions">
             <Link to={user ? account : '/login'} className="icon-button account-link" aria-label={user ? t.navAccount : t.navLogin}>
-              <UserRound size={21} />
+              <UserRound size={21} aria-hidden="true" />
             </Link>
             {user && (
               <button className="icon-button logout" onClick={logout} aria-label={t.navLogout}>
-                <LogOut size={18} />
+                <LogOut size={18} aria-hidden="true" />
               </button>
             )}
             <Link to="/cart" className="header-cart" aria-label={t.cartCount(count)}>
-              <ShoppingBag size={21} />
+              <ShoppingBag size={21} aria-hidden="true" />
               <span className="cart-label">{t.cartLabel}</span>
               {count > 0 && <span className="cart-count">{count}</span>}
             </Link>
@@ -103,7 +103,7 @@ function Header() {
               aria-label={menu ? 'Закрыть меню' : 'Открыть меню'}
               aria-expanded={menu}
             >
-              <Menu size={24} />
+              <Menu size={24} aria-hidden="true" />
             </button>
           </div>
         </div>
@@ -128,30 +128,30 @@ function Header() {
             onClick={() => setMenu(false)}
             aria-label="Закрыть меню"
           >
-            <X size={24} />
+            <X size={24} aria-hidden="true" />
           </button>
         </div>
 
         <nav className="mobile-drawer-nav" aria-label="Мобильное меню">
           <NavLink to="/" onClick={() => setMenu(false)}>
             <span>{t.navHome}</span>
-            <ArrowRight size={17} className="drawer-arrow" />
+            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
           </NavLink>
           <NavLink to="/catalog" onClick={() => setMenu(false)}>
             <span>{t.navCatalog}</span>
-            <ArrowRight size={17} className="drawer-arrow" />
+            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
           </NavLink>
           <NavLink to="/about" onClick={() => setMenu(false)}>
             <span>{t.navAbout}</span>
-            <ArrowRight size={17} className="drawer-arrow" />
+            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
           </NavLink>
           <NavLink to="/delivery" onClick={() => setMenu(false)}>
             <span>{t.navDelivery}</span>
-            <ArrowRight size={17} className="drawer-arrow" />
+            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
           </NavLink>
           <NavLink to="/contacts" onClick={() => setMenu(false)}>
             <span>{t.navContacts}</span>
-            <ArrowRight size={17} className="drawer-arrow" />
+            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
           </NavLink>
 
           <div className="mobile-drawer-divider" />
@@ -161,7 +161,7 @@ function Header() {
             className="mobile-drawer-account"
             onClick={() => setMenu(false)}
           >
-            <UserRound size={19} />
+            <UserRound size={19} aria-hidden="true" />
             <span>{user ? `${user.name} · ${t.navAccount}` : t.accountOrLogin}</span>
           </NavLink>
 
@@ -171,7 +171,7 @@ function Header() {
               className="mobile-drawer-logout"
               onClick={() => { logout(); setMenu(false); }}
             >
-              <LogOut size={18} />
+              <LogOut size={18} aria-hidden="true" />
               <span>{t.navLogout}</span>
             </button>
           )}
@@ -207,7 +207,7 @@ function Footer() {
             <Link to="/contacts">{t.navContacts}</Link>
           </div>
           <div className="footer-note">
-            <Heart size={22} strokeWidth={1} />
+            <Heart size={22} strokeWidth={1} aria-hidden="true" />
             <span>{t.footerWarm}</span>
           </div>
         </div>
@@ -221,17 +221,17 @@ function Footer() {
         </div>
       </footer>
       <nav className="bottom-nav" aria-label="Мобильная навигация">
-        <NavLink to="/"><House size={21} /><span>{t.bottomHome}</span></NavLink>
-        <NavLink to="/catalog"><LayoutGrid size={21} /><span>{t.bottomCatalog}</span></NavLink>
+        <NavLink to="/"><House size={21} aria-hidden="true" /><span>{t.bottomHome}</span></NavLink>
+        <NavLink to="/catalog"><LayoutGrid size={21} aria-hidden="true" /><span>{t.bottomCatalog}</span></NavLink>
         <NavLink to="/cart" aria-label={t.cartCount(count)}>
           <span className="bottom-cart-icon">
-            <ShoppingBag size={21} />
+            <ShoppingBag size={21} aria-hidden="true" />
             {count > 0 && <b className="bottom-cart-count">{count}</b>}
           </span>
           <span>{t.bottomCart}</span>
         </NavLink>
         <NavLink to={roleHome(user?.role)}>
-          <UserRound size={21} />
+          <UserRound size={21} aria-hidden="true" />
           <span>{t.bottomAccount}</span>
         </NavLink>
       </nav>
@@ -283,7 +283,7 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
             <h2>{t.infoAboutH2}</h2>
             <p>{t.infoAboutP1}</p>
             <p>{t.infoAboutP2}</p>
-            <Link to="/catalog" className="button button-green">{t.infoAboutButton} <ArrowRight size={18}/></Link>
+            <Link to="/catalog" className="button button-green">{t.infoAboutButton} <ArrowRight size={18} aria-hidden="true" /></Link>
           </div>
         </div>
       ) : type === 'delivery' ? (
@@ -312,7 +312,7 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
             <Heart />
             <h2>{t.infoOrderH2}</h2>
             <p>{t.infoOrderP}</p>
-            <Link to="/catalog" className="button button-green">{t.infoOrderButton} <ArrowRight size={18}/></Link>
+            <Link to="/catalog" className="button button-green">{t.infoOrderButton} <ArrowRight size={18} aria-hidden="true" /></Link>
           </section>
         </div>
       ) : (

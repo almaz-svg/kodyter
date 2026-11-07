@@ -53,8 +53,8 @@ export function Catalog() {
           ))}
         </div>
         <label className="search-box">
-          <Search size={19}/>
-          <input value={search} onChange={e => setSearch(e.target.value)} placeholder={t.searchPlaceholder} aria-label={t.searchPlaceholder}/>
+          <Search size={19} aria-hidden="true" />
+          <input name="search" autoComplete="off" value={search} onChange={e => setSearch(e.target.value)} placeholder={t.searchPlaceholder} aria-label={t.searchPlaceholder}/>
         </label>
       </div>
       <CatalogCartSummary/>
@@ -65,7 +65,7 @@ export function Catalog() {
             <div className="product-grid">{visible.map(p => <ProductCard key={p.id} product={p}/>)}</div>
           ) : (
             <div className="empty-state">
-              <Search size={36}/>
+              <Search size={36} aria-hidden="true" />
               <h2>{t.noResults}</h2>
               <p>{t.noResultsSub}</p>
               <button className="button button-green" onClick={() => {setSearch('');setParams({})}}>{t.resetFilters}</button>
@@ -92,7 +92,7 @@ export function ProductPage() {
 
   return (
     <main className="container page">
-      <Link to="/catalog" className="back-link"><ArrowLeft size={16}/>{t.navCatalog}</Link>
+      <Link to="/catalog" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t.navCatalog}</Link>
       {error ? <ErrorBox message={error}/> : !product ? <Loading/> : (
         <div className="product-detail">
           <div className="detail-image">
@@ -109,18 +109,18 @@ export function ProductPage() {
             <div className="buy-row">
               <Qty value={n} presets={[10,20,50,70]} onChange={v => setN(Math.max(1,v))}/>
               <button className="button button-green" disabled={!product.is_available} onClick={() => add(product,n)}>
-                <ShoppingBag size={18}/>{t.toCartBtn}
+                <ShoppingBag size={18} aria-hidden="true" />{t.toCartBtn}
               </button>
             </div>
             <div className="detail-facts">
               {product.ingredients && <div><h3>Состав</h3><p>{product.ingredients}</p></div>}
               {product.allergens && <div><h3>Аллергены</h3><p>{product.allergens}</p></div>}
               <div className="product-promises">
-                <span><Leaf size={18}/>{t.benefit4a} {t.benefit4b}</span>
-                <span><Truck size={18}/>{t.cartDelivery} 1 500 ₸</span>
+                <span><Leaf size={18} aria-hidden="true" />{t.benefit4a} {t.benefit4b}</span>
+                <span><Truck size={18} aria-hidden="true" />{t.cartDelivery} 1 500 ₸</span>
               </div>
             </div>
-            <Link to="/cart" className="text-link">{t.toCartBtn} <ArrowRight size={17}/></Link>
+            <Link to="/cart" className="text-link">{t.toCartBtn} <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
         </div>
       )}

@@ -14,6 +14,8 @@ export function Logo({ small = false }: { small?: boolean }) {
       <img
         src="/images/Logo.png"
         alt="Anasym"
+        width={1403}
+        height={1069}
         className={`brand-logo-img ${small ? 'brand-logo-img-small' : ''}`}
       />
       <span className="brand-text">
@@ -108,7 +110,7 @@ export function Loading({ text }: { text?: string }) {
   const { t } = useI18n();
   return (
     <div className="loading" role="status">
-      <LoaderCircle className="spin" size={24} />
+      <LoaderCircle className="spin" size={24} aria-hidden="true" />
       <span>{text ?? t.loading}</span>
     </div>
   );
@@ -119,7 +121,7 @@ export function ErrorBox({ message, retry }: { message: string; retry?: () => vo
   return (
     <div className="error-box" role="alert">
       <p>{message}</p>
-      {retry && <button type="button" className="text-button" onClick={retry}>{t.retry} <ArrowRight size={16} /></button>}
+      {retry && <button type="button" className="text-button" onClick={retry}>{t.retry} <ArrowRight size={16} aria-hidden="true" /></button>}
     </div>
   );
 }
@@ -146,7 +148,7 @@ export function Qty({ value, onChange, label = 'Количество', increaseD
         </div>
       )}
       <div className="qty" role="group" aria-label={label}>
-        <button type="button" aria-label={`Уменьшить количество${suffix}`} onClick={() => onChange(value - 1)}><Minus size={15} /></button>
+        <button type="button" aria-label={`Уменьшить количество${suffix}`} onClick={() => onChange(value - 1)}><Minus size={15} aria-hidden="true" /></button>
         <input
           type="text"
           inputMode="numeric"
@@ -158,7 +160,7 @@ export function Qty({ value, onChange, label = 'Количество', increaseD
           onBlur={commit}
           onKeyDown={e => { if (e.key === 'Enter') { commit(); e.currentTarget.blur(); } }}
         />
-        <button type="button" aria-label={`Увеличить количество${suffix}`} disabled={value >= 99 || increaseDisabled} onClick={() => onChange(value + 1)}><Plus size={15} /></button>
+        <button type="button" aria-label={`Увеличить количество${suffix}`} disabled={value >= 99 || increaseDisabled} onClick={() => onChange(value + 1)}><Plus size={15} aria-hidden="true" /></button>
       </div>
     </div>
   );
@@ -186,11 +188,11 @@ export function ProductCard({ product }: { product: Product }) {
           {selected > 0 ? (
             <div className="product-purchase">
               <Qty value={selected} label={product.name} increaseDisabled={!product.is_available} onChange={n => n < selected ? quantity(product.id, n) : add(product, n - selected)} />
-              <Link to="/cart" className="product-cart-link">{t.toCart} <ArrowRight size={16} /></Link>
+              <Link to="/cart" className="product-cart-link">{t.toCart} <ArrowRight size={16} aria-hidden="true" /></Link>
             </div>
           ) : (
             <button type="button" className="button button-green product-buy" onClick={() => add(product)} disabled={!product.is_available} aria-label={product.is_available ? `${t.buy} ${product.name}` : `${product.name} — ${t.outOfStock}`}>
-              <ShoppingBag size={17} />
+              <ShoppingBag size={17} aria-hidden="true" />
               {product.is_available ? t.buy : t.outOfStock}
             </button>
           )}
@@ -211,7 +213,7 @@ export function CatalogCartSummary() {
         <span>{money(total)} <small>{t.withoutDelivery}</small></span>
       </div>
       <Link to="/cart" className="button button-green">
-        <ShoppingBag size={18} />{t.toCartBtn} <ArrowRight size={16} />
+        <ShoppingBag size={18} aria-hidden="true" />{t.toCartBtn} <ArrowRight size={16} aria-hidden="true" />
       </Link>
     </aside>
   );

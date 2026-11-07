@@ -61,21 +61,21 @@ export default function MapSection() {
         <div className="map-layout">
           <div className="map-info">
             <div className="map-info-row">
-              <MapPin size={20} className="map-icon" />
+              <MapPin size={20} className="map-icon" aria-hidden="true" />
               <div>
                 <span className="map-info-label">{t.navContacts}</span>
                 <p>{t.mapAddress}</p>
               </div>
             </div>
             <div className="map-info-row">
-              <Clock size={20} className="map-icon" />
+              <Clock size={20} className="map-icon" aria-hidden="true" />
               <div>
                 <span className="map-info-label">{t.mapHours}</span>
                 <p>{t.mapHoursValue}</p>
               </div>
             </div>
             <div className="map-info-row">
-              <Phone size={20} className="map-icon" />
+              <Phone size={20} className="map-icon" aria-hidden="true" />
               <div>
                 <span className="map-info-label">{t.mapPhone}</span>
                 <p>+7 (727) 000-00-00</p>

@@ -34,7 +34,7 @@ export function CookieConsent() {
     <div className="cookie-banner" role="region" aria-label="Cookie notification">
       <div className="cookie-banner-inner">
         <div className="cookie-icon-wrap">
-          <Cookie size={22} />
+          <Cookie size={22} aria-hidden="true" />
         </div>
         <div className="cookie-text">
           <p>
@@ -81,11 +81,11 @@ export function PrivacyPolicy() {
         </p>
         <div className="legal-meta-row">
           <span className="legal-badge">
-            <ShieldCheck size={16} />
+            <ShieldCheck size={16} aria-hidden="true" />
             {isKz ? 'ҚР Заңнамасына сәйкес қорғалған' : isEn ? 'Protected under applicable privacy laws' : 'Защищено в соответствии с Законом РК'}
           </span>
           <span className="legal-date">
-            <Clock size={15} />
+            <Clock size={15} aria-hidden="true" />
             {isKz ? 'Жаңартылған күні: 2026 ж.' : isEn ? 'Last updated: 2026' : 'Редакция от: 2026 г.'}
           </span>
         </div>
@@ -234,7 +234,7 @@ export function PrivacyPolicy() {
         {/* Section 7 */}
         <section className="legal-card legal-contacts-card">
           <div className="legal-card-header">
-            <MapPin size={22} />
+            <MapPin size={22} aria-hidden="true" />
             <h2>{isKz ? 'Байланыс және реквизиттер' : isEn ? '7. Contacts & Operator Details' : '7. Контакты и реквизиты'}</h2>
           </div>
           <p>
@@ -279,11 +279,11 @@ export function PublicOffer() {
         </p>
         <div className="legal-meta-row">
           <span className="legal-badge">
-            <Scale size={16} />
+            <Scale size={16} aria-hidden="true" />
             {isKz ? 'ҚР Азаматтық кодексінің 395-бабына сәйкес жария оферта' : isEn ? 'Legally binding public offer' : 'Публичная оферта (ст. 395 ГК РК)'}
           </span>
           <span className="legal-date">
-            <Clock size={15} />
+            <Clock size={15} aria-hidden="true" />
             {isKz ? 'Редакция: 2026 ж.' : isEn ? 'Edition: 2026' : 'Редакция от: 2026 г.'}
           </span>
         </div>
@@ -326,7 +326,7 @@ export function PublicOffer() {
               : 'Все представленные изделия являются свежей выпечкой и кондитерскими изделиями ручной работы из натуральных ингредиентов.'}
           </p>
           <div className="legal-warning-box">
-            <AlertCircle size={20} />
+            <AlertCircle size={20} aria-hidden="true" />
             <div>
               <strong>{isKz ? 'Аллергендер туралы ескерту:' : isEn ? 'Allergen Notice:' : 'Информация об аллергенах:'}</strong>
               <p>
@@ -409,7 +409,7 @@ export function PublicOffer() {
         {/* Section 6 */}
         <section className="legal-card legal-contacts-card">
           <div className="legal-card-header">
-            <MapPin size={22} />
+            <MapPin size={22} aria-hidden="true" />
             <h2>{isKz ? 'Сатушының реквизиттері' : isEn ? '6. Seller Details' : '6. Реквизиты продавца'}</h2>
           </div>
           <p>

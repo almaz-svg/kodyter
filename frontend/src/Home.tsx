@@ -79,7 +79,7 @@ export default function Home() {
           <AnimatedHeroText />
           <p className="hero-subtitle-anim">{t.heroSubtitle}</p>
           <Link to="/catalog" className="button button-gold hero-btn-anim">
-            {t.heroButton} <ArrowRight size={20} />
+            {t.heroButton} <ArrowRight size={20} aria-hidden="true" />
           </Link>
           <div className="hero-note">
             <span />{t.heroNote}
@@ -114,7 +114,7 @@ export default function Home() {
               <h2>{t.sectionCategoriesTitle}</h2>
             </div>
             <Ornament />
-            <Link to="/catalog" className="text-link">{t.sectionCatalogLink} <ArrowRight size={17} /></Link>
+            <Link to="/catalog" className="text-link">{t.sectionCatalogLink} <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
           {error ? <ErrorBox message={error} retry={load} /> : <CategorySlider categories={categories} />}
         </div>
@@ -131,7 +131,7 @@ export default function Home() {
           <h2>{t.aboutTitle}</h2>
           <p>{t.aboutP1}</p>
           <p>{t.aboutP2}</p>
-          <Link to="/about" className="button button-outline">{t.aboutButton} <ArrowRight size={18} /></Link>
+          <Link to="/about" className="button button-outline">{t.aboutButton} <ArrowRight size={18} aria-hidden="true" /></Link>
           <Branch className="about-branch" />
         </div>
       </section>
@@ -144,7 +144,7 @@ export default function Home() {
               <span className="eyebrow">{t.sectionFavoritesEyebrow}</span>
               <h2>{t.sectionFavoritesTitle}</h2>
             </div>
-            <Link to="/catalog" className="text-link">{t.sectionFavoritesLink} <ArrowRight size={17} /></Link>
+            <Link to="/catalog" className="text-link">{t.sectionFavoritesLink} <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
           <div className="product-grid">
             {products.map(p => <ProductCard key={p.id} product={p} />)}

@@ -33,12 +33,12 @@ export function Cart() {
                 <div className="cart-row-end">
                   <strong>{money(Number(p.price)*n)}</strong>
                   <button className="icon-button remove" aria-label={`Удалить ${p.name}`} onClick={() => quantity(p.id,0)}>
-                    <Trash2 size={18}/>
+                    <Trash2 size={18} aria-hidden="true" />
                   </button>
                 </div>
               </article>
             ))}
-            <Link to="/catalog" className="back-link"><ArrowLeft size={17}/>{t.cartContinue}</Link>
+            <Link to="/catalog" className="back-link"><ArrowLeft size={17} aria-hidden="true" />{t.cartContinue}</Link>
           </div>
           <aside className="order-summary">
             <h2>{t.checkoutOrderTitle}</h2>
@@ -46,8 +46,8 @@ export function Cart() {
             <div className="summary-line"><span>{t.cartItems}</span><span>{money(total)}</span></div>
             <div className="summary-line"><span>{t.cartDelivery}</span><span>{settings ? money(settings.delivery_fee) : t.cartPending}</span></div>
             <div className="summary-total"><span>{t.cartTotal}</span><strong>{settings ? money(total+Number(settings.delivery_fee)) : '—'}</strong></div>
-            <Link className="button button-green full-width" to="/checkout">{t.cartOrder} <ArrowRight size={18}/></Link>
-            <p className="summary-note"><ShieldCheck size={17}/>{t.cartPayNote}</p>
+            <Link className="button button-green full-width" to="/checkout">{t.cartOrder} <ArrowRight size={18} aria-hidden="true" /></Link>
+            <p className="summary-note"><ShieldCheck size={17} aria-hidden="true" />{t.cartPayNote}</p>
           </aside>
         </div>
       )}
@@ -59,10 +59,10 @@ function EmptyCart() {
   const {t} = useI18n();
   return (
     <div className="empty-state">
-      <ShoppingBag size={44} strokeWidth={1}/>
+      <ShoppingBag size={44} strokeWidth={1} aria-hidden="true" />
       <h2>{t.cartEmpty}</h2>
       <p>{t.cartEmptyP}</p>
-      <Link to="/catalog" className="button button-green">{t.cartToCatalog} <ArrowRight size={17}/></Link>
+      <Link to="/catalog" className="button button-green">{t.cartToCatalog} <ArrowRight size={17} aria-hidden="true" /></Link>
     </div>
   );
 }
@@ -112,7 +112,7 @@ export function Auth() {
         </div>
       </div>
       <div className="auth-content">
-        <Link to="/catalog" className="back-link"><ArrowLeft size={16}/>{t.authBack}</Link>
+        <Link to="/catalog" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t.authBack}</Link>
         <div className="auth-form-wrap">
           <span className="eyebrow">{t.authEyebrow}</span>
           <h1>{mode==='login' ? t.authLoginTitle : mode==='register' ? t.authRegisterTitle : t.authResetTitle}</h1>
@@ -125,7 +125,7 @@ export function Auth() {
           )}
           {error && <ErrorBox message={error}/>}
           {sent ? (
-            <div className="success-note"><Check size={22}/><p>{t.authSentNote}</p></div>
+            <div className="success-note"><Check size={22} aria-hidden="true" /><p>{t.authSentNote}</p></div>
           ) : (
             <form onSubmit={submit}>
               {mode==='register' && (
@@ -148,14 +148,14 @@ export function Auth() {
               )}
               <button className="button button-green full-width" disabled={busy}>
                 {busy ? t.authButtonBusy : mode==='login' ? t.authButtonLogin : mode==='register' ? t.authButtonRegister : t.authButtonReset}
-                <ArrowRight size={18}/>
+                <ArrowRight size={18} aria-hidden="true" />
               </button>
             </form>
           )}
           <button className="text-button auth-switch" onClick={() => {setMode(mode==='reset'?'login':'reset');setError('');setSent(false)}}>
             {mode==='reset' ? t.authBackToLogin : t.authForgot}
           </button>
-          <div className="auth-safe"><LockKeyhole size={15}/>{t.authSafe}</div>
+          <div className="auth-safe"><LockKeyhole size={15} aria-hidden="true" />{t.authSafe}</div>
         </div>
       </div>
     </main>
@@ -263,7 +263,7 @@ export function Checkout() {
     <main className="container page">
       {storageWarning && <p className="error-box" role="status">{storageWarning}</p>}
       <div className="order-success">
-        <div className="success-icon"><Check size={34}/></div>
+        <div className="success-icon"><Check size={34} aria-hidden="true" /></div>
         <span className="eyebrow">{t.successEyebrow}</span>
         <h1>{t.successTitle}</h1>
         <p>Номер <strong>№ {success.number}</strong>. {t.successP}</p>
@@ -272,7 +272,7 @@ export function Checkout() {
           <strong>{money(success.total)}</strong>
           <small>{t.successPayNote}</small>
         </div>
-        <Link to="/account" className="button button-green">{t.successTrack} <ArrowRight size={17}/></Link>
+        <Link to="/account" className="button button-green">{t.successTrack} <ArrowRight size={17} aria-hidden="true" /></Link>
         <Link to="/catalog" className="text-link">{t.successBack}</Link>
       </div>
     </main>
@@ -280,7 +280,7 @@ export function Checkout() {
 
   return (
     <main className="container page">
-      <Link to="/cart" className="back-link"><ArrowLeft size={16}/>{t.checkoutBack}</Link>
+      <Link to="/cart" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t.checkoutBack}</Link>
       <h1>{t.checkoutTitle}</h1>
       {storageWarning && <p className="error-box" role="status">{storageWarning}</p>}
       {!cart.length ? <EmptyCart/> : (
@@ -295,7 +295,7 @@ export function Checkout() {
             <label>{t.checkoutAddress}<input required name="address" autoComplete="street-address" minLength={5} maxLength={500} value={address} onChange={e=>setAddress(e.target.value)} placeholder={t.checkoutAddressPl}/></label>
             <label>{t.checkoutComment} <span className="muted">{t.checkoutCommentOpt}</span><textarea value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)} placeholder={t.checkoutCommentPl} rows={3}/></label>
             <div className="delivery-note">
-              <Truck size={22}/>
+              <Truck size={22} aria-hidden="true" />
               <div>
                 <strong>{t.checkoutDeliveryNote}{settings ? money(settings.delivery_fee) : '…'}</strong>
                 <p>{t.checkoutDeliveryDemo}</p>
@@ -342,9 +342,9 @@ export function Checkout() {
             )}
             <button className="button button-green full-width" disabled={busy||refreshing||!catalogReady||recovery||!settings||(changed&&!reviewAccepted)||cart.some(x=>!x.product.is_available)}>
               {busy ? t.checkoutBtnBusy : refreshing ? t.checkoutBtnChecking : changed ? t.checkoutBtnUpdated : t.checkoutBtnConfirm}
-              <ArrowRight size={17}/>
+              <ArrowRight size={17} aria-hidden="true" />
             </button>
-            <p className="summary-note"><ShieldCheck size={16}/>{t.checkoutPayNote}</p>
+            <p className="summary-note"><ShieldCheck size={16} aria-hidden="true" />{t.checkoutPayNote}</p>
             <p className="checkout-legal-consent">
               {t.checkoutLegalNotice}{' '}
               <Link to="/terms" target="_blank">{t.footerTerms}</Link>{' '}

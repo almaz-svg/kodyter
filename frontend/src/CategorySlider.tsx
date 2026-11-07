@@ -56,7 +56,7 @@ export default function CategorySlider({categories}: {categories: Category[]}) {
      }}>
       <LazyImage src={category.image || fallbackImages[index % fallbackImages.length]} alt={category.name} width={160} height={160}/>
       <span className="category-slide-name">{category.name}</span>
-      <ArrowUpRight size={20} aria-hidden="true"/>
+      aria-hidden
      </Link>
     </li>)}
    </ul>
@@ -65,9 +65,9 @@ export default function CategorySlider({categories}: {categories: Category[]}) {
    <span>Листайте влево и вправо</span>
    <div>
     <button type="button" aria-label="Предыдущие категории" aria-controls={viewportId}
-     disabled={position.start} onClick={() => slide(-1)}><ArrowLeft size={19} aria-hidden="true"/></button>
+     disabled={position.start} onClick={() => slide(-1)}>aria-hidden</button>
     <button type="button" aria-label="Следующие категории" aria-controls={viewportId}
-     disabled={position.end} onClick={() => slide(1)}><ArrowRight size={19} aria-hidden="true"/></button>
+     disabled={position.end} onClick={() => slide(1)}>aria-hidden</button>
    </div>
   </div>}
  </div>;
