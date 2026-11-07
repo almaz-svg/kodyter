@@ -60,6 +60,8 @@ function Header() {
   }, [menu]);
 
   const account = roleHome(user?.role);
+  // Couriers work from the catalog and their own cabinet; shop pages and the cart are not part of their workflow.
+  const courier = user?.role === 'COURIER';
 
   async function logout() {
     try {
@@ -75,11 +77,12 @@ function Header() {
         <div className="container header-inner">
           <Logo />
           <nav className="desktop-nav" aria-label={t.navHome}>
-            <NavLink to="/">{t.navHome}</NavLink>
+            {!courier && <NavLink to="/">{t.navHome}</NavLink>}
             <NavLink to="/catalog">{t.navCatalog}</NavLink>
-            <NavLink to="/about">{t.navAbout}</NavLink>
-            <NavLink to="/delivery">{t.navDelivery}</NavLink>
-            <NavLink to="/contacts">{t.navContacts}</NavLink>
+            {!courier && <NavLink to="/about">{t.navAbout}</NavLink>}
+            {!courier && <NavLink to="/delivery">{t.navDelivery}</NavLink>}
+            {!courier && <NavLink to="/contacts">{t.navContacts}</NavLink>}
+            {courier && <NavLink to={account}>{t.navAccount}</NavLink>}
           </nav>
           <div className="header-actions">
             <Link to={user ? account : '/login'} className="icon-button account-link" aria-label={user ? t.navAccount : t.navLogin}>
@@ -90,11 +93,13 @@ function Header() {
                 <LogOut size={18} aria-hidden="true" />
               </button>
             )}
-            <Link to="/cart" className="header-cart" aria-label={t.cartCount(count)}>
-              <ShoppingBag size={21} aria-hidden="true" />
-              <span className="cart-label">{t.cartLabel}</span>
-              {count > 0 && <span className="cart-count">{count}</span>}
-            </Link>
+            {!courier && (
+              <Link to="/cart" className="header-cart" aria-label={t.cartCount(count)}>
+                <ShoppingBag size={21} aria-hidden="true" />
+                <span className="cart-label">{t.cartLabel}</span>
+                {count > 0 && <span className="cart-count">{count}</span>}
+              </Link>
+            )}
             <LangSwitcher />
             <button
               type="button"
@@ -133,26 +138,34 @@ function Header() {
         </div>
 
         <nav className="mobile-drawer-nav" aria-label="Мобильное меню">
-          <NavLink to="/" onClick={() => setMenu(false)}>
-            <span>{t.navHome}</span>
-            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
-          </NavLink>
+          {!courier && (
+            <NavLink to="/" onClick={() => setMenu(false)}>
+              <span>{t.navHome}</span>
+              <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
+            </NavLink>
+          )}
           <NavLink to="/catalog" onClick={() => setMenu(false)}>
             <span>{t.navCatalog}</span>
             <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
           </NavLink>
-          <NavLink to="/about" onClick={() => setMenu(false)}>
-            <span>{t.navAbout}</span>
-            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
-          </NavLink>
-          <NavLink to="/delivery" onClick={() => setMenu(false)}>
-            <span>{t.navDelivery}</span>
-            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
-          </NavLink>
-          <NavLink to="/contacts" onClick={() => setMenu(false)}>
-            <span>{t.navContacts}</span>
-            <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
-          </NavLink>
+          {!courier && (
+            <NavLink to="/about" onClick={() => setMenu(false)}>
+              <span>{t.navAbout}</span>
+              <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
+            </NavLink>
+          )}
+          {!courier && (
+            <NavLink to="/delivery" onClick={() => setMenu(false)}>
+              <span>{t.navDelivery}</span>
+              <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
+            </NavLink>
+          )}
+          {!courier && (
+            <NavLink to="/contacts" onClick={() => setMenu(false)}>
+              <span>{t.navContacts}</span>
+              <ArrowRight size={17} className="drawer-arrow" aria-hidden="true" />
+            </NavLink>
+          )}
 
           <div className="mobile-drawer-divider" />
 
@@ -192,6 +205,7 @@ function Header() {
 function Footer() {
   const {user, count} = useShop();
   const {t} = useI18n();
+  const courier = user?.role === 'COURIER';
   return (
     <>
       <footer className="site-footer">
@@ -220,16 +234,18 @@ function Footer() {
           </div>
         </div>
       </footer>
-      <nav className="bottom-nav" aria-label="Мобильная навигация">
-        <NavLink to="/"><House size={21} aria-hidden="true" /><span>{t.bottomHome}</span></NavLink>
+      <nav className={`bottom-nav ${courier ? 'bottom-nav-courier' : ''}`} aria-label="Мобильная навигация">
+        {!courier && <NavLink to="/"><House size={21} aria-hidden="true" /><span>{t.bottomHome}</span></NavLink>}
         <NavLink to="/catalog"><LayoutGrid size={21} aria-hidden="true" /><span>{t.bottomCatalog}</span></NavLink>
-        <NavLink to="/cart" aria-label={t.cartCount(count)}>
-          <span className="bottom-cart-icon">
-            <ShoppingBag size={21} aria-hidden="true" />
-            {count > 0 && <b className="bottom-cart-count">{count}</b>}
-          </span>
-          <span>{t.bottomCart}</span>
-        </NavLink>
+        {!courier && (
+          <NavLink to="/cart" aria-label={t.cartCount(count)}>
+            <span className="bottom-cart-icon">
+              <ShoppingBag size={21} aria-hidden="true" />
+              {count > 0 && <b className="bottom-cart-count">{count}</b>}
+            </span>
+            <span>{t.bottomCart}</span>
+          </NavLink>
+        )}
         <NavLink to={roleHome(user?.role)}>
           <UserRound size={21} aria-hidden="true" />
           <span>{t.bottomAccount}</span>

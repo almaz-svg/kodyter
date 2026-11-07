@@ -109,7 +109,7 @@ export function ProductPage() {
             <div className="buy-row">
               <Qty value={n} presets={[10,20,50,70]} onChange={v => setN(Math.max(1,v))}/>
               <button className="button button-green" disabled={!product.is_available} onClick={() => add(product,n)}>
-                <ShoppingBag size={18} aria-hidden="true" />{t.toCartBtn}
+                <ShoppingBag size={18} aria-hidden="true" />{product.is_available ? t.buy : t.outOfStock}
               </button>
             </div>
             <div className="detail-facts">
