@@ -26,7 +26,7 @@ function LangSwitcher() {
         onClick={() => setLang(next)}
         title={labels[next]}
       >
-        {labels[lang]}
+        <span key={lang} className="lang-label">{labels[lang]}</span>
       </button>
     </div>
   );
@@ -82,13 +82,6 @@ function Header() {
             <NavLink to="/contacts">{t.navContacts}</NavLink>
           </nav>
           <div className="header-actions">
-            <LangSwitcher />
-            {/* Cart FIRST, then Profile (swapped per spec) */}
-            <Link to="/cart" className="header-cart" aria-label={t.cartCount(count)}>
-              <ShoppingBag size={21} />
-              <span className="cart-label">{t.cartLabel}</span>
-              {count > 0 && <span className="cart-count">{count}</span>}
-            </Link>
             <Link to={user ? account : '/login'} className="icon-button account-link" aria-label={user ? t.navAccount : t.navLogin}>
               <UserRound size={21} />
             </Link>
@@ -97,6 +90,12 @@ function Header() {
                 <LogOut size={18} />
               </button>
             )}
+            <Link to="/cart" className="header-cart" aria-label={t.cartCount(count)}>
+              <ShoppingBag size={21} />
+              <span className="cart-label">{t.cartLabel}</span>
+              {count > 0 && <span className="cart-count">{count}</span>}
+            </Link>
+            <LangSwitcher />
             <button
               type="button"
               className={`icon-button menu-toggle ${menu ? 'is-active' : ''}`}
