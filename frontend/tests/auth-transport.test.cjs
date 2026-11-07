@@ -40,9 +40,9 @@ function harness(fetcher, { storageThrows = false } = {}) {
     'lucide-react': new Proxy({}, { get: () => 'icon' }),
     './ui': { Qty: 'qty', ErrorBox: 'error', Loading: 'loading' },
   };
-  function load(filename) {
+  function load(filename, suffix = '') {
     const exports = {};
-    vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(sourceRoot, filename), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText, {
+    vm.runInNewContext(ts.transpileModule(fs.readFileSync(path.join(sourceRoot, filename), 'utf8') + suffix, { compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX, target: ts.ScriptTarget.ES2022 } }).outputText, {
       exports, require: name => { if (!(name in modules)) throw new Error(`Unexpected import: ${name}`); return modules[name]; },
       fetch: fetcher, AbortController, DOMException, Headers, crypto: webcrypto,
       localStorage: storageApi, sessionStorage: storageApi,
@@ -55,6 +55,9 @@ function harness(fetcher, { storageThrows = false } = {}) {
   }
   const lib = modules['./lib'] = load('lib.ts');
   const store = modules['./store'] = load('store.tsx');
+  // The real Russian dictionary is used, so assertions match the text users see.
+  const i18n = load('i18n.tsx', '\nexports.ru = ru;');
+  modules['./i18n'] = { useI18n: () => ({ t: i18n.ru }) };
   const flow = load('ShopFlow.tsx');
   return {
     lib, store, flow, navigation, timers,
