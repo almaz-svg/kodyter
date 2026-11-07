@@ -42,7 +42,6 @@ export function Catalog() {
           <h1>{t.catalogTitle}</h1>
           <p>{t.catalogDesc}</p>
         </div>
-        <span className="catalog-flourish">Свежесть<br/>в каждой детали</span>
       </div>
       <div className="catalog-toolbar">
         <div className="filter-pills">
@@ -108,7 +107,7 @@ export function ProductPage() {
             <p className="detail-description">{product.description}</p>
             <div className="detail-price">{money(product.price)}</div>
             <div className="buy-row">
-              <Qty value={n} onChange={v => setN(Math.max(1,v))}/>
+              <Qty value={n} presets={[10,20,50,70]} onChange={v => setN(Math.max(1,v))}/>
               <button className="button button-green" disabled={!product.is_available} onClick={() => add(product,n)}>
                 <ShoppingBag size={18}/>{t.toCartBtn}
               </button>

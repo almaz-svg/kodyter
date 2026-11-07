@@ -258,7 +258,7 @@ const kz: Translations = {
   cartLabel:'Себет', cartCount:(n)=>`Себет, ${n} тауар`,
 
   heroEyebrow:'ДӘМ · ШАБЫТ · ДӘСТҮР',
-  heroH1Line1:'Авторлық', heroH1Line2:'кондитерлік', heroH1Brand:'Anasym',
+  heroH1Line1:'Анашым', heroH1Line2:'біріктіретін', heroH1Brand:'дәм',
   heroSubtitle:'Күн сайын жасалатын свежий нан-тоқаш,\nдесерттер және торттар.',
   heroButton:'Каталогты ашу', heroNote:'Жанымен дайындаймыз. Күн сайын.',
 
@@ -433,7 +433,7 @@ const ru: Translations = {
   cartLabel:'Корзина', cartCount:(n)=>`Корзина, ${n} товаров`,
 
   heroEyebrow:'ВКУС · ВДОХНОВЕНИЕ · ТРАДИЦИИ',
-  heroH1Line1:'Авторская', heroH1Line2:'кондитерская', heroH1Brand:'Anasym',
+  heroH1Line1:'Анашым', heroH1Line2:'вкус, который', heroH1Brand:'объединяет',
   heroSubtitle:'Свежая выпечка, десерты и торты,\nв которых чувствуется забота.',
   heroButton:'Открыть каталог', heroNote:'Готовим с душой. Каждый день.',
 
@@ -608,7 +608,7 @@ const en: Translations = {
   cartLabel:'Cart', cartCount:(n)=>`Cart, ${n} items`,
 
   heroEyebrow:'TASTE · INSPIRATION · TRADITION',
-  heroH1Line1:'Artisan', heroH1Line2:'Bakery', heroH1Brand:'Anasym',
+  heroH1Line1:'Anasym', heroH1Line2:'a taste that', heroH1Brand:'unites',
   heroSubtitle:'Fresh pastries, desserts and cakes\ncrafted with care every day.',
   heroButton:'Open Catalog', heroNote:'Made with soul. Every day.',
 

@@ -76,9 +76,6 @@ export default function Home() {
         </picture>
         <div className="hero-shade" />
         <div className="container hero-content">
-          <div className="eyebrow gold">
-            <span />{t.heroEyebrow}
-          </div>
           <AnimatedHeroText />
           <p className="hero-subtitle-anim">{t.heroSubtitle}</p>
           <Link to="/catalog" className="button button-gold hero-btn-anim">

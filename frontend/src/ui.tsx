@@ -124,13 +124,42 @@ export function ErrorBox({ message, retry }: { message: string; retry?: () => vo
   );
 }
 
-export function Qty({ value, onChange, label = 'Количество', increaseDisabled = false }: { value: number; onChange: (n: number) => void; label?: string; increaseDisabled?: boolean }) {
+export function Qty({ value, onChange, label = 'Количество', increaseDisabled = false, presets }: { value: number; onChange: (n: number) => void; label?: string; increaseDisabled?: boolean; presets?: number[] }) {
   const suffix = label === 'Количество' ? '' : `: ${label}`;
+  const [draft, setDraft] = useState(String(value));
+  useEffect(() => setDraft(String(value)), [value]);
+  function commit() {
+    const parsed = parseInt(draft, 10);
+    if (Number.isNaN(parsed)) { setDraft(String(value)); return; }
+    const next = Math.max(0, Math.min(99, parsed));
+    if (increaseDisabled && next > value) { setDraft(String(value)); return; }
+    setDraft(String(next));
+    if (next !== value) onChange(next);
+  }
   return (
-    <div className="qty" role="group" aria-label={label}>
-      <button type="button" aria-label={`Уменьшить количество${suffix}`} onClick={() => onChange(value - 1)}><Minus size={15} /></button>
-      <span aria-live="polite" aria-atomic="true">{value}</span>
-      <button type="button" aria-label={`Увеличить количество${suffix}`} disabled={value >= 99 || increaseDisabled} onClick={() => onChange(value + 1)}><Plus size={15} /></button>
+    <div className="qty-wrap">
+      {presets && (
+        <div className="qty-presets" role="group" aria-label="Популярное количество">
+          {presets.map(p => (
+            <button key={p} type="button" className={p === value ? 'active' : ''} disabled={increaseDisabled} onClick={() => onChange(p)}>{p}</button>
+          ))}
+        </div>
+      )}
+      <div className="qty" role="group" aria-label={label}>
+        <button type="button" aria-label={`Уменьшить количество${suffix}`} onClick={() => onChange(value - 1)}><Minus size={15} /></button>
+        <input
+          type="text"
+          inputMode="numeric"
+          pattern="[0-9]*"
+          aria-label={`Количество${suffix}`}
+          value={draft}
+          onChange={e => setDraft(e.target.value.replace(/\D/g, '').slice(0, 2))}
+          onFocus={e => e.target.select()}
+          onBlur={commit}
+          onKeyDown={e => { if (e.key === 'Enter') { commit(); e.currentTarget.blur(); } }}
+        />
+        <button type="button" aria-label={`Увеличить количество${suffix}`} disabled={value >= 99 || increaseDisabled} onClick={() => onChange(value + 1)}><Plus size={15} /></button>
+      </div>
     </div>
   );
 }
@@ -156,7 +185,7 @@ export function ProductCard({ product }: { product: Product }) {
           </div>
           {selected > 0 ? (
             <div className="product-purchase">
-              <Qty value={selected} label={product.name} increaseDisabled={!product.is_available} onChange={n => n < selected ? quantity(product.id, n) : add(product)} />
+              <Qty value={selected} label={product.name} increaseDisabled={!product.is_available} onChange={n => n < selected ? quantity(product.id, n) : add(product, n - selected)} />
               <Link to="/cart" className="product-cart-link">{t.toCart} <ArrowRight size={16} /></Link>
             </div>
           ) : (
