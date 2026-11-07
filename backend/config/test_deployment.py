@@ -96,3 +96,19 @@ class DeploymentSettingsTests(unittest.TestCase):
         with patch.dict(os.environ, environment, clear=True), patch('dotenv.load_dotenv', side_effect=import_developer_file):
             result = runpy.run_path(str(Path(__file__).with_name('settings.py')))
         self.assertEqual(result['DATABASES']['default']['NAME'], 'cloud_db')
+
+    def test_test_database_variable_is_used_under_manage_test(self):
+        # runpy reads sys.argv, which contains 'test' when this suite runs through manage.py.
+        result = self.settings(DATABASE_URL_TEST='postgresql://tester:test-only@localhost:5433/anasym_test', DATABASE_URL='postgresql://app:test-only@db.example/anasym')
+        self.assertEqual(result['DATABASES']['default']['NAME'], 'anasym_test')
+
+    def test_test_database_variable_must_name_a_test_database(self):
+        with self.assertRaises(ImproperlyConfigured):
+            self.settings(DATABASE_URL_TEST='postgresql://tester:test-only@localhost:5433/anasym')
+
+    def test_image_allowed_hosts_are_split_trimmed_and_lowercased(self):
+        result = self.settings(IMAGE_ALLOWED_HOSTS=' CDN.example.test, img.example.test ,')
+        self.assertEqual(result['IMAGE_ALLOWED_HOSTS'], ['cdn.example.test', 'img.example.test'])
+
+    def test_image_allowed_hosts_default_to_local_photos_only(self):
+        self.assertEqual(self.settings()['IMAGE_ALLOWED_HOSTS'], [])

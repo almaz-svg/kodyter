@@ -1,5 +1,6 @@
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError as DjangoValidationError
+from django.conf import settings
 from rest_framework import serializers
 import re
 from .models import User, Category, Product, Order, OrderItem, StatusHistory, Problem
@@ -74,16 +75,19 @@ class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = ['id', 'product_id', 'name', 'price', 'quantity', 'image']
+        read_only_fields = fields
 
 class StatusHistorySerializer(serializers.ModelSerializer):
     class Meta:
         model = StatusHistory
         fields = ['id', 'from_status', 'to_status', 'created_at', 'actor_name']
+        read_only_fields = fields
 
 class ProblemSerializer(serializers.ModelSerializer):
     class Meta:
         model = Problem
         fields = ['id', 'message', 'created_at', 'actor_name']
+        read_only_fields = fields
 
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
@@ -107,6 +111,7 @@ class AvailableItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
         fields = ['name', 'quantity']
+        read_only_fields = fields
 
 class AvailableOrderSerializer(serializers.ModelSerializer):
     items = AvailableItemSerializer(many=True, read_only=True)
@@ -118,6 +123,7 @@ class AvailableOrderSerializer(serializers.ModelSerializer):
     class Meta:
         model = Order
         fields = ['id', 'number', 'status', 'created_at', 'total', 'address', 'items_count', 'items']
+        read_only_fields = fields
 
 class PaymentRequestSerializer(serializers.Serializer):
     method = serializers.ChoiceField(choices=['CASH'])
@@ -125,8 +131,15 @@ class PaymentRequestSerializer(serializers.Serializer):
 
 class CheckoutItemSerializer(serializers.Serializer):
     product_id = serializers.IntegerField(min_value=1)
-    quantity = serializers.IntegerField(min_value=1, max_value=99)
+    # Whole number only: DRF rejects 1.5 and 'abc'. The maximum is read at validation time from settings.
+    quantity = serializers.IntegerField(min_value=1)
     expected_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
+
+    def validate_quantity(self, value):
+        limit = settings.MAX_ORDER_ITEM_QUANTITY
+        if value > limit:
+            raise serializers.ValidationError(f'Количество в одной позиции не может быть больше {limit}.')
+        return value
 
 class CheckoutSerializer(MarkupFreeMixin, serializers.Serializer):
     recipient_name = serializers.CharField(max_length=120)

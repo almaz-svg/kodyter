@@ -1,7 +1,7 @@
 import hashlib
 import json
 import re
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from django.conf import settings
 from django.db import transaction
 from django.db.models import Q, F, Value
@@ -104,6 +104,8 @@ class Orders(APIView):
             if product.price <= 0 or product.price != item['expected_price']:
                 raise Conflict('Цена товара изменилась. Обновите корзину и подтвердите новую сумму.')
             subtotal += product.price * item['quantity']
+        # Money is Decimal end to end; the sum is fixed to kopecks so storage never has to round it.
+        subtotal = subtotal.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         order = Order.objects.create(customer=actor, recipient_name=data['recipient_name'], phone=data['phone'], address=data['address'], comment=data['comment'], subtotal=subtotal, delivery_fee=settings.DELIVERY_FEE, total=subtotal + settings.DELIVERY_FEE, idempotency_key=data['idempotency_key'], request_fingerprint=fingerprint)
         OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=products[item['product_id']].price, image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
         StatusHistory.objects.create(order=order, from_status='', to_status='NEW', actor=actor, actor_name=actor.name)

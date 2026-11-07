@@ -51,7 +51,11 @@ AUTH_PASSWORD_VALIDATORS = [
     {'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator'},
     {'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator'},
 ]
-database_url = os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL', '')
+# Tests can run against a dedicated PostgreSQL server or database; the variable is read only under `manage.py test`.
+test_database_url = os.getenv('DATABASE_URL_TEST', '') if TESTING else ''
+if test_database_url and 'test' not in urlparse(test_database_url).path.lower():
+    raise ImproperlyConfigured('DATABASE_URL_TEST must name a database whose name contains "test".')
+database_url = test_database_url or os.getenv('DATABASE_URL') or os.getenv('POSTGRES_URL', '')
 if database_url:
     db = urlparse(database_url)
     if db.scheme not in ('postgres', 'postgresql'):
@@ -96,6 +100,8 @@ REST_FRAMEWORK = {
     'DEFAULT_THROTTLE_RATES': {'anon': '120/minute', 'user': '600/minute', 'auth': '60/hour'},
     'NUM_PROXIES': int(os.getenv('TRUSTED_PROXY_COUNT', '0')),
     'TEST_REQUEST_DEFAULT_FORMAT': 'json',
+    # Pagination is opt-in per request (?page_size=N); the server caps N, so one request cannot ask for everything.
+    'DEFAULT_PAGINATION_CLASS': 'shop.pagination.BoundedPageNumberPagination',
 }
 SESSION_COOKIE_HTTPONLY = True
 SESSION_COOKIE_NAME = os.getenv('SESSION_COOKIE_NAME', 'sessionid')
@@ -136,4 +142,8 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Anasym <noreply@example.in
 PASSWORD_RESET_TIMEOUT = 3600
 PASSWORD_RESET_ENABLED = os.getenv('PASSWORD_RESET_ENABLED', 'true').lower() == 'true'
 DELIVERY_FEE = Decimal(os.getenv('DELIVERY_FEE', '1500.00'))
+# Upper bound for one order line; the server enforces it, the client value is only a hint.
+MAX_ORDER_ITEM_QUANTITY = int(os.getenv('MAX_ORDER_ITEM_QUANTITY', '99'))
+# Hosts allowed for https photo links, comma-separated, exact names only. Empty means local photos only.
+IMAGE_ALLOWED_HOSTS = [host.strip().lower() for host in os.getenv('IMAGE_ALLOWED_HOSTS', '').split(',') if host.strip()]
 DEMO_MODE = os.getenv('DEMO_MODE', 'false').lower() == 'true'
