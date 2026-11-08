@@ -272,6 +272,8 @@ P1-09 (опрос), P1-10 (контраст), P2-01 (i18n), P2-02 (CSP), P2-03..
 - Риски: если Leaflet CSS нигде не загружается, карта сломается. Перед удалением проверить, что `main.tsx` импортирует `leaflet/dist/leaflet.css`. Это так [факт].
 - Приёмка: `npm run build` без предупреждения `@import must precede`; карта выглядит как раньше.
 - Побочный эффект: уменьшится внешний запрос к unpkg в `style-src`.
+- **Статус: выполнено 2026-11-08, не закоммичено.** Удалены строка `@import` и её комментарий. До правки: предупреждение `@import must precede all other statements` в сборке, и браузер не загружал unpkg-стили вообще (в запросах только `node_modules/leaflet/dist/leaflet.css`). После правки: предупреждения нет, стили контролов карты (`.leaflet-control-zoom-in`, `.map-container`, popup) и список запросов совпадают с базовой линией, запросов к unpkg нет. `tsc` без ошибок, `npm test` 26/26, `npm run build` проходит.
+- Открыто: в CSP (`deploy/security-headers.conf`) по-прежнему разрешён `unpkg.com` для `style-src` и `img-src`: иконки маркера карты в `MapSection.tsx` тоже грузятся оттуда. Это отдельная задача (P2-02 и связанная с ней).
 
 **P1-03 — Согласовать `DEMO_MODE` (BUG-03).**
 - Варианты: (а) `launch.ps1` выставляет `DEMO_MODE=true` в процессе при `-SeedDemo`; (б) README требует `DEMO_MODE=true` в `backend/.env`.
