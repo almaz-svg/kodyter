@@ -17,6 +17,10 @@ from .models import Order, OrderItem, Product, User, StatusHistory, Problem
 from .serializers import CheckoutSerializer, CustomerOrderSerializer, OrderSerializer
 from .security import lock_active_actor
 
+# The portals poll this list every few seconds, so every response is bounded. Older orders stay reachable through filters.
+DEFAULT_ORDER_LIST_LIMIT = 100
+MAX_ORDER_LIST_LIMIT = 500
+
 class Conflict(APIException):
     status_code = 409
     default_detail = 'Данные изменились. Обновите страницу и подтвердите действие ещё раз.'
@@ -76,7 +80,8 @@ class Orders(APIView):
                     orders = orders.annotate(phone_digits=phone_digits)
                     query |= Q(phone_digits__contains=digits)
             orders = orders.filter(query)
-        return Response(order_serializer_for(request.user)(orders, many=True).data)
+        limit = serializers.IntegerField(min_value=1, max_value=MAX_ORDER_LIST_LIMIT).run_validation(request.query_params.get('limit', DEFAULT_ORDER_LIST_LIMIT))
+        return Response(order_serializer_for(request.user)(orders[:limit], many=True).data)
 
     @transaction.atomic
     def post(self, request):
@@ -157,7 +162,9 @@ class Assign(APIView):
         if request.user.role != 'ADMIN':
             raise PermissionDenied('Назначение курьера доступно только администратору.')
         lock_active_actor(request.user, ('ADMIN',))
-        if order.status not in ('NEW', 'CONFIRMED', 'PREPARING', 'READY'):
+        # A blocked courier cannot finish a delivery, and an admin cannot advance it, so only reassignment can unblock the order.
+        courier_blocked = order.status in ('HANDED_OVER', 'IN_TRANSIT') and order.courier is not None and not order.courier.is_active
+        if order.status not in ('NEW', 'CONFIRMED', 'PREPARING', 'READY') and not courier_blocked:
             raise Conflict('После передачи курьеру или отмены переназначение недоступно.')
         courier_id = serializers.IntegerField(min_value=1).run_validation(request.data.get('courier_id'))
         courier = User.objects.select_for_update().filter(pk=courier_id, role='COURIER', is_active=True).first()

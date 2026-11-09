@@ -147,3 +147,16 @@ MAX_ORDER_ITEM_QUANTITY = int(os.getenv('MAX_ORDER_ITEM_QUANTITY', '99'))
 # Hosts allowed for https photo links, comma-separated, exact names only. Empty means local photos only.
 IMAGE_ALLOWED_HOSTS = [host.strip().lower() for host in os.getenv('IMAGE_ALLOWED_HOSTS', '').split(',') if host.strip()]
 DEMO_MODE = os.getenv('DEMO_MODE', 'false').lower() == 'true'
+# Django's default sends 500 tracebacks only to ADMINS when DEBUG is off; stderr reaches Docker and Vercel logs.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'plain': {'format': '{asctime} {levelname} {name}: {message}', 'style': '{'}},
+    'handlers': {'stderr': {'class': 'logging.StreamHandler', 'stream': 'ext://sys.stderr', 'formatter': 'plain'}},
+    'root': {'handlers': ['stderr'], 'level': 'WARNING'},
+    'loggers': {
+        'django': {'handlers': ['stderr'], 'level': 'INFO', 'propagate': False},
+        # Expected 4xx responses are not errors; 5xx responses are logged with their traceback.
+        'django.request': {'handlers': ['stderr'], 'level': 'ERROR', 'propagate': False},
+    },
+}

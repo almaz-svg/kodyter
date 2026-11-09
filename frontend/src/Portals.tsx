@@ -20,6 +20,10 @@ const isPortalDate = (value: string) => {
   return Number.isFinite(parsed.getTime()) && parsed.toISOString().slice(0, 10) === value;
 };
 
+// Match DEFAULT_ORDER_LIST_LIMIT and MAX_ORDER_LIST_LIMIT in backend/shop/order_views.py.
+const ORDER_PAGE_SIZE = 100;
+const MAX_ORDER_LIMIT = 500;
+
 function useRemote<T>(path: string | null, poll = false) {
   const [data, setData] = useState<T | null>(null);
   const [loading, setLoading] = useState(true);
@@ -167,7 +171,9 @@ function OrdersPanel({ user }: { user: User }) {
   const isCashier = user.role === 'CASHIER';
   const isStaff = isAdmin || isCourier || isCashier;
   const requestDate = isPortalDate(filters.date) ? filters.date : '';
+  const [orderLimit, setOrderLimit] = useState(ORDER_PAGE_SIZE);
   const params = new URLSearchParams(Object.entries({ ...filters, date: requestDate }).filter(([, value]) => value));
+  if (orderLimit > ORDER_PAGE_SIZE) params.set('limit', String(orderLimit));
   const remote = useRemote<Order[]>(`/orders/?${params.toString()}`, true);
   const available = useRemote<AvailableOrder[]>(isCourier ? '/courier/available-orders/' : null, true);
   const couriers = useRemote<User[]>(isAdmin ? '/admin/couriers/' : null, true);
@@ -179,7 +185,7 @@ function OrdersPanel({ user }: { user: User }) {
   const orders = isCourier ? allOrders.filter(order => terminal(order) === (view === 'history')) : allOrders;
   const active = allOrders.filter(order => !terminal(order)).length;
   const showAvailable = isCourier && view === 'available';
-  useEffect(() => { setSelected(null); }, [filters.status, filters.date, filters.courier, filters.search]);
+  useEffect(() => { setSelected(null); setOrderLimit(ORDER_PAGE_SIZE); }, [filters.status, filters.date, filters.courier, filters.search]);
   useEffect(() => { if (remote.data && selected !== null && !remote.data.some(order => order.id === selected)) setSelected(null); }, [remote.data, selected]);
   const updateFilter = (key: keyof typeof filters, value: string) => setFilters(current => ({ ...current, [key]: value }));
   const changeDate = (event: ChangeEvent<HTMLInputElement>) => {
@@ -262,7 +268,7 @@ function OrdersPanel({ user }: { user: User }) {
           <div className="portal-order-badges"><Status status={order.status} /><PaymentStatusLabel order={order} /></div>
           {isStaff && <p className="portal-order-recipient">{order.recipient_name}<span>{order.address}</span></p>}
           <div className="portal-order-card-bottom"><span>{order.items.reduce((sum, item) => sum + item.quantity, 0)} шт.</span><strong>{money(order.total)}</strong></div>
-        </button>) : <EmptyState icon={isCourier ? <Truck size={32} aria-hidden="true" /> : <ShoppingBag size={32} aria-hidden="true" />} title={isCourier ? view === 'history' ? 'Доставки ещё впереди' : 'Пока нет активных доставок' : isAdmin || isCashier ? 'Заказы не найдены' : 'Здесь будет ваша история'}>{isCourier ? view === 'history' ? 'Завершённые доставки появятся здесь.' : 'Откройте доступные заказы и примите подходящую доставку.' : isAdmin || isCashier ? 'Измените фильтры или дождитесь нового заказа.' : <>Выберите что-нибудь к чаю — и первый заказ появится здесь. <a href="/catalog">Перейти в каталог <ArrowRight size={15} aria-hidden="true" /></a></>}</EmptyState>}</div>
+        </button>) : <EmptyState icon={isCourier ? <Truck size={32} aria-hidden="true" /> : <ShoppingBag size={32} aria-hidden="true" />} title={isCourier ? view === 'history' ? 'Доставки ещё впереди' : 'Пока нет активных доставок' : isAdmin || isCashier ? 'Заказы не найдены' : 'Здесь будет ваша история'}>{isCourier ? view === 'history' ? 'Завершённые доставки появятся здесь.' : 'Откройте доступные заказы и примите подходящую доставку.' : isAdmin || isCashier ? 'Измените фильтры или дождитесь нового заказа.' : <>Выберите что-нибудь к чаю — и первый заказ появится здесь. <a href="/catalog">Перейти в каталог <ArrowRight size={15} aria-hidden="true" /></a></>}</EmptyState>}{allOrders.length >= orderLimit && orderLimit < MAX_ORDER_LIMIT && <button type="button" className="portal-text-button" onClick={() => setOrderLimit(limit => Math.min(limit + ORDER_PAGE_SIZE, MAX_ORDER_LIMIT))}>Показать ещё</button>}{allOrders.length >= MAX_ORDER_LIMIT && <p className="portal-help">Показаны последние {MAX_ORDER_LIMIT} заказов. Более ранние можно найти через фильтры.</p>}</div>
         {selected ? <OrderDetail key={selected} id={selected} user={user} couriers={couriers.data || []} onChange={refresh} onClose={() => setSelected(null)} /> : orders.length > 0 && <div className="portal-detail-placeholder"><ShoppingBag size={34} strokeWidth={1.3} aria-hidden="true" /><h3>Всё о вашем заказе</h3><p>Выберите заказ, чтобы увидеть состав, адрес и историю статусов.</p></div>}
       </div>}
     </>}
@@ -309,6 +315,7 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
     finally { mutationLock.current = false; setBusy(false); }
   };
   if (!order) return <article ref={detailRef} className="portal-card portal-order-detail"><div className="portal-section-title"><h3>Заказ</h3><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={19} aria-hidden="true" /></button></div>{remote.loading && <p role="status">Загружаем детали…</p>}<ErrorNotice message={remote.error} retry={remote.retry} /></article>;
+  const courierBlocked = ['HANDED_OVER', 'IN_TRANSIT'].includes(order.status) && order.courier_is_active === false;
   const isAdmin = user.role === 'ADMIN';
   const isCourier = user.role === 'COURIER';
   const isCashier = user.role === 'CASHIER';
@@ -324,7 +331,8 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
     {(isAdmin || isCourier || isCashier) && <div className="portal-order-actions"><ErrorNotice message={error} />{notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
       {(isAdmin || isCashier) && order.status === 'DELIVERED' && order.payment_status !== 'PAID' && (paymentConfirm ? <form className="portal-payment-confirm" onSubmit={event => { event.preventDefault(); paymentKey.current ||= crypto.randomUUID(); void mutate('payment', { method: 'CASH', idempotency_key: paymentKey.current }, 'Оплата наличными подтверждена. Сумма учтена в кассе.'); }}><h3>Подтвердите получение наличных</h3><p>За заказ №{order.number} получена полная сумма <strong>{money(order.total)}</strong>?</p><p className="portal-help">Сумма заказа фиксирована. Подтвердите только после получения денег.</p><div className="portal-form-actions"><button className="portal-button" disabled={busy}>{busy ? 'Сохраняем…' : 'Подтвердить получение'}<Banknote size={17} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setPaymentConfirm(false)}>Отмена</button></div></form> : <button type="button" className="portal-button portal-next" disabled={busy} onClick={() => { setPaymentConfirm(true); setError(''); setNotice(''); }}>Отметить оплату наличными<Banknote size={17} aria-hidden="true" /></button>)}
       {isCourier && ['NEW', 'CONFIRMED', 'PREPARING'].includes(order.status) && <p className="portal-waiting"><Clock3 size={19} aria-hidden="true" /><span>Заказ закреплён за вами. Ожидайте, пока пекарня подготовит его к выдаче.</span></p>}
-      {isAdmin && ['NEW', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status) && <form className="portal-assign" onSubmit={event => { event.preventDefault(); void mutate('assign', { courier_id: Number(courier) }, 'Курьер назначен.'); }}><label>Курьер<select disabled={busy} value={courier} onChange={event => { assignmentChanged.current = true; setCourier(event.target.value); }} required><option value="">Выберите курьера</option>{couriers.filter(person => person.is_active || person.id === order.courier).map(person => <option value={person.id} key={person.id} disabled={!person.is_active}>{person.name}{!person.is_active ? ' (заблокирован)' : ''}</option>)}</select></label><button className="portal-button portal-button-small" disabled={busy || !courier || Number(courier) === order.courier}>Назначить</button></form>}
+      {isAdmin && courierBlocked && <p className="portal-help">Курьер заблокирован. Назначьте другого курьера, чтобы завершить доставку.</p>}
+      {isAdmin && (courierBlocked || ['NEW', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status)) && <form className="portal-assign" onSubmit={event => { event.preventDefault(); void mutate('assign', { courier_id: Number(courier) }, 'Курьер назначен.'); }}><label>Курьер<select disabled={busy} value={courier} onChange={event => { assignmentChanged.current = true; setCourier(event.target.value); }} required><option value="">Выберите курьера</option>{couriers.filter(person => person.is_active || person.id === order.courier).map(person => <option value={person.id} key={person.id} disabled={!person.is_active}>{person.name}{!person.is_active ? ' (заблокирован)' : ''}</option>)}</select></label><button className="portal-button portal-button-small" disabled={busy || !courier || Number(courier) === order.courier}>Назначить</button></form>}
       {next && <button className="portal-button portal-next" disabled={busy || (next === 'HANDED_OVER' && !order.courier)} onClick={() => void mutate('transition', { status: next }, 'Статус заказа обновлён.')}>{busy ? 'Сохраняем…' : nextLabels[next]}<ArrowRight size={17} aria-hidden="true" /></button>}
       {next === 'HANDED_OVER' && !order.courier && <p className="portal-help">Для передачи заказа сначала назначьте курьера.</p>}
       {isAdmin && !terminal(order) && (cancel ? <form className="portal-form portal-cancel" onSubmit={event => { event.preventDefault(); if (reason.trim()) void mutate('transition', { status: 'CANCELLED', reason: reason.trim() }, 'Заказ отменён.'); }}><label>Причина отмены<textarea disabled={busy} value={reason} onChange={e => setReason(e.target.value)} required maxLength={2000} placeholder="Укажите причину — её увидит покупатель" /></label><div className="portal-form-actions"><button className="portal-button portal-button-danger" disabled={busy || !reason.trim()}>Подтвердить отмену</button><button className="portal-text-button" type="button" disabled={busy} onClick={() => setCancel(false)}>Не отменять</button></div></form> : <button className="portal-text-button portal-danger-text" disabled={busy} onClick={() => setCancel(true)}>Отменить заказ</button>)}
