@@ -3,11 +3,13 @@ import {Link} from 'react-router-dom';
 import {ArrowLeft, ArrowRight, ArrowUpRight} from 'lucide-react';
 import type {Category} from './lib';
 import {LazyImage} from './ui';
+import {useI18n} from './i18n';
 import './category-slider.css';
 
 const fallbackImages = ['/images/croissant.webp', '/images/cake.webp', '/images/tart.webp', '/images/buns.webp', '/images/catering.webp'];
 
 export default function CategorySlider({categories}: {categories: Category[]}) {
+ const {t} = useI18n();
  const viewport = useRef<HTMLDivElement>(null);
  const list = useRef<HTMLUListElement>(null);
  const viewportId = useId();
@@ -62,7 +64,7 @@ export default function CategorySlider({categories}: {categories: Category[]}) {
    </ul>
   </div>
   {position.overflow && <div className="category-slider-controls">
-   <span>Листайте влево и вправо</span>
+   <span>{t.sliderHint}</span>
    <div>
     <button type="button" aria-label="Предыдущие категории" aria-controls={viewportId}
      disabled={position.start} onClick={() => slide(-1)}><ArrowLeft size={19} aria-hidden="true"/></button>

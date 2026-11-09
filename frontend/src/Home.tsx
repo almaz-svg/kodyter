@@ -86,7 +86,7 @@ export default function Home() {
           </div>
         </div>
         <Branch className="hero-branch" />
-        <span className="hero-caption">Маленькие поводы для большого счастья</span>
+        <span className="hero-caption">{t.heroCaption}</span>
         <div className="hero-index"><span>01</span><i />Anasym</div>
       </section>
 

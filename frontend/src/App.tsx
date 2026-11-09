@@ -353,7 +353,7 @@ function Shell() {
 
   return (
     <>
-      <a className="skip-link" href="#main-content">Перейти к содержимому</a>
+      <a className="skip-link" href="#main-content">{t.skipToContent}</a>
       {!isAuthPage && <Header />}
       <div id="main-content">
         <Routes>
