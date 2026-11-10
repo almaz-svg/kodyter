@@ -1,5 +1,19 @@
 # Anasym website image sources
 
+## Update 2026-11-10: processed photo set
+
+All site photos were replaced with the 84 processed photos from the project folder `обработанные/`. The file names were kept, so existing references still resolve:
+
+- `hero.webp`: photo #32 (baguette), cropped to 16:9 and saved at 1672 × 941.
+- `croissant`, `cake`, `tart`, `buns`, `catering`, `baker` `.webp`: 512 × 512 crops of photos #05, #11, #06, #15, #79, #20.
+- `catalog/pdf-01…10-*.webp`: demo products from `backend/shop/data/pdf_catalog_20261017.json`, 800 × 800, photos #64, #16, #65, #82, #45, #49, #63, #77, #62, #35.
+- `catalog/card-01…48.webp` and `catalog/v2/card-01…05.webp`: overwritten with the remaining photos, 800 × 800.
+- `catalog/card-49…62.webp`: 14 new files. No product references them yet.
+
+The original generated images remain in git history.
+
+## Original generation (2026-10-15)
+
 Created 2026-10-15 with the built-in image_gen tool. All final assets are generated editorial bakery imagery; no external stock service or remote runtime image dependency is used. The provided phone/laptop references informed only the palette and subject styling, and are not embedded or copied into these images.
 
 ## Assets
