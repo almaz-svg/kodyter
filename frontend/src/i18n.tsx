@@ -124,6 +124,15 @@ export interface Translations {
   authTabRegister: string;
   authName: string;
   authNamePlaceholder: string;
+  authAccountType: string;
+  authAccountIndividual: string;
+  authAccountBusiness: string;
+  authCompanyName: string;
+  authCompanyNamePlaceholder: string;
+  authBusinessNote: string;
+  wholesaleFrom: (n: number, price: string) => string;
+  wholesaleAddMore: (n: number, price: string) => string;
+  wholesaleApplied: string;
   authEmail: string;
   authPassword: string;
   authPasswordPlaceholder: string;
@@ -341,6 +350,7 @@ const kz: Translations = {
   authCheckoutSub:'Тапсырыс рәсімдеу үшін кіріңіз. Таңдалғанның бәрі себетте сақталды.',
   authTabLogin:'Кіру', authTabRegister:'Тіркелу',
   authName:'Атыңыз', authNamePlaceholder:'Қалай хабарласуға болады',
+  authAccountType:'Аккаунт түрі', authAccountIndividual:'Жеке тұлға', authAccountBusiness:'Мекеме (кафе, мейрамхана, дүкен)', authCompanyName:'Мекеменің атауы', authCompanyNamePlaceholder:'Мысалы, «Анасым» кафесі', authBusinessNote:'Көтерме баға әкімші өтінімді тексергеннен кейін ашылады.', wholesaleFrom:(n,p)=>`${n} данадан бастап көтерме баға: ${p}`, wholesaleAddMore:(n,p)=>`Тағы ${n} дана қосыңыз — баға ${p} болады`, wholesaleApplied:'Көтерме баға қолданылды',
   authEmail:'Электрондық пошта',
   authPassword:'Құпия сөз',
   authPasswordPlaceholder:'Құпия сөзді енгізіңіз',
@@ -516,6 +526,7 @@ const ru: Translations = {
   authCheckoutSub:'Войдите, чтобы оформить заказ. Всё выбранное сохранено в корзине.',
   authTabLogin:'Войти', authTabRegister:'Регистрация',
   authName:'Ваше имя', authNamePlaceholder:'Как к вам обращаться',
+  authAccountType:'Тип аккаунта', authAccountIndividual:'Физическое лицо', authAccountBusiness:'Заведение (кафе, ресторан, магазин)', authCompanyName:'Название заведения', authCompanyNamePlaceholder:'Например, кафе «Anasym»', authBusinessNote:'Оптовые цены откроются после проверки заявки администратором.', wholesaleFrom:(n,p)=>`От ${n} шт. — оптовая цена ${p}`, wholesaleAddMore:(n,p)=>`Добавьте ещё ${n} шт. — и цена станет ${p}`, wholesaleApplied:'Оптовая цена применена',
   authEmail:'Электронная почта',
   authPassword:'Пароль',
   authPasswordPlaceholder:'Введите пароль',
@@ -691,6 +702,7 @@ const en: Translations = {
   authCheckoutSub:'Sign in to complete your order. Everything in your cart is saved.',
   authTabLogin:'Sign in', authTabRegister:'Register',
   authName:'Your name', authNamePlaceholder:'What should we call you?',
+  authAccountType:'Account type', authAccountIndividual:'Individual', authAccountBusiness:'Business (café, restaurant, shop)', authCompanyName:'Business name', authCompanyNamePlaceholder:'For example, Café Anasym', authBusinessNote:'Wholesale prices open after the administrator reviews the application.', wholesaleFrom:(n,p)=>`From ${n} units — wholesale price ${p}`, wholesaleAddMore:(n,p)=>`Add ${n} more — the price becomes ${p}`, wholesaleApplied:'Wholesale price applied',
   authEmail:'Email address',
   authPassword:'Password',
   authPasswordPlaceholder:'Enter password',

@@ -30,14 +30,24 @@ class PartialUpdateMixin:
 class UserSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'phone', 'role', 'is_active']
-        read_only_fields = ['id', 'email', 'role', 'is_active']
+        fields = ['id', 'name', 'email', 'phone', 'role', 'is_active', 'account_type', 'company_name', 'business_approved']
+        # The account type is chosen at registration only, and approval is set only by an administrator.
+        read_only_fields = ['id', 'email', 'role', 'is_active', 'account_type', 'company_name', 'business_approved']
+
+class BusinessAccountSerializer(serializers.ModelSerializer):
+    """Admin view of business accounts. Only `business_approved` can be written."""
+    class Meta:
+        model = User
+        fields = ['id', 'name', 'email', 'phone', 'company_name', 'business_approved']
+        read_only_fields = ['id', 'name', 'email', 'phone', 'company_name']
 
 class RegisterSerializer(MarkupFreeMixin, serializers.Serializer):
     name = serializers.CharField(max_length=120)
     email = serializers.EmailField(max_length=254)
     phone = serializers.CharField(max_length=30, required=False, allow_blank=True)
     password = serializers.CharField(write_only=True, max_length=128, trim_whitespace=False)
+    account_type = serializers.ChoiceField(choices=User.AccountType.choices, default=User.AccountType.INDIVIDUAL)
+    company_name = serializers.CharField(max_length=160, required=False, allow_blank=True, default='')
 
     def validate_email(self, value):
         value = value.lower()
@@ -47,6 +57,8 @@ class RegisterSerializer(MarkupFreeMixin, serializers.Serializer):
 
     def validate(self, data):
         data = super().validate(data)
+        if data['account_type'] == User.AccountType.BUSINESS and not data.get('company_name', '').strip():
+            raise serializers.ValidationError({'company_name': 'Укажите название заведения.'})
         try:
             validate_password(data['password'], User(email=data['email'], name=data['name']))
         except DjangoValidationError as exc:
@@ -60,11 +72,43 @@ class CategorySerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelS
         extra_kwargs = {'image': {'validators': [validate_image_reference]}}
 
 class ProductSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
+    """Admin view and input: `price` is the retail price, `wholesale_price` is the business price."""
     price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
+    wholesale_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'), required=False, allow_null=True)
+
     class Meta:
         model = Product
-        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible']
+        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible']
         extra_kwargs = {'image': {'validators': [validate_image_reference]}}
+
+    def validate(self, attrs):
+        attrs = super().validate(attrs)
+        price = attrs.get('price', self.instance.price if self.instance else None)
+        wholesale = attrs.get('wholesale_price', self.instance.wholesale_price if self.instance else None)
+        if wholesale is not None and price is not None and wholesale > price:
+            raise serializers.ValidationError({'wholesale_price': 'Оптовая цена не может быть выше розничной.'})
+        return attrs
+
+class PublicProductSerializer(serializers.ModelSerializer):
+    """Catalog view for every visitor. `price` is what this visitor pays; `retail_price` is the list price.
+    Wholesale prices are never sent to the public. The list price is always retail: wholesale depends on the quantity in the
+    order, which the catalog does not know. Only an approved business sees the offer next to the retail price."""
+    price = serializers.DecimalField(max_digits=10, decimal_places=2, read_only=True)
+    retail_price = serializers.DecimalField(source='price', max_digits=10, decimal_places=2, read_only=True)
+
+    class Meta:
+        model = Product
+        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'retail_price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible']
+        read_only_fields = fields
+
+    def to_representation(self, product):
+        data = super().to_representation(product)
+        user = getattr(self.context.get('request'), 'user', None)
+        approved = getattr(user, 'account_type', None) == User.AccountType.BUSINESS and getattr(user, 'business_approved', False)
+        if approved and product.wholesale_price is not None:
+            data['wholesale_price'] = format(product.wholesale_price, '.2f')
+            data['wholesale_min_qty'] = settings.WHOLESALE_MIN_QTY
+        return data
 
 class CourierUpdateSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
     class Meta:

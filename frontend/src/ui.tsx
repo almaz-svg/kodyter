@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ImgHTMLAttributes } from 'react';
 import { ArrowRight, Minus, Plus, LoaderCircle, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { money } from './lib';
+import { money, unitPrice } from './lib';
 import type { Product } from './lib';
 import { useShop } from './store';
 import { useI18n } from './i18n';
@@ -166,6 +166,22 @@ export function Qty({ value, onChange, label = 'Количество', increaseD
   );
 }
 
+/** The price this line pays at `quantity` units. An approved business sees the wholesale offer as a hint next to it. */
+export function PriceTag({ product, quantity }: { product: Product; quantity?: number }) {
+  const { t } = useI18n();
+  const offer = product.wholesale_price;
+  const min = product.wholesale_min_qty;
+  if (offer == null || min == null) return <strong>{money(product.price)}</strong>;
+  const units = quantity ?? 0;
+  const hint = units >= min ? t.wholesaleApplied : units > 0 ? t.wholesaleAddMore(min - units, money(offer)) : t.wholesaleFrom(min, money(offer));
+  return (
+    <span className="price-tag-wrap">
+      <strong>{money(unitPrice(product, units))}</strong>
+      <small className="price-offer">{hint}</small>
+    </span>
+  );
+}
+
 export function ProductCard({ product }: { product: Product }) {
   const { add, cart, quantity } = useShop();
   const { t } = useI18n();
@@ -182,7 +198,7 @@ export function ProductCard({ product }: { product: Product }) {
         <p>{product.description}</p>
         <div className="product-bottom">
           <div className="product-price-row">
-            <strong>{money(product.price)}</strong>
+            <PriceTag product={product} quantity={selected} />
             <span className="product-selected">{selected ? t.inCart(selected) : t.perItem}</span>
           </div>
           {selected > 0 ? (

@@ -2,9 +2,18 @@ export type Role = 'CUSTOMER'|'ADMIN'|'COURIER'|'CASHIER';
 const roleRoutes:Record<Role,string> = {CUSTOMER:'/account',ADMIN:'/admin',COURIER:'/courier',CASHIER:'/cashier'};
 export const roleHome=(role?:Role|null)=>role?roleRoutes[role]:'/account';
 export type PaymentStatus = 'UNPAID'|'PAID';
-export interface User {id:number;name:string;email:string;phone:string;role:Role;is_active:boolean}
+export type AccountType = 'INDIVIDUAL'|'BUSINESS';
+export interface User {id:number;name:string;email:string;phone:string;role:Role;is_active:boolean;account_type?:AccountType;company_name?:string;business_approved?:boolean}
+/** Unit price for `quantity` units of this product in one order. The server sends wholesale fields only to approved businesses. */
+export function unitPrice(product: Product, quantity: number): number {
+  const offer = product.wholesale_price;
+  const min = product.wholesale_min_qty;
+  if (offer != null && min != null && quantity >= min) return Number(offer);
+  return Number(product.price);
+}
+
 export interface Category {id:number;name:string;slug:string;description:string;image:string;is_visible:boolean}
-export interface Product {id:number;category:number;name:string;description:string;image:string;price:number|string;weight:string;ingredients:string;allergens:string;is_available:boolean;is_visible:boolean}
+export interface Product {id:number;category:number;name:string;description:string;image:string;price:number|string;retail_price?:number|string;wholesale_price?:number|string|null;wholesale_min_qty?:number;weight:string;ingredients:string;allergens:string;is_available:boolean;is_visible:boolean}
 export interface Order {id:number;number:string;created_at:string;status:string;recipient_name:string;phone:string;address:string;comment:string;subtotal:number|string;delivery_fee:number|string;total:number|string;courier:number|null;courier_name:string|null;cancellation_reason:string;payment_status?:PaymentStatus;paid_at?:string|null;paid_by?:number|null;paid_by_name?:string|null;items:{id:number;product_id:number;name:string;price:number|string;quantity:number;image:string}[];status_history:{id:number;from_status:string|null;to_status:string;created_at:string;actor_name?:string}[];problems:{id:number;message:string;created_at:string;actor_name?:string}[]}
 export interface AdminOverview {new:number;unassigned:number;on_the_way:number;unpaid_delivered:number}
 export interface CashierSummary {date:string;currency:'KZT';cash_received:number|string;paid_count:number;unpaid_delivered_total:number|string;unpaid_delivered_count:number}

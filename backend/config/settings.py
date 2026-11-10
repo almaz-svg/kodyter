@@ -144,6 +144,8 @@ PASSWORD_RESET_ENABLED = os.getenv('PASSWORD_RESET_ENABLED', 'true').lower() == 
 DELIVERY_FEE = Decimal(os.getenv('DELIVERY_FEE', '1500.00'))
 # Upper bound for one order line; the server enforces it, the client value is only a hint.
 MAX_ORDER_ITEM_QUANTITY = int(os.getenv('MAX_ORDER_ITEM_QUANTITY', '99'))
+# A wholesale price applies to a product only from this many units of that product in one order.
+WHOLESALE_MIN_QTY = int(os.getenv('WHOLESALE_MIN_QTY', '10'))
 # Hosts allowed for https photo links, comma-separated, exact names only. Empty means local photos only.
 IMAGE_ALLOWED_HOSTS = [host.strip().lower() for host in os.getenv('IMAGE_ALLOWED_HOSTS', '').split(',') if host.strip()]
 DEMO_MODE = os.getenv('DEMO_MODE', 'false').lower() == 'true'

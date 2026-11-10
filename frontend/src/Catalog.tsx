@@ -4,7 +4,7 @@ import {ArrowLeft,ArrowRight,Search,ShoppingBag,Leaf,Truck} from 'lucide-react';
 import {api,money} from './lib';
 import type {Product,Category} from './lib';
 import {useShop} from './store';
-import {ProductCard,Loading,ErrorBox,Qty,CatalogCartSummary,LazyImage} from './ui';
+import {ProductCard,PriceTag,Loading,ErrorBox,Qty,CatalogCartSummary,LazyImage} from './ui';
 import {useI18n} from './i18n';
 
 export function Catalog() {
@@ -105,7 +105,7 @@ export function ProductPage() {
               {product.is_available ? 'В наличии' : 'Временно недоступно'}{product.weight?` · ${product.weight}`:''}
             </span>
             <p className="detail-description">{product.description}</p>
-            <div className="detail-price">{money(product.price)}</div>
+            <div className="detail-price"><PriceTag product={product} quantity={n} /></div>
             <div className="buy-row">
               <Qty value={n} presets={[10,20,50,70]} onChange={v => setN(Math.max(1,v))}/>
               <button className="button button-green" disabled={!product.is_available} onClick={() => add(product,n)}>

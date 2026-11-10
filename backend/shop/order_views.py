@@ -100,18 +100,23 @@ class Orders(APIView):
         ids = [item['product_id'] for item in items]
         products = {p.pk: p for p in Product.objects.select_related('category').select_for_update().filter(pk__in=ids).order_by('pk')}
         subtotal = Decimal('0.00')
+        unit_prices = {}
         for item in items:
             product = products.get(item['product_id'])
             if not product or not product.is_visible or not product.category.is_visible or not product.is_available:
                 raise Conflict('Один из товаров больше недоступен. Обновите корзину перед оформлением.')
-            # Server prices are authoritative; a zero or negative price is never orderable.
-            if product.price <= 0 or product.price != item['expected_price']:
+            # Server prices are authoritative. The unit price depends on the buyer's account and on this line's quantity:
+            # wholesale only for an approved business and only from WHOLESALE_MIN_QTY units of this product.
+            # A zero or negative price is never orderable.
+            unit = product.price_for(actor, item['quantity'])
+            if unit <= 0 or unit != item['expected_price']:
                 raise Conflict('Цена товара изменилась. Обновите корзину и подтвердите новую сумму.')
-            subtotal += product.price * item['quantity']
+            unit_prices[item['product_id']] = unit
+            subtotal += unit * item['quantity']
         # Money is Decimal end to end; the sum is fixed to kopecks so storage never has to round it.
         subtotal = subtotal.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         order = Order.objects.create(customer=actor, recipient_name=data['recipient_name'], phone=data['phone'], address=data['address'], comment=data['comment'], subtotal=subtotal, delivery_fee=settings.DELIVERY_FEE, total=subtotal + settings.DELIVERY_FEE, idempotency_key=data['idempotency_key'], request_fingerprint=fingerprint)
-        OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=products[item['product_id']].price, image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
+        OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=unit_prices[item['product_id']], image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
         StatusHistory.objects.create(order=order, from_status='', to_status='NEW', actor=actor, actor_name=actor.name)
         return order_response(order, request.user, status=201)
 

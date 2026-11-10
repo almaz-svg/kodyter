@@ -7,7 +7,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Category, Product, User
 from .security import IsAdmin
-from .serializers import CategorySerializer, ProductSerializer, RegisterSerializer, UserSerializer, CourierUpdateSerializer
+from .serializers import BusinessAccountSerializer, CategorySerializer, ProductSerializer, PublicProductSerializer, RegisterSerializer, UserSerializer, CourierUpdateSerializer
 
 class Categories(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -16,7 +16,7 @@ class Categories(generics.ListAPIView):
 
 class Products(generics.ListAPIView):
     permission_classes = [AllowAny]
-    serializer_class = ProductSerializer
+    serializer_class = PublicProductSerializer
 
     def get_queryset(self):
         products = Product.objects.filter(is_visible=True, category__is_visible=True)
@@ -30,7 +30,7 @@ class Products(generics.ListAPIView):
 
 class ProductDetail(generics.RetrieveAPIView):
     permission_classes = [AllowAny]
-    serializer_class = ProductSerializer
+    serializer_class = PublicProductSerializer
     queryset = Product.objects.filter(is_visible=True, category__is_visible=True)
 
 class StoreSettings(APIView):
@@ -106,3 +106,16 @@ class AdminCashiers(AdminCouriers):
 
 class AdminCashier(AdminCourier):
     queryset = User.objects.filter(role='CASHIER')
+
+class AdminBusinesses(generics.ListAPIView):
+    """Business ('заведение') accounts with their approval state, for the administrator to review."""
+    permission_classes = [IsAdmin]
+    serializer_class = BusinessAccountSerializer
+    queryset = User.objects.filter(account_type=User.AccountType.BUSINESS).order_by('company_name', 'id')
+
+class AdminBusiness(generics.UpdateAPIView):
+    """Approve or revoke wholesale prices. Non-business accounts are not found here."""
+    permission_classes = [IsAdmin]
+    serializer_class = BusinessAccountSerializer
+    queryset = User.objects.filter(account_type=User.AccountType.BUSINESS)
+    http_method_names = ['patch', 'options']

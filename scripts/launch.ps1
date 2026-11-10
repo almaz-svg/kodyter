@@ -60,6 +60,7 @@ $postgresRecord = $null
 $oldDatabaseUrl = [Environment]::GetEnvironmentVariable('DATABASE_URL', 'Process')
 $oldUseSqlite = [Environment]::GetEnvironmentVariable('USE_SQLITE', 'Process')
 $oldApiTarget = [Environment]::GetEnvironmentVariable('ANASYM_API_TARGET', 'Process')
+$oldDemoMode = [Environment]::GetEnvironmentVariable('DEMO_MODE', 'Process')
 $oldFrontendUrl = [Environment]::GetEnvironmentVariable('FRONTEND_URL', 'Process')
 $oldSessionCookie = [Environment]::GetEnvironmentVariable('SESSION_COOKIE_NAME', 'Process')
 $oldCsrfCookie = [Environment]::GetEnvironmentVariable('CSRF_COOKIE_NAME', 'Process')
@@ -96,6 +97,8 @@ try {
             }
         }
     }
+    # seed_demo refuses to run unless DEMO_MODE=true. Set it for this launch only, so backend/.env keeps its value.
+    if ($SeedDemo) { $env:DEMO_MODE = 'true' }
     Push-Location (Join-Path $projectRoot 'backend')
     try {
         & $PythonExecutable manage.py migrate --noinput
@@ -143,6 +146,7 @@ try {
     [Environment]::SetEnvironmentVariable('FRONTEND_URL', $oldFrontendUrl, 'Process')
     [Environment]::SetEnvironmentVariable('SESSION_COOKIE_NAME', $oldSessionCookie, 'Process')
     [Environment]::SetEnvironmentVariable('CSRF_COOKIE_NAME', $oldCsrfCookie, 'Process')
+    [Environment]::SetEnvironmentVariable('DEMO_MODE', $oldDemoMode, 'Process')
 }
 } finally {
     if ($ownsLaunchMutex) { $launchMutex.ReleaseMutex() }

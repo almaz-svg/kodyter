@@ -1,6 +1,6 @@
 import {createContext,useCallback,useContext,useEffect,useState} from 'react';
 import type {ReactNode} from 'react';
-import {api,ApiError,getAuthRevision,markAuthChanged,onAuthExpired} from './lib';
+import {api,ApiError,getAuthRevision,markAuthChanged,onAuthExpired,unitPrice} from './lib';
 import type {Product,User} from './lib';
 export interface CartItem {product:Product;quantity:number}
 interface Settings {currency:string;delivery_fee:number|string;demo_mode:boolean;payment_method:string}
@@ -26,9 +26,26 @@ export function ShopProvider({children}:{children:ReactNode}){
   return()=>{alive=false;controller.abort();unsubscribe();};
  },[]);
  useEffect(()=>{try{localStorage.setItem('anasym-cart',JSON.stringify(cart));}catch{reportStorageFailure();}},[cart,reportStorageFailure]);
+ // Prices depend on the account (retail for guests and individuals, wholesale for approved businesses). When the account
+ // changes, re-read the products in the cart so the displayed prices match what the server will charge. Quantities stay.
+ const priceKey = user ? `${user.id}:${user.account_type ?? ''}:${user.business_approved ? 'approved' : 'pending'}` : 'guest';
+ useEffect(()=>{
+  let alive = true;
+  const ids = [...new Set(cart.map(item => item.product.id))];
+  if (!ids.length) return;
+  Promise.all(ids.map(id => api<Product>(`/products/${id}/`).then(product => [id, product] as const, () => null)))
+   .then(pairs => {
+    if (!alive) return;
+    const fresh = new Map(pairs.filter((pair): pair is readonly [number, Product] => pair !== null));
+    setCart(current => current.map(item => fresh.has(item.product.id) ? {...item, product: fresh.get(item.product.id)!} : item));
+   });
+  return () => {alive = false;};
+  // The cart is read once per account change; it is not a dependency on purpose.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+ },[priceKey]);
  useEffect(()=>{if(toast){const timer=setTimeout(()=>setToast(''),3500);return()=>clearTimeout(timer)}},[toast]);
  const add=(product:Product,n=1)=>{if(!product.is_available)return;setCart(current=>{const found=current.find(x=>x.product.id===product.id);return found?current.map(x=>x.product.id===product.id?{product,quantity:Math.min(99,x.quantity+n)}:x):[...current,{product,quantity:n}]});setToast('Добавлено в корзину');};
  const quantity=(id:number,n:number)=>setCart(current=>n<=0?current.filter(x=>x.product.id!==id):current.map(x=>x.product.id===id?{...x,quantity:Math.min(99,n)}:x));
- return <Context.Provider value={{user,setUser,authLoading,authError,cart,add,quantity,replaceCart:setCart,clear:()=>setCart([]),count:cart.reduce((s,x)=>s+x.quantity,0),total:cart.reduce((s,x)=>s+Number(x.product.price)*x.quantity,0),settings,settingsError,refreshSettings,notice:setToast,storageWarning,reportStorageFailure}}>{children}{toast&&<div className="toast" role="status">{toast}</div>}</Context.Provider>;
+ return <Context.Provider value={{user,setUser,authLoading,authError,cart,add,quantity,replaceCart:setCart,clear:()=>setCart([]),count:cart.reduce((s,x)=>s+x.quantity,0),total:cart.reduce((s,x)=>s+unitPrice(x.product,x.quantity)*x.quantity,0),settings,settingsError,refreshSettings,notice:setToast,storageWarning,reportStorageFailure}}>{children}{toast&&<div className="toast" role="status">{toast}</div>}</Context.Provider>;
 }
 export const useShop=()=>useContext(Context);

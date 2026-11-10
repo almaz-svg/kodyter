@@ -1,4 +1,5 @@
 import uuid
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 from django.db import models
 from django.db.models.functions import Lower
@@ -21,11 +22,20 @@ class User(AbstractUser):
         COURIER = 'COURIER', 'Курьер'
         CASHIER = 'CASHIER', 'Кассир'
 
+    class AccountType(models.TextChoices):
+        # Chosen at registration. A business ('заведение') pays the wholesale price where one is set.
+        INDIVIDUAL = 'INDIVIDUAL', 'Физическое лицо'
+        BUSINESS = 'BUSINESS', 'Заведение'
+
     username = None
     email = models.EmailField(unique=True)
     name = models.CharField(max_length=120)
     phone = models.CharField(max_length=30, blank=True)
     role = models.CharField(max_length=10, choices=Role.choices, default=Role.CUSTOMER)
+    account_type = models.CharField(max_length=10, choices=AccountType.choices, default=AccountType.INDIVIDUAL)
+    company_name = models.CharField(max_length=160, blank=True)
+    # Set only by an administrator. A business gets wholesale prices after approval, not at registration.
+    business_approved = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
     objects = UserManager()
@@ -49,15 +59,29 @@ class Product(models.Model):
     description = models.TextField(blank=True)
     image = models.CharField(max_length=500, blank=True)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    # Optional wholesale price for business accounts. Empty means business customers pay the retail price.
+    wholesale_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     weight = models.CharField(max_length=80, blank=True)
     ingredients = models.TextField(blank=True)
     allergens = models.TextField(blank=True)
     is_available = models.BooleanField(default=True)
     is_visible = models.BooleanField(default=True)
 
+    def price_for(self, user, quantity=1):
+        """Unit price this user pays for `quantity` units of this product in one order.
+        Wholesale needs an approved business account, a wholesale price, and at least WHOLESALE_MIN_QTY units of this product.
+        The count is per product: units of different products are never added together."""
+        is_approved_business = getattr(user, 'account_type', None) == User.AccountType.BUSINESS and getattr(user, 'business_approved', False)
+        if is_approved_business and self.wholesale_price is not None and quantity >= settings.WHOLESALE_MIN_QTY:
+            return self.wholesale_price
+        return self.price
+
     class Meta:
         ordering = ['id']
-        constraints = [models.CheckConstraint(condition=models.Q(price__gte=0), name='product_price_nonnegative')]
+        constraints = [
+            models.CheckConstraint(condition=models.Q(price__gte=0), name='product_price_nonnegative'),
+            models.CheckConstraint(condition=models.Q(wholesale_price__isnull=True) | models.Q(wholesale_price__gte=0), name='product_wholesale_price_nonnegative'),
+        ]
 
 def order_number():
     return 'AN-' + uuid.uuid4().hex[:12].upper()

@@ -2,10 +2,10 @@ import {useEffect,useState} from 'react';
 import type {FormEvent} from 'react';
 import {Link,useNavigate,useSearchParams} from 'react-router-dom';
 import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,LockKeyhole} from 'lucide-react';
-import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey} from './lib';
-import type {Product,Order,User} from './lib';
+import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey,unitPrice} from './lib';
+import type {Product,Order,User,AccountType} from './lib';
 import {useShop} from './store';
-import {Qty,ErrorBox,Loading,LazyImage} from './ui';
+import {Qty,ErrorBox,Loading,LazyImage,PriceTag} from './ui';
 import {useI18n} from './i18n';
 
 /* ── Cart ─────────────────────────────────────────────────────────────── */
@@ -27,11 +27,11 @@ export function Cart() {
                 <Link to={`/product/${p.id}`}><LazyImage src={p.image} alt={p.name}/></Link>
                 <div className="cart-info">
                   <Link to={`/product/${p.id}`}><h3>{p.name}</h3></Link>
-                  <span>{money(p.price)}{p.weight ? ` · ${p.weight}` : ''}</span>
+                  <span><PriceTag product={p} quantity={n}/>{p.weight ? ` · ${p.weight}` : ''}</span>
                   <Qty value={n} onChange={v => quantity(p.id,v)}/>
                 </div>
                 <div className="cart-row-end">
-                  <strong>{money(Number(p.price)*n)}</strong>
+                  <strong>{money(unitPrice(p,n)*n)}</strong>
                   <button className="icon-button remove" aria-label={`Удалить ${p.name}`} onClick={() => quantity(p.id,0)}>
                     <Trash2 size={18} aria-hidden="true" />
                   </button>
@@ -74,6 +74,7 @@ export function Auth() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
   const [mode,setMode] = useState<'login'|'register'|'reset'>(params.get('mode')==='register'?'register':'login');
+  const [accountType,setAccountType] = useState<AccountType>('INDIVIDUAL');
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const [sent,setSent] = useState(false);
@@ -130,6 +131,19 @@ export function Auth() {
             <form onSubmit={submit}>
               {mode==='register' && (
                 <label>{t.authName}<input name="name" required maxLength={120} autoComplete="name" placeholder={t.authNamePlaceholder}/></label>
+              )}
+              {mode==='register' && (
+                <fieldset className="account-type">
+                  <legend>{t.authAccountType}</legend>
+                  <label className="account-type-option"><input type="radio" name="account_type" value="INDIVIDUAL" checked={accountType==='INDIVIDUAL'} onChange={() => setAccountType('INDIVIDUAL')}/>{t.authAccountIndividual}</label>
+                  <label className="account-type-option"><input type="radio" name="account_type" value="BUSINESS" checked={accountType==='BUSINESS'} onChange={() => setAccountType('BUSINESS')}/>{t.authAccountBusiness}</label>
+                  {accountType==='BUSINESS' && (
+                    <>
+                      <label>{t.authCompanyName}<input name="company_name" required maxLength={160} placeholder={t.authCompanyNamePlaceholder}/></label>
+                      <small className="muted">{t.authBusinessNote}</small>
+                    </>
+                  )}
+                </fieldset>
               )}
               <label>{t.authEmail}<input name="email" type="email" autoComplete="email" required placeholder="you@example.com"/></label>
               {mode !== 'reset' && (
@@ -231,7 +245,7 @@ export function Checkout() {
       const [current,updatedSettings] = await Promise.all([api<Product[]>('/products/'), refreshSettings()]);
       if (!isCurrent()) return;
       const updatedCart = cart.map(item => ({...item, product: current.find(product => product.id===item.product.id) || {...item.product, is_available:false}}));
-      const priceChanged = updatedCart.some((item,index) => Number(item.product.price)!==Number(cart[index].product.price)) || (settings!==null && Number(updatedSettings.delivery_fee)!==Number(settings.delivery_fee));
+      const priceChanged = updatedCart.some((item,index) => unitPrice(item.product,item.quantity)!==unitPrice(cart[index].product,cart[index].quantity)) || (settings!==null && Number(updatedSettings.delivery_fee)!==Number(settings.delivery_fee));
       replaceCart(updatedCart); setCatalogReady(true);
       if (priceChanged||requireReview) { setChanged(true); setReviewAccepted(false); setRefreshNotice('Условия заказа изменились. Проверьте цены, доставку и итоговую сумму.'); }
       else if (!changed) setRefreshNotice(updatedCart.some(item => !item.product.is_available) ? 'Некоторые изделия пока недоступны.' : 'Цены и наличие актуальны.');
@@ -247,7 +261,7 @@ export function Checkout() {
     if (busy||refreshing||!catalogReady||recovery||!settings||(changed&&!reviewAccepted)||cart.some(item=>!item.product.is_available)) return;
     setBusy(true); setError('');
     try {
-      const order = await api<Order>('/orders/', {method:'POST', body:JSON.stringify({recipient_name:recipient,phone,address,comment,items:cart.map(x=>({product_id:x.product.id,quantity:x.quantity,expected_price:x.product.price})),expected_delivery_fee:settings.delivery_fee,idempotency_key:key})});
+      const order = await api<Order>('/orders/', {method:'POST', body:JSON.stringify({recipient_name:recipient,phone,address,comment,items:cart.map(x=>({product_id:x.product.id,quantity:x.quantity,expected_price:unitPrice(x.product,x.quantity).toFixed(2)})),expected_delivery_fee:settings.delivery_fee,idempotency_key:key})});
       setSuccess(order); clear();
       if (!clearCheckoutKey()) reportStorageFailure();
     } catch(e) {
@@ -315,10 +329,10 @@ export function Checkout() {
                 <LazyImage src={x.product.image} alt={x.product.name}/>
                 <div>
                   <span>{x.product.name}</span>
-                  <small>{x.quantity} × {money(x.product.price)}</small>
+                  <small>{x.quantity} × {money(unitPrice(x.product,x.quantity))}</small>
                   {!x.product.is_available && <strong className="unavailable-text">Нет в наличии</strong>}
                 </div>
-                <strong>{money(Number(x.product.price)*x.quantity)}</strong>
+                <strong>{money(unitPrice(x.product,x.quantity)*x.quantity)}</strong>
               </div>
             ))}
             <div className="summary-line"><span>{t.checkoutItems}</span><span>{money(total)}</span></div>

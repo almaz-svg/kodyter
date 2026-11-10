@@ -11,7 +11,7 @@ from rest_framework.test import APIClient
 from . import serializers as shop_serializers
 from .models import Category, Order, Payment, Product, User
 from .serializers import (
-    AvailableItemSerializer, AvailableOrderSerializer, CategorySerializer, CheckoutItemSerializer,
+    AvailableItemSerializer, AvailableOrderSerializer, BusinessAccountSerializer, CategorySerializer, CheckoutItemSerializer,
     CheckoutSerializer, CourierUpdateSerializer, OrderItemSerializer, OrderSerializer,
     PaymentRequestSerializer, ProblemSerializer, ProductSerializer, RegisterSerializer,
     StatusHistorySerializer, UserSerializer,
@@ -22,9 +22,12 @@ PASSWORD = 'Staff-password-123!'
 # Every field a client may send, per input serializer. Adding a field here is a deliberate API change.
 EXPECTED_CLIENT_WRITES = {
     UserSerializer: {'name', 'phone'},
-    RegisterSerializer: {'name', 'email', 'phone', 'password'},
+    # Registration chooses the account type ('физлицо' or 'заведение'); wholesale_price is admin-only input.
+    RegisterSerializer: {'name', 'email', 'phone', 'password', 'account_type', 'company_name'},
     CategorySerializer: {'name', 'slug', 'description', 'image', 'is_visible'},
-    ProductSerializer: {'category', 'name', 'description', 'image', 'price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible'},
+    # Only an administrator writes business approval.
+    BusinessAccountSerializer: {'business_approved'},
+    ProductSerializer: {'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible'},
     CourierUpdateSerializer: {'name', 'phone', 'is_active'},
     PaymentRequestSerializer: {'method', 'idempotency_key'},
     CheckoutSerializer: {'recipient_name', 'phone', 'address', 'comment', 'items', 'expected_delivery_fee', 'idempotency_key'},
