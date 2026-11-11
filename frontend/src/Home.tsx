@@ -33,12 +33,12 @@ function AnimatedHeroText() {
 
   return (
     <h1 key={key} className={`hero-h1 ${visible ? 'hero-h1-visible' : ''}`}>
-      <span className="hero-h1-line" style={{transitionDelay: '0ms'}}>{t.heroH1Line1}</span>
+      <span className="hero-h1-line" style={{transitionDelay: '0ms'}}>Anaşym</span>
       <br />
-      <span className="hero-h1-line" style={{transitionDelay: '90ms'}}>{t.heroH1Line2}</span>
-      <br />
-      <span className="hero-h1-line hero-h1-brand" style={{transitionDelay: '180ms'}}>
-        {t.heroH1Brand}
+      <span className="hero-h1-sub-group">
+        <span className="hero-h1-line hero-h1-sub" style={{transitionDelay: '90ms'}}>{t.heroH1Line2}</span>
+        {' '}
+        <span className="hero-h1-line hero-h1-brand hero-h1-sub" style={{transitionDelay: '180ms'}}>{t.heroH1Brand}</span>
       </span>
     </h1>
   );
@@ -71,23 +71,31 @@ export default function Home() {
       <section className="hero">
         <picture className="hero-picture">
           <source media="(max-width: 600px)" srcSet="/images/croissant.webp" />
-          <img className="hero-image" src="/images/hero.webp" alt="Золотистые круассаны на деревянной доске"
+          <img className="hero-image" src="/images/hero-croissants.webp" alt="Золотистые круассаны на деревянной доске"
             fetchPriority="high" width={1672} height={941} />
         </picture>
         <div className="hero-shade" />
         <div className="container hero-content">
-          <AnimatedHeroText />
-          <p className="hero-subtitle-anim">{t.heroSubtitle}</p>
-          <Link to="/catalog" className="button button-gold hero-btn-anim">
-            {t.heroButton} <ArrowRight size={20} aria-hidden="true" />
-          </Link>
-          <div className="hero-note">
-            <span />{t.heroNote}
+          <div className="hero-stack">
+            <div className="hero-ornament" aria-hidden="true">
+              <i />
+              <svg viewBox="0 0 16 16" width="15" height="15"><path d="M8 0C8.6 5 11 7.4 16 8 11 8.6 8.6 11 8 16 7.4 11 5 8.6 0 8 5 7.4 7.4 5 8 0Z" fill="currentColor" /></svg>
+              <i />
+            </div>
+            <AnimatedHeroText />
+            <svg className="hero-swoosh" viewBox="0 0 340 44" fill="none" aria-hidden="true">
+              <path d="M3 41C78 14 205 1 337 5C215 6 92 19 3 41Z" fill="currentColor" />
+            </svg>
+            <Link to="/catalog" className="button button-gold hero-btn-anim">
+              {t.heroButton} <ArrowRight size={20} aria-hidden="true" />
+            </Link>
+            <div className="hero-note">
+              <i /><Heart size={11} aria-hidden="true" />{t.heroNote}<i />
+            </div>
           </div>
         </div>
+        <Branch className="hero-branch hero-branch-top" />
         <Branch className="hero-branch" />
-        <span className="hero-caption">Маленькие поводы для большого счастья</span>
-        <div className="hero-index"><span>01</span><i />Anasym</div>
       </section>
 
       {/* ── Benefits ──────────────────────────────────────────────────── */}

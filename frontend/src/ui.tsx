@@ -10,16 +10,16 @@ import { useI18n } from './i18n';
 export function Logo({ small = false }: { small?: boolean }) {
   const { t } = useI18n();
   return (
-    <Link to="/" className={`brand ${small ? 'brand-small' : ''}`} aria-label="Anasym — на главную">
+    <Link to="/" className={`brand ${small ? 'brand-small' : ''}`} aria-label="Anaşym — на главную">
       <img
         src="/images/Logo.png"
-        alt="Anasym"
+        alt="Anaşym"
         width={1403}
         height={1069}
         className={`brand-logo-img ${small ? 'brand-logo-img-small' : ''}`}
       />
       <span className="brand-text">
-        <span className="brand-name">Anasym</span>
+        <span className="brand-name">Anaşym</span>
         <span className="brand-sub">{t.brandSub}</span>
       </span>
     </Link>

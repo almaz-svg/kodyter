@@ -267,7 +267,7 @@ const kz: Translations = {
   cartLabel:'Себет', cartCount:(n)=>`Себет, ${n} тауар`,
 
   heroEyebrow:'ДӘМ · ШАБЫТ · ДӘСТҮР',
-  heroH1Line1:'Анашым', heroH1Line2:'біріктіретін', heroH1Brand:'дәм',
+  heroH1Line1:'Anaşym', heroH1Line2:'біріктіретін', heroH1Brand:'дәм',
   heroSubtitle:'Күн сайын жасалатын свежий нан-тоқаш,\nдесерттер және торттар.',
   heroButton:'Каталогты ашу', heroNote:'Жанымен дайындаймыз. Күн сайын.',
 
@@ -443,9 +443,9 @@ const ru: Translations = {
   cartLabel:'Корзина', cartCount:(n)=>`Корзина, ${n} товаров`,
 
   heroEyebrow:'ВКУС · ВДОХНОВЕНИЕ · ТРАДИЦИИ',
-  heroH1Line1:'Анашым', heroH1Line2:'вкус, который', heroH1Brand:'объединяет',
+  heroH1Line1:'Anaşym', heroH1Line2:'вкус который', heroH1Brand:'объединяет',
   heroSubtitle:'Свежая выпечка, десерты и торты,\nв которых чувствуется забота.',
-  heroButton:'Открыть каталог', heroNote:'Готовим с душой. Каждый день.',
+  heroButton:'Открыть каталог', heroNote:'С любовью к деталям',
 
   benefit1a:'Свежие', benefit1b:'ингредиенты',
   benefit2a:'Авторские', benefit2b:'рецепты',
@@ -619,7 +619,7 @@ const en: Translations = {
   cartLabel:'Cart', cartCount:(n)=>`Cart, ${n} items`,
 
   heroEyebrow:'TASTE · INSPIRATION · TRADITION',
-  heroH1Line1:'Anasym', heroH1Line2:'a taste that', heroH1Brand:'unites',
+  heroH1Line1:'Anaşym', heroH1Line2:'a taste that', heroH1Brand:'unites',
   heroSubtitle:'Fresh pastries, desserts and cakes\ncrafted with care every day.',
   heroButton:'Open Catalog', heroNote:'Made with soul. Every day.',
 
