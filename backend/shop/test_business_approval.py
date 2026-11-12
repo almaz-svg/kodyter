@@ -30,7 +30,7 @@ class BusinessApprovalTests(APITestCase):
 
     def checkout(self, user, price, quantity=1):
         self.client.force_login(user)
-        return self.client.post('/api/orders/', {'recipient_name': 'Pending', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': '', 'items': [{'product_id': self.product.pk, 'quantity': quantity, 'expected_price': price}], 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}, format='json')
+        return self.client.post('/api/orders/', {'recipient_name': 'Pending', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': 'Подъезд 2', 'items': [{'product_id': self.product.pk, 'quantity': quantity, 'expected_price': price}], 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}, format='json')
 
     def test_new_business_is_not_approved_and_pays_retail(self):
         self.assertFalse(self.pending.business_approved)

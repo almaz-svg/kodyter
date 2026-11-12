@@ -53,7 +53,7 @@ export default function Home() {
   const load = () => {
     setError('');
     Promise.all([api<Category[]>('/categories/'), api<Product[]>('/products/')])
-      .then(([c, p]) => { setCategories(c); setProducts(p.slice(0, 4)); })
+      .then(([c, p]) => { setCategories(c); setProducts(p); })
       .catch(e => setError(e.message));
   };
   useEffect(load, []);
@@ -124,7 +124,7 @@ export default function Home() {
             <Ornament />
             <Link to="/catalog" className="text-link">{t.sectionCatalogLink} <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
-          {error ? <ErrorBox message={error} retry={load} /> : <CategorySlider categories={categories} />}
+          {error ? <ErrorBox message={error} retry={load} /> : <CategorySlider categories={categories} products={products} />}
         </div>
       </section>
 
@@ -155,7 +155,7 @@ export default function Home() {
             <Link to="/catalog" className="text-link">{t.sectionFavoritesLink} <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
           <div className="product-grid">
-            {products.map(p => <ProductCard key={p.id} product={p} />)}
+            {products.slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}
           </div>
         </div>
       </section>

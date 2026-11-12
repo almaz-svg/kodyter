@@ -37,7 +37,7 @@ class HardeningBase(TestCase):
             'recipient_name': 'Айгерим',
             'phone': '+77011234567',
             'address': 'Taraz, Konaev 62a',
-            'comment': '',
+            'comment': 'Подъезд 2',
             'items': [{'product_id': self.product.pk, 'quantity': 2, 'expected_price': '900.00'}],
             'expected_delivery_fee': '1500.00',
             'idempotency_key': str(uuid.uuid4()),
@@ -75,7 +75,8 @@ class PriceIntegrityTests(HardeningBase):
 
     def test_quantity_outside_range_is_refused(self):
         self.assertEqual(self.post_checkout(items=[{'product_id': self.product.pk, 'quantity': 0, 'expected_price': '900.00'}]).status_code, 400)
-        self.assertEqual(self.post_checkout(items=[{'product_id': self.product.pk, 'quantity': 100, 'expected_price': '900.00'}]).status_code, 400)
+        # The per-product maximum is 200 units; one more is refused.
+        self.assertEqual(self.post_checkout(items=[{'product_id': self.product.pk, 'quantity': 201, 'expected_price': '900.00'}]).status_code, 400)
 
     def test_admin_cannot_set_zero_or_negative_price(self):
         self.api.force_login(self.admin)

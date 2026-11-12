@@ -112,6 +112,8 @@
 .portal-detail-section > p { font-size: 12px; margin-bottom: 6px; }
 .portal-phone { display: inline-flex; align-items: center; gap: 7px; font-size: 12px; margin-bottom: 8px; }
 .portal-address { color: #62715e; overflow-wrap: anywhere; }
+.portal-photo { display: grid; gap: 8px; }
+.portal-photo-preview { width: 140px; height: 140px; object-fit: cover; border-radius: 6px; border: 1px solid #d8d0bc; }
 .portal-comment { background: #f2f1e8; border-radius: 4px; padding: 12px 14px; margin-top: 13px; }
 .portal-comment span { color: var(--portal-muted); font-size: 9px; }
 .portal-comment p { font-size: 11px; margin: 5px 0 0; white-space: pre-wrap; overflow-wrap: anywhere; }

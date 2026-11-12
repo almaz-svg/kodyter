@@ -1,6 +1,6 @@
 import {createContext,useCallback,useContext,useEffect,useState} from 'react';
 import type {ReactNode} from 'react';
-import {api,ApiError,getAuthRevision,markAuthChanged,onAuthExpired,unitPrice} from './lib';
+import {api,ApiError,getAuthRevision,markAuthChanged,MAX_ORDER_ITEM_QUANTITY,onAuthExpired,unitPrice} from './lib';
 import type {Product,User} from './lib';
 export interface CartItem {product:Product;quantity:number}
 interface Settings {currency:string;delivery_fee:number|string;demo_mode:boolean;payment_method:string}
@@ -8,7 +8,7 @@ interface ShopContext {user:User|null;setUser:(u:User|null)=>void;authLoading:bo
 const Context=createContext<ShopContext>(null!);
 export function ShopProvider({children}:{children:ReactNode}){
  const [user,setUserState]=useState<User|null>(null),[authLoading,setAuthLoading]=useState(true),[authError,setAuthError]=useState('');
- const [cart,setCart]=useState<CartItem[]>(()=>{try{const data=JSON.parse(localStorage.getItem('anasym-cart')||'[]');return Array.isArray(data)?data.filter((x:CartItem)=>x.product?.id&&Number.isInteger(x.quantity)&&x.quantity>0&&x.quantity<=99):[]}catch{return []}});
+ const [cart,setCart]=useState<CartItem[]>(()=>{try{const data=JSON.parse(localStorage.getItem('anasym-cart')||'[]');return Array.isArray(data)?data.filter((x:CartItem)=>x.product?.id&&Number.isInteger(x.quantity)&&x.quantity>0&&x.quantity<=MAX_ORDER_ITEM_QUANTITY):[]}catch{return []}});
  const [settings,setSettings]=useState<Settings|null>(null),[settingsError,setSettingsError]=useState(''),[toast,setToast]=useState('');
  const [storageWarning,setStorageWarning]=useState('');
  const reportStorageFailure=useCallback(()=>setStorageWarning('Браузер не сохраняет данные. Корзина и попытка оформления доступны только до перезагрузки этой страницы.'),[]);
@@ -44,8 +44,8 @@ export function ShopProvider({children}:{children:ReactNode}){
   // eslint-disable-next-line react-hooks/exhaustive-deps
  },[priceKey]);
  useEffect(()=>{if(toast){const timer=setTimeout(()=>setToast(''),3500);return()=>clearTimeout(timer)}},[toast]);
- const add=(product:Product,n=1)=>{if(!product.is_available)return;setCart(current=>{const found=current.find(x=>x.product.id===product.id);return found?current.map(x=>x.product.id===product.id?{product,quantity:Math.min(99,x.quantity+n)}:x):[...current,{product,quantity:n}]});setToast('Добавлено в корзину');};
- const quantity=(id:number,n:number)=>setCart(current=>n<=0?current.filter(x=>x.product.id!==id):current.map(x=>x.product.id===id?{...x,quantity:Math.min(99,n)}:x));
+ const add=(product:Product,n=1)=>{if(!product.is_available)return;setCart(current=>{const found=current.find(x=>x.product.id===product.id);return found?current.map(x=>x.product.id===product.id?{product,quantity:Math.min(MAX_ORDER_ITEM_QUANTITY,x.quantity+n)}:x):[...current,{product,quantity:Math.min(MAX_ORDER_ITEM_QUANTITY,n)}]});setToast('Добавлено в корзину');};
+ const quantity=(id:number,n:number)=>setCart(current=>n<=0?current.filter(x=>x.product.id!==id):current.map(x=>x.product.id===id?{...x,quantity:Math.min(MAX_ORDER_ITEM_QUANTITY,n)}:x));
  return <Context.Provider value={{user,setUser,authLoading,authError,cart,add,quantity,replaceCart:setCart,clear:()=>setCart([]),count:cart.reduce((s,x)=>s+x.quantity,0),total:cart.reduce((s,x)=>s+unitPrice(x.product,x.quantity)*x.quantity,0),settings,settingsError,refreshSettings,notice:setToast,storageWarning,reportStorageFailure}}>{children}{toast&&<div className="toast" role="status">{toast}</div>}</Context.Provider>;
 }
 export const useShop=()=>useContext(Context);

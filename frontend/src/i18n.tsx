@@ -56,6 +56,9 @@ export interface Translations {
   mapHours: string;
   mapHoursValue: string;
   mapPhone: string;
+  mapAddressLabel: string;
+  mapCall: string;
+  mapFindOnMap: string;
 
   /* Footer */
   footerTagline: string;
@@ -66,6 +69,12 @@ export interface Translations {
   footerWarm: string;
   footerPrivacy: string;
   footerTerms: string;
+  footerNavTitle: string;
+  footerBuyersTitle: string;
+  footerSlogan: string;
+  footerAbout: string;
+  footerFindOnMap: string;
+  footerRights: string;
   and: string;
   cookieText: string;
   cookieAccept: string;
@@ -180,7 +189,6 @@ export interface Translations {
   checkoutAddressPl: string;
   checkoutComment: string;
   checkoutCommentPl: string;
-  checkoutCommentOpt: string;
   checkoutDeliveryNote: string;
   checkoutDeliveryDemo: string;
   checkoutOrderTitle: string;
@@ -293,7 +301,7 @@ const kz: Translations = {
   mapEyebrow:'МЕКЕН-ЖАЙЫМЫЗ', mapTitle:'Бізді табыңыз',
   mapAddress:'Тараз қ., Қонаев к-сі, 62а',
   mapHours:'Жұмыс уақыты', mapHoursValue:'Дүй–Жек: 08:00–21:00',
-  mapPhone:'Телефон',
+  mapPhone:'Телефон', mapAddressLabel:'Мекенжайы', mapCall:'Қоңырау шалу', mapFindOnMap:'Картадан табу',
 
   footerTagline:'Дәстүрден шабыт алған дәм.\nСезінуге болатын қамқорлық.',
   footerHistory:'Біздің тарих', footerDelivery:'Жеткізу және төлем',
@@ -302,6 +310,10 @@ const kz: Translations = {
   footerWarm:'Сіздің ең\nжылы сәттеріңіз үшін.',
   footerPrivacy:'Құпиялылық саясаты',
   footerTerms:'Жария оферта',
+  footerNavTitle:'Навигация', footerBuyersTitle:'Сатып алушыларға',
+  footerSlogan:'Біріктіретін дәм',
+  footerAbout:'Авторлық десерттер, тоқаштар және табиғи ингредиенттерден жасалған жаңа өнімдер.',
+  footerFindOnMap:'Картадан табу', footerRights:'Барлық құқықтар қорғалған.',
   and:'және',
   cookieText:'Сайттың дұрыс жұмыс істеуі, кіру және себетті сақтау үшін cookie-файлдар қолданылады.',
   cookieAccept:'Қабылдау',
@@ -381,7 +393,7 @@ const kz: Translations = {
   checkoutName:'Алушының аты', checkoutNamePlaceholder:'Сіздің атыңыз',
   checkoutPhone:'Телефон', checkoutPhonePlaceholder:'+7 (___) ___ __ __',
   checkoutAddress:'Жеткізу мекен-жайы', checkoutAddressPl:'Қала, көше, үй, пәтер',
-  checkoutComment:'Пікір', checkoutCommentOpt:'· міндетті емес',
+  checkoutComment:'Пікір',
   checkoutCommentPl:'Кіреберіс, қабат, домофон немесе тапсырысқа тілектер',
   checkoutDeliveryNote:'Жеткізу — ', checkoutDeliveryDemo:'Мерзім мен жеткізу мүмкіндігі растау кезінде нақтыланады.',
   checkoutOrderTitle:'Тапсырысыңыз',
@@ -469,7 +481,7 @@ const ru: Translations = {
   mapEyebrow:'НАШ АДРЕС', mapTitle:'Найдите нас',
   mapAddress:'г. Тараз, ул. Конаева, 62а',
   mapHours:'Часы работы', mapHoursValue:'Пн–Вс: 08:00–21:00',
-  mapPhone:'Телефон',
+  mapPhone:'Телефон', mapAddressLabel:'Адрес', mapCall:'Позвонить', mapFindOnMap:'Найти на карте',
 
   footerTagline:'Вкус, вдохновлённый традициями.\nЗабота, которую можно почувствовать.',
   footerHistory:'Наша история', footerDelivery:'Доставка и оплата',
@@ -478,6 +490,10 @@ const ru: Translations = {
   footerWarm:'Для ваших\nсамых тёплых моментов.',
   footerPrivacy:'Политика конфиденциальности',
   footerTerms:'Публичная оферта',
+  footerNavTitle:'Навигация', footerBuyersTitle:'Покупателям',
+  footerSlogan:'Вкус, который объединяет',
+  footerAbout:'Авторские десерты, выпечка и свежая продукция из натуральных ингредиентов.',
+  footerFindOnMap:'Найти нас на карте', footerRights:'Все права защищены.',
   and:'и',
   cookieText:'Мы используем cookie-файлы для корректной работы сайта, авторизации и сохранения вашей корзины.',
   cookieAccept:'Принять',
@@ -557,7 +573,7 @@ const ru: Translations = {
   checkoutName:'Имя получателя', checkoutNamePlaceholder:'Ваше имя',
   checkoutPhone:'Телефон', checkoutPhonePlaceholder:'+7 (___) ___ __ __',
   checkoutAddress:'Адрес доставки', checkoutAddressPl:'Город, улица, дом, квартира',
-  checkoutComment:'Комментарий', checkoutCommentOpt:'· необязательно',
+  checkoutComment:'Комментарий',
   checkoutCommentPl:'Подъезд, этаж, домофон или пожелания к заказу',
   checkoutDeliveryNote:'Доставка — ', checkoutDeliveryDemo:'Срок и возможность доставки уточняются при подтверждении.',
   checkoutOrderTitle:'Ваш заказ',
@@ -645,7 +661,7 @@ const en: Translations = {
   mapEyebrow:'OUR ADDRESS', mapTitle:'Find Us',
   mapAddress:'Taraz, Konaev St, 62a',
   mapHours:'Opening Hours', mapHoursValue:'Mon–Sun: 08:00–21:00',
-  mapPhone:'Phone',
+  mapPhone:'Phone', mapAddressLabel:'Address', mapCall:'Call us', mapFindOnMap:'Find on map',
 
   footerTagline:'Taste inspired by tradition.\nCare you can feel.',
   footerHistory:'Our Story', footerDelivery:'Delivery & Payment',
@@ -654,6 +670,10 @@ const en: Translations = {
   footerWarm:'For your\nwarmest moments.',
   footerPrivacy:'Privacy Policy',
   footerTerms:'Public Offer & Terms',
+  footerNavTitle:'Navigation', footerBuyersTitle:'For customers',
+  footerSlogan:'A taste that unites',
+  footerAbout:'Signature desserts, pastries and fresh products made from natural ingredients.',
+  footerFindOnMap:'Find us on the map', footerRights:'All rights reserved.',
   and:'and',
   cookieText:'We use cookies to ensure proper website functionality, authentication, and cart persistence.',
   cookieAccept:'Accept',
@@ -733,7 +753,7 @@ const en: Translations = {
   checkoutName:'Recipient name', checkoutNamePlaceholder:'Your name',
   checkoutPhone:'Phone', checkoutPhonePlaceholder:'+7 (___) ___ __ __',
   checkoutAddress:'Delivery address', checkoutAddressPl:'City, street, house, apt',
-  checkoutComment:'Comment', checkoutCommentOpt:'· optional',
+  checkoutComment:'Comment',
   checkoutCommentPl:'Entrance, floor, intercom or order notes',
   checkoutDeliveryNote:'Delivery — ', checkoutDeliveryDemo:'Timing and availability confirmed on approval.',
   checkoutOrderTitle:'Your Order',

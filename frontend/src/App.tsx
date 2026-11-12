@@ -1,16 +1,17 @@
 import {useEffect,useState} from 'react';
 import type {ReactNode} from 'react';
 import {Link,NavLink,Navigate,Route,Routes,useLocation} from 'react-router-dom';
-import {ShoppingBag,UserRound,Menu,X,ArrowRight,Heart,House,LayoutGrid,LogOut,Truck,MapPin} from 'lucide-react';
+import {ShoppingBag,UserRound,Menu,X,ArrowRight,Heart,House,LayoutGrid,LogOut,Truck,MapPin,Clock,Phone} from 'lucide-react';
 import Home from './Home';
 import {Catalog,ProductPage} from './Catalog';
 import {Auth,Cart,Checkout,ResetPassword} from './ShopFlow';
 import Portals from './Portals';
+import {MAP_URL} from './MapSection';
 import {ShopProvider,useShop} from './store';
 import {I18nProvider,useI18n} from './i18n';
 import type {Lang} from './i18n';
 import {api,roleHome} from './lib';
-import {Logo,Loading,ErrorBox,Ornament,LazyImage} from './ui';
+import {Logo,Loading,ErrorBox,Ornament,LazyImage,Branch} from './ui';
 import {PrivacyPolicy,PublicOffer,CookieConsent} from './Legal';
 
 /* ── Language Switcher ────────────────────────────────────────────────── */
@@ -175,7 +176,7 @@ function Header() {
             onClick={() => setMenu(false)}
           >
             <UserRound size={19} aria-hidden="true" />
-            <span>{user ? `${user.name} · ${t.navAccount}` : t.accountOrLogin}</span>
+            <span>{user ? t.navAccount : t.accountOrLogin}</span>
           </NavLink>
 
           {user && (
@@ -209,27 +210,59 @@ function Footer() {
   return (
     <>
       <footer className="site-footer">
-        <div className="container footer-top">
-          <div>
+        <svg className="footer-wave" viewBox="0 0 1440 54" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 0H1440V30C1200 44 960 16 720 30C480 44 240 14 0 34Z" fill="var(--cream)" />
+          <path d="M0 34C240 14 480 44 720 30C960 16 1200 44 1440 30" fill="none" stroke="#d7b779" strokeWidth="1.5" vectorEffect="non-scaling-stroke" />
+        </svg>
+        <svg className="footer-knot" viewBox="0 0 24 24" aria-hidden="true">
+          <path d="M12 1C15 5 15 8 12 12C9 8 9 5 12 1ZM12 23C9 19 9 16 12 12C15 16 15 19 12 23ZM1 12C5 9 8 9 12 12C8 15 5 15 1 12ZM23 12C19 15 16 15 12 12C16 9 19 9 23 12Z" />
+        </svg>
+        <Branch className="footer-branch footer-branch-left" />
+        <Branch className="footer-branch footer-branch-right" />
+        <div className="container footer-grid">
+          <div className="footer-col footer-brand">
             <Logo />
-            <p>{t.footerTagline}</p>
+            <p className="footer-slogan">{t.footerSlogan}</p>
+            <p className="footer-about">{t.footerAbout}</p>
           </div>
-          <div className="footer-links">
-            <Link to="/catalog">{t.navCatalog}</Link>
-            {!courier && <Link to="/about">{t.footerHistory}</Link>}
-            {!courier && <Link to="/delivery">{t.footerDelivery}</Link>}
-            {!courier && <Link to="/contacts">{t.navContacts}</Link>}
-          </div>
-          <div className="footer-note">
-            <Heart size={22} strokeWidth={1} aria-hidden="true" />
-            <span>{t.footerWarm}</span>
+          <nav className="footer-col" aria-label={t.footerNavTitle}>
+            <h2>{t.footerNavTitle}</h2>
+            <ul>
+              {!courier && <li><Link to="/">{t.navHome}</Link></li>}
+              <li><Link to="/catalog">{t.navCatalog}</Link></li>
+              {!courier && <li><Link to="/about">{t.navAbout}</Link></li>}
+              {!courier && <li><Link to="/delivery">{t.navDelivery}</Link></li>}
+              {!courier && <li><Link to="/contacts">{t.navContacts}</Link></li>}
+            </ul>
+          </nav>
+          {!courier && (
+            <nav className="footer-col footer-icon-list" aria-label={t.footerBuyersTitle}>
+              <h2>{t.footerBuyersTitle}</h2>
+              <ul>
+                <li><Link to="/delivery"><Truck size={24} strokeWidth={1.3} aria-hidden="true" />{t.footerDelivery}</Link></li>
+                <li><Link to="/cart"><ShoppingBag size={24} strokeWidth={1.3} aria-hidden="true" />{t.cartLabel}</Link></li>
+                <li><Link to={roleHome(user?.role)}><UserRound size={24} strokeWidth={1.3} aria-hidden="true" />{t.navAccount}</Link></li>
+                <li><Link to="/about"><Heart size={24} strokeWidth={1.3} aria-hidden="true" />{t.footerHistory}</Link></li>
+              </ul>
+            </nav>
+          )}
+          <div className="footer-col footer-icon-list">
+            <h2>{t.footerContacts}</h2>
+            <ul>
+              <li><span><MapPin size={24} strokeWidth={1.3} aria-hidden="true" />{t.mapAddress}</span></li>
+              <li><span><Clock size={24} strokeWidth={1.3} aria-hidden="true" />{t.mapHoursValue}</span></li>
+              <li><span><Phone size={24} strokeWidth={1.3} aria-hidden="true" />+7 778 232 1708</span></li>
+            </ul>
+            <a href={MAP_URL} target="_blank" rel="noopener noreferrer" className="footer-map-btn">
+              <MapPin size={17} aria-hidden="true" />{t.footerFindOnMap}<ArrowRight size={17} aria-hidden="true" />
+            </a>
           </div>
         </div>
         <div className="container footer-bottom">
-          <span>© {new Date().getFullYear()} Anasym</span>
+          <span>© {new Date().getFullYear()} Anaşym. {t.footerRights}</span>
           <div className="footer-legal-links">
             <Link to="/privacy">{t.footerPrivacy}</Link>
-            <span className="footer-sep">·</span>
+            <span className="footer-sep">|</span>
             <Link to="/terms">{t.footerTerms}</Link>
           </div>
         </div>

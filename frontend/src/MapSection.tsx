@@ -5,6 +5,11 @@ import {useI18n} from './i18n';
 // Taraz, Konaev St 62a — coordinates
 const LAT = 42.8925;
 const LNG = 71.3679;
+// Contact phone: shown on the map card and used by the "Позвонить" button.
+const CONTACT_PHONE = '+7 778 232 1708';
+const CONTACT_PHONE_LINK = 'tel:+77782321708';
+// Public 2GIS page for the bakery; the map card and the footer open it in a new tab.
+export const MAP_URL = 'https://2gis.kz/taraz/geo/70000001087635808?inv_by=78675e2a2c264b2d8be2b3b70bc9ca96&inv_ts=1794403437';
 
 export default function MapSection() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -39,7 +44,7 @@ export default function MapSection() {
       }).addTo(map);
       L.marker([LAT, LNG])
         .addTo(map)
-        .bindPopup(`<strong>Anasym</strong><br/>${t.mapAddress}`)
+        .bindPopup(`<strong>Anasym</strong><br/>${t.mapAddress}<br/><a class="map-popup-link" href="${MAP_URL}" target="_blank" rel="noopener noreferrer">${t.mapFindOnMap}</a>`, {closeButton: false})
         .openPopup();
       mapInstance.current = map;
     });
@@ -67,7 +72,7 @@ export default function MapSection() {
             <div className="map-info-row">
               <MapPin size={20} className="map-icon" aria-hidden="true" />
               <div>
-                <span className="map-info-label">{t.navContacts}</span>
+                <span className="map-info-label">{t.mapAddressLabel}</span>
                 <p>{t.mapAddress}</p>
               </div>
             </div>
@@ -82,8 +87,16 @@ export default function MapSection() {
               <Phone size={20} className="map-icon" aria-hidden="true" />
               <div>
                 <span className="map-info-label">{t.mapPhone}</span>
-                <p>+7 (727) 000-00-00</p>
+                <p>{CONTACT_PHONE}</p>
               </div>
+            </div>
+            <div className="map-actions">
+              <a className="map-call" href={CONTACT_PHONE_LINK}>
+                <Phone size={17} aria-hidden="true" />{t.mapCall}
+              </a>
+              <a className="map-call" href={MAP_URL} target="_blank" rel="noopener noreferrer">
+                <MapPin size={17} aria-hidden="true" />{t.mapFindOnMap}
+              </a>
             </div>
           </div>
           <div className="map-container" ref={mapRef} aria-label={t.mapTitle} />

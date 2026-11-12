@@ -307,7 +307,7 @@ export function Checkout() {
             </div>
             <div className="checkout-step"><span>{t.checkoutStep2}</span><h2>{t.checkoutStep2Title}</h2></div>
             <label>{t.checkoutAddress}<input required name="address" autoComplete="street-address" minLength={5} maxLength={500} value={address} onChange={e=>setAddress(e.target.value)} placeholder={t.checkoutAddressPl}/></label>
-            <label>{t.checkoutComment} <span className="muted">{t.checkoutCommentOpt}</span><textarea value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)} placeholder={t.checkoutCommentPl} rows={3}/></label>
+            <label>{t.checkoutComment}<textarea required value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)} placeholder={t.checkoutCommentPl} rows={3}/></label>
             <div className="delivery-note">
               <Truck size={22} aria-hidden="true" />
               <div>

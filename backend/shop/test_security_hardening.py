@@ -65,6 +65,7 @@ class MarkupRejectionTests(TestCase):
             'recipient_name': 'Айгерим',
             'phone': '+7 701 123 45 67',
             'address': '<b>Taraz</b> Konaev 62a',
+            'comment': 'Подъезд 2',
             'items': [{'product_id': 1, 'quantity': 1, 'expected_price': '1000.00'}],
             'expected_delivery_fee': '1500.00',
             'idempotency_key': '6f1c6c1e-1d1e-4f3a-9a77-3c6f2a0b9a11',

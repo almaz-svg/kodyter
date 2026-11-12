@@ -220,7 +220,7 @@ class CheckoutSerializer(MarkupFreeMixin, serializers.Serializer):
     recipient_name = serializers.CharField(max_length=120)
     phone = serializers.CharField(max_length=30)
     address = serializers.CharField(max_length=500, min_length=5)
-    comment = serializers.CharField(max_length=2000, required=False, allow_blank=True, default='')
+    comment = serializers.CharField(max_length=2000, min_length=1)
     items = CheckoutItemSerializer(many=True, allow_empty=False, max_length=100)
     expected_delivery_fee = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=0)
     idempotency_key = serializers.UUIDField()

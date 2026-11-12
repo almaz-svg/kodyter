@@ -1,4 +1,5 @@
 import inspect
+import os
 import uuid
 from decimal import Decimal
 
@@ -94,6 +95,7 @@ class CheckoutInputTests(TestCase):
             'recipient_name': 'Айгерим',
             'phone': '+77011234567',
             'address': 'Taraz, Konaev 62a',
+            'comment': 'Подъезд 2',
             'items': [{'product_id': self.product.pk, 'quantity': quantity, 'expected_price': price}],
             'expected_delivery_fee': '1500.00',
             'idempotency_key': str(uuid.uuid4()),
@@ -116,6 +118,21 @@ class CheckoutInputTests(TestCase):
     def test_quantity_one_and_the_default_maximum_are_accepted(self):
         self.assertEqual(self.post(self.payload(quantity=1)).status_code, 201)
         self.assertEqual(self.post(self.payload(quantity=settings.MAX_ORDER_ITEM_QUANTITY)).status_code, 201)
+
+    def test_comment_is_required_for_checkout(self):
+        without_comment = self.payload()
+        del without_comment['comment']
+        self.assertEqual(self.post(without_comment).status_code, 400)
+        self.assertEqual(self.post(self.payload(comment='')).status_code, 400)
+        self.assertEqual(self.post(self.payload(comment='   ')).status_code, 400)
+        self.assertEqual(self.post(self.payload(comment='Подъезд 2, этаж 3')).status_code, 201)
+
+    def test_default_maximum_is_200_units_per_line(self):
+        if 'MAX_ORDER_ITEM_QUANTITY' in os.environ:
+            self.skipTest('MAX_ORDER_ITEM_QUANTITY is set in the environment; the default does not apply')
+        self.assertEqual(settings.MAX_ORDER_ITEM_QUANTITY, 200)
+        self.assertEqual(self.post(self.payload(quantity=200)).status_code, 201)
+        self.assertEqual(self.post(self.payload(quantity=201)).status_code, 400)
 
     @override_settings(MAX_ORDER_ITEM_QUANTITY=5)
     def test_maximum_comes_from_settings(self):

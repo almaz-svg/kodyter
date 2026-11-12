@@ -53,7 +53,11 @@ def _check_local(path):
         raise DjangoValidationError('Локальная фотография должна лежать в /images/ или /media/ и быть файлом .webp, .png или .jpg.')
 
 def _allowed_image_hosts():
-    return {host.lower() for host in settings.IMAGE_ALLOWED_HOSTS}
+    hosts = {host.lower() for host in settings.IMAGE_ALLOWED_HOSTS}
+    # Photos uploaded to Supabase Storage are served from the project's own host.
+    if settings.SUPABASE_URL:
+        hosts.add((urlsplit(settings.SUPABASE_URL).hostname or '').lower())
+    return hosts
 
 def _check_https(text):
     parts = urlsplit(text)

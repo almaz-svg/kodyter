@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ImgHTMLAttributes } from 'react';
 import { ArrowRight, Minus, Plus, LoaderCircle, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { money, unitPrice } from './lib';
+import { money, unitPrice, MAX_ORDER_ITEM_QUANTITY } from './lib';
 import type { Product } from './lib';
 import { useShop } from './store';
 import { useI18n } from './i18n';
@@ -20,7 +20,7 @@ export function Logo({ small = false }: { small?: boolean }) {
       />
       <span className="brand-text">
         <span className="brand-name">Anaşym</span>
-        <span className="brand-sub">{t.brandSub}</span>
+        <span className="brand-sub" aria-label={t.brandSub}>{Array.from(t.brandSub).map((ch, i) => <span key={i} aria-hidden="true">{ch}</span>)}</span>
       </span>
     </Link>
   );
@@ -133,7 +133,7 @@ export function Qty({ value, onChange, label = 'Количество', increaseD
   function commit() {
     const parsed = parseInt(draft, 10);
     if (Number.isNaN(parsed)) { setDraft(String(value)); return; }
-    const next = Math.max(0, Math.min(99, parsed));
+    const next = Math.max(0, Math.min(MAX_ORDER_ITEM_QUANTITY, parsed));
     if (increaseDisabled && next > value) { setDraft(String(value)); return; }
     setDraft(String(next));
     if (next !== value) onChange(next);
@@ -155,12 +155,12 @@ export function Qty({ value, onChange, label = 'Количество', increaseD
           pattern="[0-9]*"
           aria-label={`Количество${suffix}`}
           value={draft}
-          onChange={e => setDraft(e.target.value.replace(/\D/g, '').slice(0, 2))}
+          onChange={e => setDraft(e.target.value.replace(/\D/g, '').slice(0, 3))}
           onFocus={e => e.target.select()}
           onBlur={commit}
           onKeyDown={e => { if (e.key === 'Enter') { commit(); e.currentTarget.blur(); } }}
         />
-        <button type="button" aria-label={`Увеличить количество${suffix}`} disabled={value >= 99 || increaseDisabled} onClick={() => onChange(value + 1)}><Plus size={15} aria-hidden="true" /></button>
+        <button type="button" aria-label={`Увеличить количество${suffix}`} disabled={value >= MAX_ORDER_ITEM_QUANTITY || increaseDisabled} onClick={() => onChange(value + 1)}><Plus size={15} aria-hidden="true" /></button>
       </div>
     </div>
   );

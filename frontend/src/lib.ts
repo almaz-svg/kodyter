@@ -1,4 +1,6 @@
 export type Role = 'CUSTOMER'|'ADMIN'|'COURIER'|'CASHIER';
+/** Largest number of units of one product in one order line. The server enforces the same value (MAX_ORDER_ITEM_QUANTITY). */
+export const MAX_ORDER_ITEM_QUANTITY = 200;
 const roleRoutes:Record<Role,string> = {CUSTOMER:'/account',ADMIN:'/admin',COURIER:'/courier',CASHIER:'/cashier'};
 export const roleHome=(role?:Role|null)=>role?roleRoutes[role]:'/account';
 export type PaymentStatus = 'UNPAID'|'PAID';
@@ -87,7 +89,8 @@ export async function api<T>(path:string,options:RequestInit={}):Promise<T>{
    csrfToken=data.csrfToken;
   }
   const headers=new Headers(options.headers);
-  if(!headers.has('Content-Type'))headers.set('Content-Type','application/json');
+  // A FormData body (photo upload) sets its own multipart Content-Type; JSON is the default for everything else.
+  if(!(options.body instanceof FormData)&&!headers.has('Content-Type'))headers.set('Content-Type','application/json');
   if(mutation)headers.set('X-CSRFToken',csrfToken);
   const data=await requestJson(`/api${path}`,{...options,headers});
   if(changesIdentity){

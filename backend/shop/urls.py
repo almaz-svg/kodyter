@@ -3,6 +3,7 @@ from . import auth_views as auth
 from . import catalog_views as catalog
 from . import order_views as orders
 from . import staff_views as staff
+from . import upload_views as uploads
 
 urlpatterns = [
     path('health/', catalog.Health.as_view()),
@@ -18,6 +19,7 @@ urlpatterns = [
     path('products/', catalog.Products.as_view()),
     path('products/<int:pk>/', catalog.ProductDetail.as_view()),
     path('settings/', catalog.StoreSettings.as_view()),
+    path('admin/uploads/product-image/', uploads.ProductImageUpload.as_view()),
     path('admin/categories/', catalog.AdminCategories.as_view()),
     path('admin/categories/<int:pk>/', catalog.AdminCategory.as_view()),
     path('admin/products/', catalog.AdminProducts.as_view()),

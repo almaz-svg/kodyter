@@ -102,7 +102,7 @@ class WholesalePricingTests(APITestCase):
         self.assertEqual(self.individual.company_name, '')
 
     def checkout_payload(self, expected_price, product, quantity=10):
-        return {'recipient_name': 'Manager', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': '', 'items': [{'product_id': product.pk, 'quantity': quantity, 'expected_price': expected_price}], 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}
+        return {'recipient_name': 'Manager', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': 'Подъезд 2', 'items': [{'product_id': product.pk, 'quantity': quantity, 'expected_price': expected_price}], 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}
 
     def test_business_checkout_charges_wholesale_from_ten_units(self):
         self.client.force_login(self.business)

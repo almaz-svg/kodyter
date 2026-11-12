@@ -352,7 +352,7 @@ class PostgresConcurrencyTests(TransactionTestCase):
         customer = User.objects.create_user(email='concurrent@example.test', password='Test-password-123!', name='Concurrent')
         category = Category.objects.create(name='Bakery', slug='bakery')
         product = Product.objects.create(category=category, name='Bread', price='900.00')
-        data = {'recipient_name': 'Concurrent', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': '', 'items': [{'product_id': product.pk, 'quantity': 2, 'expected_price': '900.00'}], 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}
+        data = {'recipient_name': 'Concurrent', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': 'Подъезд 2', 'items': [{'product_id': product.pk, 'quantity': 2, 'expected_price': '900.00'}], 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}
         barrier = Barrier(2)
 
         def checkout():

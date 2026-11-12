@@ -30,7 +30,7 @@ class WholesaleThresholdTests(APITestCase):
         """lines: list of (product, quantity, expected_price)."""
         self.client.force_login(user)
         items = [{'product_id': product.pk, 'quantity': quantity, 'expected_price': str(price)} for product, quantity, price in lines]
-        return self.client.post('/api/orders/', {'recipient_name': 'Threshold', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': '', 'items': items, 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}, format='json')
+        return self.client.post('/api/orders/', {'recipient_name': 'Threshold', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': 'Подъезд 2', 'items': items, 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}, format='json')
 
     def catalog_row(self, user, product):
         if user is None:
