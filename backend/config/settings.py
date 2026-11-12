@@ -153,3 +153,16 @@ SUPABASE_URL = os.getenv('SUPABASE_URL', '').rstrip('/')
 SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
 SUPABASE_STORAGE_BUCKET = os.getenv('SUPABASE_STORAGE_BUCKET', 'product-images')
 DEMO_MODE = os.getenv('DEMO_MODE', 'false').lower() == 'true'
+# Django's default sends 500 tracebacks only to ADMINS when DEBUG is off; stderr reaches Docker and Vercel logs.
+LOGGING = {
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {'plain': {'format': '{asctime} {levelname} {name}: {message}', 'style': '{'}},
+    'handlers': {'stderr': {'class': 'logging.StreamHandler', 'stream': 'ext://sys.stderr', 'formatter': 'plain'}},
+    'root': {'handlers': ['stderr'], 'level': 'WARNING'},
+    'loggers': {
+        'django': {'handlers': ['stderr'], 'level': 'INFO', 'propagate': False},
+        # Expected 4xx responses are not errors; 5xx responses are logged with their traceback.
+        'django.request': {'handlers': ['stderr'], 'level': 'ERROR', 'propagate': False},
+    },
+}

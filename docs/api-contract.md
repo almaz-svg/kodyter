@@ -11,9 +11,10 @@ Roles: `CUSTOMER`, `ADMIN`, `COURIER`, `CASHIER`. Statuses: `NEW`, `CONFIRMED`, 
 - GET `/products/?category=&search=` and GET `/products/:id/`: `{id,category,name,description,image,price,weight,ingredients,allergens,is_available,is_visible}`.
 - GET `/settings/`: `{currency,delivery_fee,demo_mode,payment_method}`.
 - POST `/orders/`: `{recipient_name,phone,address,comment,items:[{product_id,quantity,expected_price}],expected_delivery_fee,idempotency_key}`. Returns order. Changed price/availability is HTTP 409. Client refreshes prices then requires a second explicit confirmation.
-- GET `/orders/?status=&date=&courier=&search=` (role scoped); GET `/orders/:id/` (role scoped). Order: `{id,number,created_at,status,recipient_name,phone,address,comment,subtotal,delivery_fee,total,courier,courier_name,items,status_history,problems,cancellation_reason}`.
+- GET `/orders/?status=&date=&courier=&search=&limit=` (role scoped); GET `/orders/:id/` (role scoped). Order: `{id,number,created_at,status,recipient_name,phone,address,comment,subtotal,delivery_fee,total,courier,courier_name,courier_is_active (staff only),items,status_history,problems,cancellation_reason}`.
+- The orders list is a plain array, newest first: 100 orders by default, `limit` accepts 1-500. Use filters to reach older orders.
 - Order item: `{id,product_id,name,price,quantity,image}`. History: `{id,from_status,to_status,created_at,actor_name}`. Problem: `{id,message,created_at,actor_name}`.
-- POST `/orders/:id/transition/` `{status,reason?}`; POST `/orders/:id/assign/` `{courier_id}`; POST `/orders/:id/problem/` `{message}`.
+- POST `/orders/:id/transition/` `{status,reason?}`; POST `/orders/:id/assign/` `{courier_id}` (before pickup, or for HANDED_OVER/IN_TRANSIT orders whose courier is blocked); POST `/orders/:id/problem/` `{message}`.
 - GET/POST `/admin/products/`; PATCH `/admin/products/:id/` same product fields; GET/POST `/admin/categories/`; PATCH `/admin/categories/:id/` same category fields.
 - GET/POST `/admin/couriers/`; POST `{name,email,password,phone}`; PATCH `/admin/couriers/:id/` `{is_active,name?,phone?}`.
 - PATCH `/auth/profile/` `{name,phone}`.

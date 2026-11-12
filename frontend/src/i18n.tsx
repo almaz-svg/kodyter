@@ -1,4 +1,4 @@
-import {createContext,useCallback,useContext,useState} from 'react';
+import {createContext,useCallback, useEffect,useContext,useState} from 'react';
 import type {ReactNode} from 'react';
 
 export type Lang = 'kz' | 'ru' | 'en';
@@ -25,6 +25,10 @@ export interface Translations {
   heroSubtitle: string;
   heroButton: string;
   heroNote: string;
+  skipToContent: string;
+  logoHome: string;
+  sliderHint: string;
+  heroCaption: string;
 
   /* Benefits */
   benefit1a: string; benefit1b: string;
@@ -276,10 +280,10 @@ const kz: Translations = {
 
   heroEyebrow:'ДӘМ · ШАБЫТ · ДӘСТҮР',
   heroH1Line1:'Anaşym', heroH1Line2:'біріктіретін', heroH1Brand:'дәм',
-  heroSubtitle:'Күн сайын жасалатын свежий нан-тоқаш,\nдесерттер және торттар.',
-  heroButton:'Каталогты ашу', heroNote:'Жанымен дайындаймыз. Күн сайын.',
+  heroSubtitle:'Күн сайын жасалатын балғын нан-тоқаш,\nдесерттер және торттар.',
+  heroButton:'Каталогты ашу', heroNote:'Жанымен дайындаймыз. Күн сайын.', skipToContent:'Мазмұнға өту', logoHome:'Anaşym — басты бетке', sliderHint:'Солға және оңға сырғытыңыз', heroCaption:'Үлкен бақытқа шағын себептер',
 
-  benefit1a:'Свежий', benefit1b:'ингредиенттер',
+  benefit1a:'Балғын', benefit1b:'ингредиенттер',
   benefit2a:'Авторлық', benefit2b:'рецепттер',
   benefit3a:'Табиғи', benefit3b:'құрам',
   benefit4a:'Қолмен', benefit4b:'жасалған',
@@ -295,8 +299,8 @@ const kz: Translations = {
   aboutTitle:'Әр нан-тоқашта — жан парасы',
   aboutP1:'Anasym — қарапайым ингредиенттер ерекше нәрсеге айналатын орын. Таныс дәмдерді, авторлық рецепттерді және өз ісіне деген сүйіспеншілікті ұштастырамыз.',
   aboutP2:'Баяу таңертеңге, отбасылық мерекеге немесе жай ыстық кездесуге арналған.',
-  aboutButton:'Біздің тарих', aboutCaption:'Мастерство в каждом движении',
-  photoCaption:'Мастерство в каждом движении',
+  aboutButton:'Біздің тарих', aboutCaption:'Әр қимылдағы шеберлік',
+  photoCaption:'Әр қимылдағы шеберлік',
 
   mapEyebrow:'МЕКЕН-ЖАЙЫМЫЗ', mapTitle:'Бізді табыңыз',
   mapAddress:'Тараз қ., Қонаев к-сі, 62а',
@@ -457,7 +461,7 @@ const ru: Translations = {
   heroEyebrow:'ВКУС · ВДОХНОВЕНИЕ · ТРАДИЦИИ',
   heroH1Line1:'Anaşym', heroH1Line2:'вкус который', heroH1Brand:'объединяет',
   heroSubtitle:'Свежая выпечка, десерты и торты,\nв которых чувствуется забота.',
-  heroButton:'Открыть каталог', heroNote:'С любовью к деталям',
+  heroButton:'Открыть каталог', heroNote:'С любовью к деталям', skipToContent:'Перейти к содержимому', logoHome:'Anaşym — на главную', sliderHint:'Листайте влево и вправо', heroCaption:'Маленькие поводы для большого счастья',
 
   benefit1a:'Свежие', benefit1b:'ингредиенты',
   benefit2a:'Авторские', benefit2b:'рецепты',
@@ -637,7 +641,7 @@ const en: Translations = {
   heroEyebrow:'TASTE · INSPIRATION · TRADITION',
   heroH1Line1:'Anaşym', heroH1Line2:'a taste that', heroH1Brand:'unites',
   heroSubtitle:'Fresh pastries, desserts and cakes\ncrafted with care every day.',
-  heroButton:'Open Catalog', heroNote:'Made with soul. Every day.',
+  heroButton:'Open Catalog', heroNote:'Made with soul. Every day.', skipToContent:'Skip to content', logoHome:'Anaşym — home', sliderHint:'Swipe left or right', heroCaption:'Small reasons for great happiness',
 
   benefit1a:'Fresh', benefit1b:'ingredients',
   benefit2a:'Original', benefit2b:'recipes',
@@ -821,6 +825,7 @@ export function I18nProvider({children}: {children: ReactNode}) {
     localStorage.setItem('anasym-lang', l);
     setLangState(l);
   }, []);
+  useEffect(() => { document.documentElement.lang = lang === 'kz' ? 'kk' : lang; }, [lang]);
   return (
     <I18nContext.Provider value={{lang, t: DICT[lang], setLang}}>
       {children}

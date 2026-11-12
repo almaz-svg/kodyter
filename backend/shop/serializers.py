@@ -138,9 +138,10 @@ class OrderSerializer(serializers.ModelSerializer):
     status_history = StatusHistorySerializer(many=True, read_only=True)
     problems = ProblemSerializer(many=True, read_only=True)
     courier_name = serializers.CharField(source='courier.name', default=None, read_only=True)
+    courier_is_active = serializers.BooleanField(source='courier.is_active', default=None, read_only=True)
     payment_status = serializers.SerializerMethodField()
     paid_at = serializers.DateTimeField(source='payment.paid_at', default=None, read_only=True)
-    paid_by = serializers.IntegerField(source='payment.paid_by_id', default=None, read_only=True)
+    paid_by =serializers.IntegerField(source='payment.paid_by_id', default=None, read_only=True)
     paid_by_name = serializers.CharField(source='payment.paid_by_name', default=None, read_only=True)
 
     def get_payment_status(self, order):
@@ -148,7 +149,7 @@ class OrderSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Order
-        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name']
+        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'courier_is_active', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name']
         read_only_fields = fields
 
 class CustomerStatusHistorySerializer(serializers.ModelSerializer):

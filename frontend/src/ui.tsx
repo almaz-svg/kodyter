@@ -10,9 +10,9 @@ import { useI18n } from './i18n';
 export function Logo({ small = false }: { small?: boolean }) {
   const { t } = useI18n();
   return (
-    <Link to="/" className={`brand ${small ? 'brand-small' : ''}`} aria-label="Anaşym — на главную">
+    <Link to="/" className={`brand ${small ? 'brand-small' : ''}`} aria-label={t.logoHome}>
       <img
-        src="/images/Logo.png"
+        src="/images/Logo.webp"
         alt="Anaşym"
         width={1403}
         height={1069}
