@@ -29,6 +29,7 @@ function panel(initialDate = '') {
       if (name === './lib') return { statusSteps: [], statusLabel: {}, money: value => String(value) };
       if (name === 'lucide-react' || name === './portals.css') return {};
       if (name === './ui') return { LazyImage: 'img' };
+      if (name === './imageUpload') return { uploadProductPhoto: async () => '' };
       return require(name);
     },
     remote(requestPath) { calls.push(requestPath); return { data: null, loading: false, error: '', retry() {}, replace() {} }; },
