@@ -7,6 +7,7 @@ import {Catalog,ProductPage} from './Catalog';
 import {Auth,Cart,Checkout,ResetPassword} from './ShopFlow';
 import Portals from './Portals';
 import {MAP_URL} from './MapSection';
+import AboutPage from './AboutPage';
 import {ShopProvider,useShop} from './store';
 import {I18nProvider,useI18n} from './i18n';
 import type {Lang} from './i18n';
@@ -317,6 +318,7 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
   const {t} = useI18n();
   const crumb = type === 'about' ? t.infoAboutCrumb : type === 'delivery' ? t.infoDeliveryCrumb : type === 'contacts' ? t.infoContactsCrumb : t.infoPrivacyCrumb;
   const title = type === 'about' ? t.infoAboutTitle : type === 'delivery' ? t.infoDeliveryTitle : type === 'contacts' ? t.infoContactsTitle : t.infoPrivacyTitle;
+  if (type === 'about') return <AboutPage />;
   return (
     <main className="container page info-page">
       <div className="breadcrumb">
@@ -325,17 +327,7 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
       <span className="eyebrow">{t.infoAboutEyebrow}</span>
       <h1>{title}</h1>
       <Ornament />
-      {type === 'about' ? (
-        <div className="info-two">
-          <LazyImage src="/images/baker.webp" alt={t.infoAboutH2} />
-          <div>
-            <h2>{t.infoAboutH2}</h2>
-            <p>{t.infoAboutP1}</p>
-            <p>{t.infoAboutP2}</p>
-            <Link to="/catalog" className="button button-green">{t.infoAboutButton} <ArrowRight size={18} aria-hidden="true" /></Link>
-          </div>
-        </div>
-      ) : type === 'delivery' ? (
+      {type === 'delivery' ? (
         <div className="info-panels">
           <section>
             <Truck />
