@@ -1,15 +1,19 @@
 import {useEffect, useRef} from 'react';
-import {MapPin, Clock, Phone} from 'lucide-react';
+import {MapPin, Clock, Phone, Navigation, ArrowRight, CakeSlice, Leaf, Heart} from 'lucide-react';
+import {Branch} from './ui';
 import {useI18n} from './i18n';
+import './find-section.css';
 
 // Taraz, Konaev St 62a — coordinates
 const LAT = 42.8925;
 const LNG = 71.3679;
-// Contact phone: shown on the map card and used by the "Позвонить" button.
+// Contact phone: shown on the contact card; tapping it starts a call.
 const CONTACT_PHONE = '+7 778 232 1708';
 const CONTACT_PHONE_LINK = 'tel:+77782321708';
-// Public 2GIS page for the bakery; the map card and the footer open it in a new tab.
+// Public 2GIS page for the bakery (it has a route button); the contact card, the map and the footer open it in a new tab.
 export const MAP_URL = 'https://2gis.kz/taraz/geo/70000001087635808?inv_by=78675e2a2c264b2d8be2b3b70bc9ca96&inv_ts=1794403437';
+
+const escapeHtml = (value: string) => value.replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch] as string));
 
 export default function MapSection() {
   const mapRef = useRef<HTMLDivElement>(null);
@@ -24,29 +28,29 @@ export default function MapSection() {
       const container = mapRef.current;
       if (cancelled || !container || mapInstance.current) return;
       const L = mod.default;
-      // Fix leaflet default icon path issues with bundlers
-      // @ts-expect-error leaflet internals
-      delete L.Icon.Default.prototype._getIconUrl;
-      L.Icon.Default.mergeOptions({
-        iconRetinaUrl: 'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon-2x.png',
-        iconUrl:       'https://unpkg.com/leaflet@1.9.4/dist/images/marker-icon.png',
-        shadowUrl:     'https://unpkg.com/leaflet@1.9.4/dist/images/marker-shadow.png',
-      });
       const map = L.map(container, {
-        center: [LAT, LNG],
+        center: [LAT + 0.0006, LNG],
         zoom: 16,
         scrollWheelZoom: false,
         zoomControl: true,
+        attributionControl: true,
       });
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
-      const marker = L.marker([LAT, LNG])
-        .addTo(map)
-        .bindPopup(`<strong>Anasym</strong><br/>${t.mapAddress}<br/><a class="map-popup-link" href="${MAP_URL}" target="_blank" rel="noopener noreferrer">${t.mapFindOnMap}</a>`, {closeButton: false});
-      // On phones the open popup would cover the pin and most of the small map, so it opens on tap instead.
-      if (!window.matchMedia('(max-width: 600px)').matches) marker.openPopup();
+      // Branded pin with the logo and a label card above it; the label opens the 2GIS page.
+      const icon = L.divIcon({
+        className: 'find-marker',
+        html: `<a class="find-marker-label" href="${MAP_URL}" target="_blank" rel="noopener noreferrer">`
+          + `<span><b>Anasym</b><small>${escapeHtml(t.brandSub.charAt(0) + t.brandSub.slice(1).toLowerCase())}</small></span>`
+          + `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a>`
+          + `<span class="find-marker-halo"></span>`
+          + `<span class="find-marker-pin"><img src="/images/Logo.webp" alt=""></span>`,
+        iconSize: [0, 0],
+        iconAnchor: [0, 0],
+      });
+      L.marker([LAT, LNG], {icon, keyboard: false}).addTo(map);
       mapInstance.current = map;
     });
     return () => {
@@ -60,47 +64,67 @@ export default function MapSection() {
   }, []);
 
   return (
-    <section className="map-section section">
+    <section className="find-section" id="contacts">
+      <img className="find-leaves" src="/images/leaves-corner.webp" alt="" aria-hidden="true" loading="lazy" />
+      <img className="find-leaves find-leaves-bottom" src="/images/leaves-corner.webp" alt="" aria-hidden="true" loading="lazy" />
+      <Branch className="find-branch" />
       <div className="container">
-        <div className="section-heading">
-          <div>
-            <span className="eyebrow">{t.mapEyebrow}</span>
-            <h2>{t.mapTitle}</h2>
-          </div>
-        </div>
-        <div className="map-layout">
-          <div className="map-info">
-            <div className="map-info-row">
-              <MapPin size={20} className="map-icon" aria-hidden="true" />
-              <div>
-                <span className="map-info-label">{t.mapAddressLabel}</span>
-                <p>{t.mapAddress}</p>
-              </div>
+        <header className="find-heading">
+          <span className="find-eyebrow"><i />{t.mapEyebrow}<i /></span>
+          <h2>{t.mapTitle}</h2>
+          <p>{t.mapSubtitle}</p>
+        </header>
+
+        <div className="find-layout">
+          <div className="find-visual">
+            <svg className="find-orbit" viewBox="0 0 600 420" fill="none" aria-hidden="true" preserveAspectRatio="none">
+              <ellipse cx="300" cy="210" rx="296" ry="190" transform="rotate(-8 300 210)" />
+            </svg>
+            <div className="find-photo">
+              <img src="/images/storefront.webp" alt={`Anasym — ${t.mapAddress}`} loading="lazy" width={935} height={985} />
             </div>
-            <div className="map-info-row">
-              <Clock size={20} className="map-icon" aria-hidden="true" />
-              <div>
-                <span className="map-info-label">{t.mapHours}</span>
-                <p>{t.mapHoursValue}</p>
+
+            <div className="find-card">
+              <div className="find-card-brand">
+                <img src="/images/Logo.webp" alt="" aria-hidden="true" />
+                <div>
+                  <strong>Anasym</strong>
+                  <span>{t.brandSub}</span>
+                </div>
               </div>
-            </div>
-            <div className="map-info-row">
-              <Phone size={20} className="map-icon" aria-hidden="true" />
-              <div>
-                <span className="map-info-label">{t.mapPhone}</span>
-                <p>{CONTACT_PHONE}</p>
-              </div>
-            </div>
-            <div className="map-actions">
-              <a className="map-call" href={CONTACT_PHONE_LINK}>
-                <Phone size={17} aria-hidden="true" />{t.mapCall}
+              <ul className="find-card-list">
+                <li>
+                  <span className="find-icon"><MapPin aria-hidden="true" /></span>
+                  <div><small>{t.mapAddressLabel}</small><span>{t.mapAddress}</span></div>
+                </li>
+                <li>
+                  <span className="find-icon"><Clock aria-hidden="true" /></span>
+                  <div><small>{t.mapHours}</small><span>{t.mapHoursValue}</span></div>
+                </li>
+                <li>
+                  <span className="find-icon"><Phone aria-hidden="true" /></span>
+                  <div><small>{t.mapPhone}</small><a href={CONTACT_PHONE_LINK} aria-label={`${t.mapCall}: ${CONTACT_PHONE}`}>{CONTACT_PHONE}</a></div>
+                </li>
+              </ul>
+              <a className="find-route" href={MAP_URL} target="_blank" rel="noopener noreferrer">
+                <Navigation aria-hidden="true" />{t.mapRoute}<ArrowRight aria-hidden="true" />
               </a>
-              <a className="map-call" href={MAP_URL} target="_blank" rel="noopener noreferrer">
-                <MapPin size={17} aria-hidden="true" />{t.mapFindOnMap}
-              </a>
             </div>
           </div>
-          <div className="map-container" ref={mapRef} aria-label={t.mapTitle} />
+
+          <div className="find-side">
+            <div className="find-map-card">
+              <div className="find-map" ref={mapRef} aria-label={t.mapTitle} />
+              <a className="find-locate" href={MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={t.mapRoute}>
+                <Navigation aria-hidden="true" />
+              </a>
+            </div>
+            <ul className="find-features">
+              <li><CakeSlice aria-hidden="true" /><span>{t.mapF1a}<br />{t.mapF1b}</span></li>
+              <li><Leaf aria-hidden="true" /><span>{t.mapF2a}<br />{t.mapF2b}</span></li>
+              <li><Heart aria-hidden="true" /><span>{t.mapF3a}<br />{t.mapF3b}</span></li>
+            </ul>
+          </div>
         </div>
       </div>
     </section>

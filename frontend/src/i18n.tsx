@@ -64,6 +64,7 @@ export interface Translations {
   mapAddressLabel: string;
   mapCall: string;
   mapFindOnMap: string;
+  mapSubtitle: string; mapRoute: string; mapF1a: string; mapF1b: string; mapF2a: string; mapF2b: string; mapF3a: string; mapF3b: string;
 
   /* Footer */
   footerTagline: string;
@@ -304,10 +305,11 @@ const kz: Translations = {
   aboutF1a:'Табиғи', aboutF1b:'ингредиенттер', aboutF2a:'Авторлық', aboutF2b:'рецепттер', aboutF3a:'Әр детальға', aboutF3b:'қамқорлық',
   photoCaption:'Әр қимылдағы шеберлік',
 
-  mapEyebrow:'МЕКЕН-ЖАЙЫМЫЗ', mapTitle:'Бізді табыңыз',
+  mapEyebrow:'БАЙЛАНЫС', mapTitle:'Бізді табыңыз',
   mapAddress:'Тараз қ., Қонаев к-сі, 62а',
   mapHours:'Жұмыс уақыты', mapHoursValue:'Дүй–Жек: 08:00–21:00',
   mapPhone:'Телефон', mapAddressLabel:'Мекенжайы', mapCall:'Қоңырау шалу', mapFindOnMap:'Картадан табу',
+  mapSubtitle:'Балғын десерттер үшін Anasym кондитерлігіне келіңіз', mapRoute:'Бағыт құру', mapF1a:'Балғын', mapF1b:'десерттер', mapF2a:'Табиғи', mapF2b:'ингредиенттер', mapF3a:'Жайлы', mapF3b:'атмосфера',
 
   footerTagline:'Дәстүрден шабыт алған дәм.\nСезінуге болатын қамқорлық.',
   footerHistory:'Біздің тарих', footerDelivery:'Жеткізу және төлем',
@@ -485,10 +487,11 @@ const ru: Translations = {
   aboutF1a:'Натуральные', aboutF1b:'ингредиенты', aboutF2a:'Авторские', aboutF2b:'рецепты', aboutF3a:'Забота', aboutF3b:'в каждой детали',
   photoCaption:'Мастерство в каждом движении',
 
-  mapEyebrow:'НАШ АДРЕС', mapTitle:'Найдите нас',
+  mapEyebrow:'КОНТАКТЫ', mapTitle:'Найдите нас',
   mapAddress:'г. Тараз, ул. Конаева, 62а',
   mapHours:'Часы работы', mapHoursValue:'Пн–Вс: 08:00–21:00',
   mapPhone:'Телефон', mapAddressLabel:'Адрес', mapCall:'Позвонить', mapFindOnMap:'Найти на карте',
+  mapSubtitle:'Загляните за свежими десертами в нашу кондитерскую Anasym', mapRoute:'Построить маршрут', mapF1a:'Свежие', mapF1b:'десерты', mapF2a:'Натуральные', mapF2b:'ингредиенты', mapF3a:'Уютная', mapF3b:'атмосфера',
 
   footerTagline:'Вкус, вдохновлённый традициями.\nЗабота, которую можно почувствовать.',
   footerHistory:'Наша история', footerDelivery:'Доставка и оплата',
@@ -666,10 +669,11 @@ const en: Translations = {
   aboutF1a:'Natural', aboutF1b:'ingredients', aboutF2a:'Original', aboutF2b:'recipes', aboutF3a:'Care in', aboutF3b:'every detail',
   photoCaption:'Craftsmanship in every move',
 
-  mapEyebrow:'OUR ADDRESS', mapTitle:'Find Us',
+  mapEyebrow:'CONTACTS', mapTitle:'Find Us',
   mapAddress:'Taraz, Konaev St, 62a',
   mapHours:'Opening Hours', mapHoursValue:'Mon–Sun: 08:00–21:00',
   mapPhone:'Phone', mapAddressLabel:'Address', mapCall:'Call us', mapFindOnMap:'Find on map',
+  mapSubtitle:'Drop by our Anasym confectionery for fresh desserts', mapRoute:'Get directions', mapF1a:'Fresh', mapF1b:'desserts', mapF2a:'Natural', mapF2b:'ingredients', mapF3a:'Cosy', mapF3b:'atmosphere',
 
   footerTagline:'Taste inspired by tradition.\nCare you can feel.',
   footerHistory:'Our Story', footerDelivery:'Delivery & Payment',
