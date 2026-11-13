@@ -31,7 +31,7 @@
   .hero{min-height:max(575px,100vw)}
   .hero-image{inset:auto 0 0;width:100%;height:auto;aspect-ratio:1;object-fit:contain;object-position:center;opacity:1}
   .hero-shade{background:linear-gradient(180deg,#062d22 0%,#062d22 18%,#062d22e6 35%,#062d2250 63%,#062d2200 80%),linear-gradient(90deg,#062d2299,#062d2200 85%)}
-  .hero-content{padding-top:32px;padding-bottom:145px}
+  .hero-content{padding-top:32px;padding-bottom:calc(79vw + 20px)}
   .hero h1{font-size:clamp(42px,11.8vw,57px);line-height:1.04;letter-spacing:-.6px}
   .hero .eyebrow{font-size:12px;letter-spacing:0.84px;margin-bottom:18px}
   .hero-content>p{max-width:255px;font-size:13px;margin:18px 0 20px}
