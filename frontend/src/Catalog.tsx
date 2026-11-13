@@ -4,7 +4,7 @@ import {ArrowLeft,ArrowRight,Search,ShoppingBag,Leaf,Truck} from 'lucide-react';
 import {api,money} from './lib';
 import type {Product,Category} from './lib';
 import {useShop} from './store';
-import {ProductCard,PriceTag,Loading,ErrorBox,Qty,CatalogCartSummary,LazyImage} from './ui';
+import {FeaturedCard,PriceTag,Loading,ErrorBox,Qty,CatalogCartSummary,LazyImage} from './ui';
 import {useI18n} from './i18n';
 
 export function Catalog() {
@@ -62,7 +62,7 @@ export function Catalog() {
         <>
           <div className="results-count">{t.resultsCount(visible.length)}</div>
           {visible.length ? (
-            <div className="product-grid">{visible.map(p => <ProductCard key={p.id} product={p}/>)}</div>
+            <div className="feat-grid catalog-feat-grid">{visible.map(p => <FeaturedCard key={p.id} product={p}/>)}</div>
           ) : (
             <div className="empty-state">
               <Search size={36} aria-hidden="true" />

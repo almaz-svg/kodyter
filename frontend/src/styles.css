@@ -564,3 +564,5 @@
 }
 /* Featured card ribbon: the Anaşym lattice emblem, drawn in the ribbon's dark green via a mask of the logo. */
 .feat-ribbon-logo{display:block;width:36px;height:36px;margin:-4px 0 -2px;background:#173b2e;-webkit-mask:url(/images/Logo.webp) center/contain no-repeat;mask:url(/images/Logo.webp) center/contain no-repeat}
+/* Catalog uses the same product card as the home favourites; give the rows room for the hover lift. */
+.catalog-feat-grid{row-gap:clamp(26px,2.6vw,40px);padding-top:18px}

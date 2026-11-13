@@ -182,43 +182,7 @@ export function PriceTag({ product, quantity }: { product: Product; quantity?: n
   );
 }
 
-export function ProductCard({ product }: { product: Product }) {
-  const { add, cart, quantity } = useShop();
-  const { t } = useI18n();
-  const selected = cart.find(item => item.product.id === product.id)?.quantity || 0;
-  return (
-    <article className="product-card">
-      <Link to={`/product/${product.id}`} className="product-image">
-        <LazyImage src={product.image || '/images/croissant.webp'} alt={product.name} />
-        {!product.is_available && <span className="availability">{t.soonAvail}</span>}
-      </Link>
-      <div className="product-copy">
-        <span className="product-weight">{product.weight || 'Авторский рецепт'}</span>
-        <Link to={`/product/${product.id}`}><h3>{product.name}</h3></Link>
-        <p>{product.description}</p>
-        <div className="product-bottom">
-          <div className="product-price-row">
-            <PriceTag product={product} quantity={selected} />
-            <span className="product-selected">{selected ? t.inCart(selected) : t.perItem}</span>
-          </div>
-          {selected > 0 ? (
-            <div className="product-purchase">
-              <Qty value={selected} label={product.name} increaseDisabled={!product.is_available} onChange={n => n < selected ? quantity(product.id, n) : add(product, n - selected)} />
-              <Link to="/cart" className="product-cart-link">{t.toCart} <ArrowRight size={16} aria-hidden="true" /></Link>
-            </div>
-          ) : (
-            <button type="button" className="button button-green product-buy" onClick={() => add(product)} disabled={!product.is_available} aria-label={product.is_available ? `${t.buy} ${product.name}` : `${product.name} — ${t.outOfStock}`}>
-              <ShoppingBag size={17} aria-hidden="true" />
-              {product.is_available ? t.buy : t.outOfStock}
-            </button>
-          )}
-        </div>
-      </div>
-    </article>
-  );
-}
-
-// Home-page card: light by default; on hover or keyboard focus it turns into the "featured" look —
+// Product card (home favourites and catalog): light by default; on hover or keyboard focus it turns into the "featured" look —
 // gold frame, green body under a wave, gold weight ribbon and an outlined Buy button.
 export function FeaturedCard({ product }: { product: Product }) {
   const { add, cart, quantity } = useShop();
