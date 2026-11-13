@@ -842,3 +842,14 @@ export function I18nProvider({children}: {children: ReactNode}) {
 }
 
 export const useI18n = () => useContext(I18nContext);
+
+// Category names live in the database in Russian only. Known categories are translated by slug here;
+// Russian (and any unknown category) shows the database name, so a rename in the admin still appears.
+const CATEGORY_NAMES: Record<Exclude<Lang, 'ru'>, Record<string, string>> = {
+  kz: {bakery: 'Нан-тоқаш', cakes: 'Торттар', desserts: 'Десерттер', catering: 'Кейтеринг', buns: 'Тоқаштар мен бәліштер'},
+  en: {bakery: 'Pastries', cakes: 'Cakes', desserts: 'Desserts', catering: 'Catering', buns: 'Buns & pies'},
+};
+export function categoryName(category: {name: string; slug?: string}, lang: Lang): string {
+  if (lang === 'ru' || !category.slug) return category.name;
+  return CATEGORY_NAMES[lang][category.slug] ?? category.name;
+}

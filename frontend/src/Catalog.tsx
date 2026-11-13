@@ -5,7 +5,7 @@ import {api,money} from './lib';
 import type {Product,Category} from './lib';
 import {useShop} from './store';
 import {FeaturedCard,PriceTag,Loading,ErrorBox,Qty,CatalogCartSummary,LazyImage} from './ui';
-import {useI18n} from './i18n';
+import {useI18n,categoryName} from './i18n';
 
 export function Catalog() {
   const [params,setParams] = useSearchParams();
@@ -14,7 +14,7 @@ export function Catalog() {
   const [loading,setLoading] = useState(true);
   const [error,setError] = useState('');
   const [search,setSearch] = useState('');
-  const {t} = useI18n();
+  const {t, lang} = useI18n();
   const category = params.get('category') || '';
 
   const load = () => {
@@ -48,7 +48,7 @@ export function Catalog() {
           <button className={!category?'active':''} onClick={() => setParams({})}>{t.catalogAll}</button>
           {categories.map(c => (
             <button key={c.id} className={category===String(c.id)?'active':''} onClick={() => setParams({category:String(c.id)})}>
-              {c.name}
+              {categoryName(c, lang)}
             </button>
           ))}
         </div>
