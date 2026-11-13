@@ -142,3 +142,17 @@
 .find-btn:hover svg{color:var(--gold)}
 @media(max-width:600px){.find-btn{font-size:13px;gap:6px;padding:0 6px;min-height:48px}}
 @media(prefers-reduced-motion:reduce){.find-btn,.find-btn svg{transition:none}}
+
+/* Tablets and phones: bigger, less tilted storefront photo; the contact card sits below it instead of covering
+   its lower part, and the gallery controls move to the photo's bottom edge. */
+@media(max-width:1100px){
+  .find-visual::before{left:1%;top:2%;width:88%;transform:rotate(-5deg)}
+  .find-photo{width:94%;margin:12px auto 0;transform:rotate(-2deg)}
+  .find-orbit{height:60%}
+  .find-card{margin:26px 0 0}
+  .find-photo-controls{bottom:14px;gap:6px;padding:4px}
+}
+@media(max-width:600px){
+  .find-photo-nav{width:32px;height:32px}
+  .find-photo-nav svg{width:18px;height:18px}
+}
