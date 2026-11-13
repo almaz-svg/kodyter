@@ -35,13 +35,13 @@
 
 .find-side{display:flex;flex-direction:column;gap:clamp(22px,2.4vw,36px)}
 .find-map-card{position:relative;border-radius:30px;padding:8px;background:#fffaf2;box-shadow:0 22px 56px #3b2a0f26}
-.find-map{position:relative;height:clamp(280px,23vw,400px);border-radius:24px;overflow:hidden;z-index:0}
+.find-map{position:relative;display:block;width:100%;border:0;height:clamp(280px,23vw,400px);border-radius:24px;overflow:hidden;z-index:0;background:#efe6d6}
 .find-map .leaflet-tile-pane{filter:sepia(.55) saturate(.7) hue-rotate(-10deg) brightness(1.05) contrast(.9)}
 .find-map .leaflet-top.leaflet-left{left:auto;right:0}
 .find-map .leaflet-control-zoom{border:0;box-shadow:0 6px 16px #3b2a0f22;border-radius:14px;overflow:hidden;margin:14px 14px 0 0}
 .find-map .leaflet-control-zoom a{width:42px;height:42px;line-height:40px;font-size:22px;color:#1d2b25;background:#fffaf2;border-bottom-color:#eadfca}
 .find-map .leaflet-control-attribution{font-size:10px;background:#fffaf2cc;border-radius:8px 0 0 0}
-.find-locate{position:absolute;right:24px;bottom:34px;z-index:500;display:grid;place-items:center;width:50px;height:50px;border-radius:16px;background:#fffaf2;color:#1d2b25;box-shadow:0 6px 16px #3b2a0f2b;transition:transform .2s}
+.find-locate{position:absolute;right:22px;top:22px;z-index:500;display:grid;place-items:center;width:50px;height:50px;border-radius:16px;background:#fffaf2;color:#1d2b25;box-shadow:0 6px 16px #3b2a0f2b;transition:transform .2s}
 .find-locate:hover{transform:translateY(-2px)}
 .find-locate svg{width:22px;height:22px}
 .find-marker{background:none;border:0}

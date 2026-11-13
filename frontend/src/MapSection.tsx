@@ -1,4 +1,3 @@
-import {useEffect, useRef} from 'react';
 import {MapPin, Clock, Phone, Navigation, ArrowRight, CakeSlice, Leaf, Heart} from 'lucide-react';
 import {Branch} from './ui';
 import {useI18n} from './i18n';
@@ -13,55 +12,11 @@ const CONTACT_PHONE_LINK = 'tel:+77782321708';
 // Public 2GIS page for the bakery (it has a route button); the contact card, the map and the footer open it in a new tab.
 export const MAP_URL = 'https://2gis.kz/taraz/geo/70000001087635808?inv_by=78675e2a2c264b2d8be2b3b70bc9ca96&inv_ts=1794403437';
 
-const escapeHtml = (value: string) => value.replace(/[&<>"']/g, ch => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'}[ch] as string));
+// Google Maps embed (no API key needed); the pin sits on the bakery's coordinates.
+const mapEmbedUrl = (lang: string) => `https://maps.google.com/maps?q=${LAT},${LNG}&z=17&hl=${lang === 'kk' ? 'kk' : lang === 'en' ? 'en' : 'ru'}&output=embed`;
 
 export default function MapSection() {
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstance = useRef<unknown>(null);
-  const {t} = useI18n();
-
-  useEffect(() => {
-    // React StrictMode runs this effect twice in development. The first run's import can resolve after its cleanup,
-    // so a cancelled run must not create a map: two maps on one container throw "Map container is already initialized".
-    let cancelled = false;
-    import('leaflet').then(mod => {
-      const container = mapRef.current;
-      if (cancelled || !container || mapInstance.current) return;
-      const L = mod.default;
-      const map = L.map(container, {
-        center: [LAT + 0.0006, LNG],
-        zoom: 16,
-        scrollWheelZoom: false,
-        zoomControl: true,
-        attributionControl: true,
-      });
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
-        maxZoom: 19,
-      }).addTo(map);
-      // Branded pin with the logo and a label card above it; the label opens the 2GIS page.
-      const icon = L.divIcon({
-        className: 'find-marker',
-        html: `<a class="find-marker-label" href="${MAP_URL}" target="_blank" rel="noopener noreferrer">`
-          + `<span><b>Anasym</b><small>${escapeHtml(t.brandSub.charAt(0) + t.brandSub.slice(1).toLowerCase())}</small></span>`
-          + `<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg></a>`
-          + `<span class="find-marker-halo"></span>`
-          + `<span class="find-marker-pin"><img src="/images/Logo.webp" alt=""></span>`,
-        iconSize: [0, 0],
-        iconAnchor: [0, 0],
-      });
-      L.marker([LAT, LNG], {icon, keyboard: false}).addTo(map);
-      mapInstance.current = map;
-    });
-    return () => {
-      cancelled = true;
-      if (mapInstance.current) {
-        (mapInstance.current as {remove: () => void}).remove();
-        mapInstance.current = null;
-      }
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const {t, lang} = useI18n();
 
   return (
     <section className="find-section" id="contacts">
@@ -114,7 +69,7 @@ export default function MapSection() {
 
           <div className="find-side">
             <div className="find-map-card">
-              <div className="find-map" ref={mapRef} aria-label={t.mapTitle} />
+              <iframe className="find-map" src={mapEmbedUrl(lang)} title={`${t.mapTitle} — ${t.mapAddress}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
               <a className="find-locate" href={MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={t.mapRoute}>
                 <Navigation aria-hidden="true" />
               </a>
