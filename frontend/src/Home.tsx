@@ -72,7 +72,7 @@ export default function Home() {
         <picture className="hero-picture">
           <source media="(max-width: 600px)" srcSet="/images/hero-cakes-mobile.webp" />
           <img className="hero-image" src="/images/hero-cakes.webp" alt="Пирог с клубникой и киви, тарталетка со сливками и песочное печенье"
-            fetchPriority="high" width={1672} height={707} />
+            fetchPriority="high" width={2367} height={1001} />
         </picture>
         <div className="hero-shade" />
         <div className="container hero-content">
