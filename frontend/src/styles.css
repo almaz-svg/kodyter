@@ -550,3 +550,5 @@
 /* About title: both lines start on the same left edge as the eyebrow (no indent on the gold line). */
 .about-v2 h2 em{margin-left:0}
 @media(max-width:820px){.about-v2 h2 em{margin-left:0}}
+/* "Choose yours" under the favourites heading: one line on phones (an older .favorites .text-link rule capped it at 95px). */
+.favorites .feat-link{max-width:none;white-space:nowrap}
