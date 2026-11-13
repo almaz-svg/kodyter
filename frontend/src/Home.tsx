@@ -3,7 +3,7 @@ import {Link} from 'react-router-dom';
 import {ArrowRight, Heart, Leaf, ChefHat, Croissant} from 'lucide-react';
 import {api} from './lib';
 import type {Category, Product} from './lib';
-import {Branch, Ornament, ProductCard, ErrorBox, LazyImage} from './ui';
+import {Branch, Ornament, FeaturedCard, ErrorBox, LazyImage} from './ui';
 import CategorySlider from './CategorySlider';
 import MapSection from './MapSection';
 import {useI18n} from './i18n';
@@ -157,16 +157,23 @@ export default function Home() {
       {/* ── Featured products ─────────────────────────────────────────── */}
       <section className="section favorites">
         <div className="container">
-          <div className="section-heading">
-            <div>
-              <span className="eyebrow">{t.sectionFavoritesEyebrow}</span>
-              <h2>{t.sectionFavoritesTitle}</h2>
-            </div>
-            <Link to="/catalog" className="text-link">{t.sectionFavoritesLink} <ArrowRight size={17} aria-hidden="true" /></Link>
+          <div className="feat-heading">
+            <span className="eyebrow">{t.sectionFavoritesEyebrow}</span>
+            <h2>{t.sectionFavoritesTitle}</h2>
+            <span className="feat-ornament" aria-hidden="true">
+              <i />
+              <svg viewBox="0 0 40 30" fill="none" stroke="currentColor" strokeWidth="1.3">
+                <path d="M20 27C14 22 9 18 9 12a5 5 0 0 1 9-3l2 3 2-3a5 5 0 0 1 9 3c0 6-5 10-11 15Z" />
+                <path d="M20 27C17 21 12 18 4 19c1 5 7 8 16 8Zm0 0c3-6 8-9 16-8-1 5-7 8-16 8Z" />
+              </svg>
+              <i />
+            </span>
+            <Link to="/catalog" className="text-link feat-link">{t.sectionFavoritesLink} <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
-          <div className="product-grid">
-            {products.slice(0, 4).map(p => <ProductCard key={p.id} product={p} />)}
+          <div className="feat-grid">
+            {products.slice(0, 4).map(p => <FeaturedCard key={p.id} product={p} />)}
           </div>
+          <Branch className="feat-wheat" />
         </div>
       </section>
 

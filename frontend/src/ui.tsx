@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ImgHTMLAttributes } from 'react';
-import { ArrowRight, Minus, Plus, LoaderCircle, ShoppingBag } from 'lucide-react';
+import { ArrowRight, Minus, Plus, LoaderCircle, ShoppingBag, Croissant } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { money, unitPrice, MAX_ORDER_ITEM_QUANTITY } from './lib';
 import type { Product } from './lib';
@@ -209,6 +209,49 @@ export function ProductCard({ product }: { product: Product }) {
           ) : (
             <button type="button" className="button button-green product-buy" onClick={() => add(product)} disabled={!product.is_available} aria-label={product.is_available ? `${t.buy} ${product.name}` : `${product.name} — ${t.outOfStock}`}>
               <ShoppingBag size={17} aria-hidden="true" />
+              {product.is_available ? t.buy : t.outOfStock}
+            </button>
+          )}
+        </div>
+      </div>
+    </article>
+  );
+}
+
+// Home-page card: light by default; on hover or keyboard focus it turns into the "featured" look —
+// gold frame, green body under a wave, gold weight ribbon and an outlined Buy button.
+export function FeaturedCard({ product }: { product: Product }) {
+  const { add, cart, quantity } = useShop();
+  const { t } = useI18n();
+  const selected = cart.find(item => item.product.id === product.id)?.quantity || 0;
+  return (
+    <article className="feat-card">
+      <Link to={`/product/${product.id}`} className="feat-photo" tabIndex={-1} aria-hidden="true">
+        <LazyImage src={product.image || '/images/croissant.webp'} alt="" />
+        {product.weight && <span className="feat-pill">{product.weight}</span>}
+        {product.weight && <span className="feat-ribbon"><Croissant size={22} strokeWidth={1.4} />{product.weight}</span>}
+        {!product.is_available && <span className="availability">{t.soonAvail}</span>}
+      </Link>
+      <div className="feat-body">
+        <svg className="feat-wave" viewBox="0 0 400 40" preserveAspectRatio="none" aria-hidden="true">
+          <path className="feat-wave-fill" d="M0 22C70 4 140 2 210 14S340 36 400 18V40H0Z" />
+          <path className="feat-wave-line" d="M0 22C70 4 140 2 210 14S340 36 400 18" />
+        </svg>
+        <Link to={`/product/${product.id}`}><h3>{product.name}</h3></Link>
+        {product.description && <p>{product.description}</p>}
+        <div className="feat-bottom">
+          <div className="feat-price">
+            <PriceTag product={product} quantity={selected} />
+            <span>{selected ? t.inCart(selected) : t.perItem}</span>
+          </div>
+          {selected > 0 ? (
+            <div className="product-purchase">
+              <Qty value={selected} label={product.name} increaseDisabled={!product.is_available} onChange={n => n < selected ? quantity(product.id, n) : add(product, n - selected)} />
+              <Link to="/cart" className="product-cart-link">{t.toCart} <ArrowRight size={16} aria-hidden="true" /></Link>
+            </div>
+          ) : (
+            <button type="button" className="feat-buy" onClick={() => add(product)} disabled={!product.is_available} aria-label={product.is_available ? `${t.buy} ${product.name}` : `${product.name} — ${t.outOfStock}`}>
+              <ShoppingBag size={18} aria-hidden="true" />
               {product.is_available ? t.buy : t.outOfStock}
             </button>
           )}
