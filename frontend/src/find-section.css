@@ -156,3 +156,15 @@
   .find-photo-nav{width:32px;height:32px}
   .find-photo-nav svg{width:18px;height:18px}
 }
+
+/* Features under the map: each item is as wide as its text, with equal room on both sides of every divider. */
+.find-features{display:flex;justify-content:center;align-items:center;padding:0}
+.find-features li{flex:0 1 auto;gap:10px;padding:0 clamp(10px,1.3vw,22px);font-size:clamp(12.5px,.95vw,16px)}
+.find-features li>span{white-space:nowrap}
+.find-features svg{width:clamp(26px,2vw,34px)}
+@media(max-width:600px){
+  .find-features li{padding:0 clamp(8px,3vw,14px);gap:6px}
+}
+.find-features li{padding:0 clamp(8px,1vw,16px);font-size:clamp(12.5px,.84vw,15px)}
+.find-features svg{width:clamp(24px,1.75vw,30px)}
+@media(max-width:600px){.find-features li{padding:0 clamp(8px,3vw,14px)}}
