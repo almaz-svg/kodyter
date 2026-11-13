@@ -9,6 +9,7 @@ import Portals from './Portals';
 import {MAP_URL} from './MapSection';
 import AboutPage from './AboutPage';
 import DeliveryPage from './DeliveryPage';
+import ContactsPage from './ContactsPage';
 import {ShopProvider,useShop} from './store';
 import {I18nProvider,useI18n} from './i18n';
 import type {Lang} from './i18n';
@@ -321,6 +322,7 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
   const title = type === 'about' ? t.infoAboutTitle : type === 'delivery' ? t.infoDeliveryTitle : type === 'contacts' ? t.infoContactsTitle : t.infoPrivacyTitle;
   if (type === 'about') return <AboutPage />;
   if (type === 'delivery') return <DeliveryPage />;
+  if (type === 'contacts') return <ContactsPage />;
   return (
     <main className="container page info-page">
       <div className="breadcrumb">
@@ -329,27 +331,11 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
       <span className="eyebrow">{t.infoAboutEyebrow}</span>
       <h1>{title}</h1>
       <Ornament />
-      {type === 'contacts' ? (
-        <div className="info-panels">
-          <section>
-            <MapPin />
-            <h2>{t.infoAddressH2}</h2>
-            <p>{t.infoAddressP}</p>
-          </section>
-          <section>
-            <Heart />
-            <h2>{t.infoOrderH2}</h2>
-            <p>{t.infoOrderP}</p>
-            <Link to="/catalog" className="button button-green">{t.infoOrderButton} <ArrowRight size={18} aria-hidden="true" /></Link>
-          </section>
-        </div>
-      ) : (
-        <div className="prose">
-          <p>{t.infoPrivacyP1}</p>
-          <p>{t.infoPrivacyP2}</p>
-          <p>{t.infoPrivacyP3}</p>
-        </div>
-      )}
+      <div className="prose">
+        <p>{t.infoPrivacyP1}</p>
+        <p>{t.infoPrivacyP2}</p>
+        <p>{t.infoPrivacyP3}</p>
+      </div>
     </main>
   );
 }

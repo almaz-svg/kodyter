@@ -8,13 +8,13 @@ import './find-section.css';
 const LAT = 42.8925;
 const LNG = 71.3679;
 // Contact phone: shown on the contact card; tapping it starts a call.
-const CONTACT_PHONE = '+7 778 232 1708';
-const CONTACT_PHONE_LINK = 'tel:+77782321708';
+export const CONTACT_PHONE = '+7 778 232 1708';
+export const CONTACT_PHONE_LINK = 'tel:+77782321708';
 // Public 2GIS page for the bakery (it has a route button); the contact card, the map and the footer open it in a new tab.
 export const MAP_URL = 'https://2gis.kz/taraz/geo/70000001087635808?inv_by=78675e2a2c264b2d8be2b3b70bc9ca96&inv_ts=1794403437';
 
 // Google Maps embed (no API key needed); the pin sits on the bakery's coordinates.
-const mapEmbedUrl = (lang: string) => `https://maps.google.com/maps?q=${LAT},${LNG}&z=17&hl=${lang === 'kz' ? 'kk' : lang === 'en' ? 'en' : 'ru'}&output=embed`;
+export const mapEmbedUrl = (lang: string) => `https://maps.google.com/maps?q=${LAT},${LNG}&z=17&hl=${lang === 'kz' ? 'kk' : lang === 'en' ? 'en' : 'ru'}&output=embed`;
 
 // Storefront photos in the tilted frame. The track scrolls with snap points, so a finger swipe works natively;
 // arrows and dots scroll it too, and the active dot follows the scroll position.

@@ -1,0 +1,41 @@
+/* Contacts page; reuses the About/Delivery page blocks plus the contact rows and buttons from find-section.css. */
+.cp-lead{margin-top:18px;max-width:760px;font-family:var(--serif);font-size:clamp(21px,1.8vw,28px);line-height:1.35;color:#0b3a2c;padding-left:18px;border-left:2px solid #c9a865}
+.contacts-page .dp-intro{margin-top:14px}
+
+.cp-info{list-style:none;margin:22px 0 0;padding:6px 20px;border-radius:18px;background:#f4ebdb;border:1px solid #e6d6b6}
+.cp-info li{display:grid;grid-template-columns:46px minmax(0,1fr);gap:14px;align-items:center;padding:12px 0}
+.cp-info li+li{border-top:1px solid #e3d2ae}
+.cp-info small{display:block;font-size:12px;color:#7b7566;margin-bottom:2px;letter-spacing:.3px}
+.cp-info span:not(.find-icon),.cp-info a{font-size:clamp(15px,1.1vw,17px);font-weight:600;color:#1d2b25;text-decoration:none}
+.cp-info a:hover{color:#0b5a43;text-decoration:underline;text-underline-offset:3px}
+.dp-card p.cp-note{margin-top:18px;font-family:var(--serif);font-style:italic;font-size:clamp(18px,1.4vw,22px);color:#b08a46}
+.cp-actions{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:16px}
+.cp-order-btn{margin-top:26px;gap:16px;padding:15px 28px;font-size:14px}
+
+.about-page .cp-find{margin-top:clamp(56px,7vw,100px);text-align:center}
+.cp-find h2,.cp-moments h2{font-size:clamp(32px,3.2vw,50px);margin-top:6px}
+.cp-find-grid{display:grid;grid-template-columns:minmax(0,.8fr) minmax(0,1.2fr);gap:clamp(16px,2vw,28px);margin-top:clamp(28px,3vw,44px);text-align:left}
+.cp-photo{aspect-ratio:auto;height:clamp(340px,30vw,480px)}
+.cp-photo img{object-position:center 30%}
+.cp-map{border-radius:24px;padding:8px;background:#fffaf2;box-shadow:0 22px 56px #3b2a0f26;height:clamp(340px,30vw,480px)}
+.cp-map iframe{display:block;width:100%;height:100%;border:0;border-radius:18px;background:#efe6d6}
+
+.about-page .cp-moments{margin-top:clamp(56px,7vw,100px);text-align:center}
+.cp-moments ul{list-style:none;padding:0;margin:clamp(26px,3vw,40px) 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(12px,1.4vw,20px)}
+.cp-moments li{display:flex;flex-direction:column;align-items:center;gap:4px;padding:26px 14px;border-radius:20px;background:#fbf7ef;border:1px solid #ecdfc6;font-family:var(--serif);font-size:clamp(19px,1.5vw,23px);color:#0b3a2c;transition:transform .3s,box-shadow .3s}
+.cp-moments li:hover{transform:translateY(-5px);box-shadow:0 16px 36px #5a43181c}
+
+@media(max-width:900px){
+  .cp-find-grid{grid-template-columns:1fr}
+  .cp-photo,.cp-map{height:320px}
+  .cp-moments ul{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+@media(max-width:600px){
+  .cp-info{padding:4px 14px}
+  .cp-actions{gap:8px}
+  .cp-order-btn{width:100%;justify-content:center}
+  .cp-photo{height:300px}
+  .cp-map{height:300px;border-radius:20px;padding:6px}
+  .cp-moments li{padding:18px 10px;font-size:17px}
+}
+@media(prefers-reduced-motion:reduce){.cp-moments li{transition:none}}
