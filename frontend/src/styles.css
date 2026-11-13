@@ -552,3 +552,8 @@
 @media(max-width:820px){.about-v2 h2 em{margin-left:0}}
 /* "Choose yours" under the favourites heading: one line on phones (an older .favorites .text-link rule capped it at 95px). */
 .favorites .feat-link{max-width:none;white-space:nowrap}
+/* Phones: underline only the "Choose yours" words, not the arrow. */
+@media(max-width:820px){
+  .favorites .feat-link{border-bottom:0;padding:6px 0;min-height:44px;align-items:center}
+  .favorites .feat-link>span{border-bottom:1px solid #b0a58d;padding-bottom:4px}
+}

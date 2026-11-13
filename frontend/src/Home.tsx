@@ -168,7 +168,7 @@ export default function Home() {
               </svg>
               <i />
             </span>
-            <Link to="/catalog" className="text-link feat-link">{t.sectionFavoritesLink} <ArrowRight size={17} aria-hidden="true" /></Link>
+            <Link to="/catalog" className="text-link feat-link"><span>{t.sectionFavoritesLink}</span> <ArrowRight size={17} aria-hidden="true" /></Link>
           </div>
           <div className="feat-grid">
             {products.slice(0, 4).map(p => <FeaturedCard key={p.id} product={p} />)}
