@@ -170,6 +170,14 @@
 .portal-stock-toggle { display: flex; align-items: center; gap: 7px; background: none; border: 0; color: var(--portal-muted); padding: 8px 0 0; font-size: 12px !important; }
 .portal-stock-toggle i { width: 5px; height: 5px; border-radius: 50%; background: #b9986c; }
 .portal-stock-toggle i.available { background: #648759; }
+.portal-product-icons { display: flex; align-items: center; gap: 2px; }
+/* Wins over .portal-icon-button, which sets the green colour one rule later. */
+.portal-icon-button.portal-delete { color: #c23b22; }
+.portal-icon-button.portal-delete:hover:not(:disabled) { background: #fbe9e3; color: #9c2d18; }
+.portal-product-confirm { border-top: 1px solid var(--portal-line); padding-top: 11px; margin-top: 14px; }
+.portal-product-confirm p { font-size: 12px; color: #87452f; margin: 0 0 11px; }
+.portal-product-confirm > div { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+.portal-product-confirm .portal-button { padding: 9px 15px; font-size: 12px !important; }
 .portal-manage-list { display: grid; gap: 13px; }
 .portal-manage-row { display: flex; align-items: center; gap: 20px; padding: 22px; background: #fffdf7; border: 1px solid var(--portal-line); border-radius: 6px; }
 .portal-category-image { width: 74px; height: 74px; flex-shrink: 0; background: #ece8da; border-radius: 5px; display: flex; align-items: center; justify-content: center; overflow: hidden; }

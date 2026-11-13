@@ -12,7 +12,7 @@ from django.utils import timezone
 from django.utils.encoding import force_bytes
 from django.utils.http import urlsafe_base64_encode
 from rest_framework.test import APITestCase, APIClient
-from .models import User
+from .models import Product, User
 
 class AuthContractTests(APITestCase):
     def test_health_checks_database(self):
@@ -147,6 +147,23 @@ class OrderContractTests(APITestCase):
         self.assertEqual(saved['items'][0]['name'], 'Croissant')
         self.assertEqual(saved['items'][0]['price'], '900.00')
         self.assertEqual(saved['total'], '3300.00')
+
+    def test_admin_deletes_unused_product_but_an_ordered_one_is_protected(self):
+        self.client.force_login(self.admin)
+        spare = self.client.post('/api/admin/products/', {'category': self.category['id'], 'name': 'Bun', 'price': '300.00', 'image': '/images/bun.webp'})
+        self.assertEqual(spare.status_code, 201, spare.content)
+        spare_id = spare.json()['id']
+        self.assertEqual(self.client.delete(f'/api/admin/products/{spare_id}/').status_code, 204)
+        self.assertFalse(Product.objects.filter(pk=spare_id).exists())
+
+        order = self.order()
+        self.client.force_login(self.admin)
+        response = self.client.delete(f"/api/admin/products/{self.product['id']}/")
+        self.assertEqual(response.status_code, 409, response.content)
+        self.assertIn('нельзя', response.json()['detail'])
+        self.assertTrue(Product.objects.filter(pk=self.product['id']).exists())
+        saved = self.client.get(f"/api/orders/{order['id']}/").json()
+        self.assertEqual(saved['items'][0]['name'], 'Croissant')
 
     def test_changed_price_returns_conflict_then_explicit_new_price_succeeds(self):
         data = self.payload()
@@ -299,6 +316,7 @@ class OrderContractTests(APITestCase):
 
     def test_catalog_admin_permission_and_public_hiding(self):
         self.assertEqual(self.client.get('/api/admin/products/').status_code, 403)
+        self.assertEqual(self.client.delete(f"/api/admin/products/{self.product['id']}/").status_code, 403)
         self.assertEqual(self.client.post('/api/admin/couriers/', {}).status_code, 403)
         self.client.force_login(self.admin)
         self.client.patch(f"/api/admin/categories/{self.category['id']}/", {'is_visible': False})

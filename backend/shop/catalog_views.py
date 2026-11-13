@@ -1,7 +1,8 @@
 from django.conf import settings
 from django.db import IntegrityError, connection, OperationalError
-from django.db.models import Q
+from django.db.models import ProtectedError, Q
 from rest_framework import generics, serializers
+from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
@@ -66,11 +67,21 @@ class AdminProducts(generics.ListCreateAPIView):
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
 
-class AdminProduct(generics.UpdateAPIView):
+class ProductInUse(APIException):
+    status_code = 409
+    default_detail = 'Товар уже есть в оформленных заказах, поэтому удалить его нельзя — иначе история заказов потеряет позицию. Скройте товар из каталога.'
+
+class AdminProduct(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [IsAdmin]
     serializer_class = ProductSerializer
     queryset = Product.objects.all()
-    http_method_names = ['patch', 'options']
+    http_method_names = ['patch', 'delete', 'options']
+
+    def perform_destroy(self, instance):
+        try:
+            instance.delete()
+        except ProtectedError:
+            raise ProductInUse()
 
 class AdminCouriers(APIView):
     permission_classes = [IsAdmin]
