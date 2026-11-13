@@ -1,4 +1,5 @@
-import {MapPin, Clock, Phone, Navigation, ArrowRight, CakeSlice, Leaf, Heart} from 'lucide-react';
+import {useEffect, useRef, useState} from 'react';
+import {MapPin, Clock, Phone, Navigation, ArrowRight, CakeSlice, Leaf, Heart, ChevronLeft, ChevronRight} from 'lucide-react';
 import {Branch} from './ui';
 import {useI18n} from './i18n';
 import './find-section.css';
@@ -14,6 +15,60 @@ export const MAP_URL = 'https://2gis.kz/taraz/geo/70000001087635808?inv_by=78675
 
 // Google Maps embed (no API key needed); the pin sits on the bakery's coordinates.
 const mapEmbedUrl = (lang: string) => `https://maps.google.com/maps?q=${LAT},${LNG}&z=17&hl=${lang === 'kk' ? 'kk' : lang === 'en' ? 'en' : 'ru'}&output=embed`;
+
+// Storefront photos in the tilted frame. The track scrolls with snap points, so a finger swipe works natively;
+// arrows and dots scroll it too, and the active dot follows the scroll position.
+const STOREFRONT_PHOTOS = [
+  {src: '/images/storefront-1.webp', position: 'center 32%'},
+  {src: '/images/storefront-2.webp', position: 'center 20%'},
+];
+
+function StorefrontGallery({alt}: {alt: string}) {
+  const track = useRef<HTMLDivElement>(null);
+  const [active, setActive] = useState(0);
+  const count = STOREFRONT_PHOTOS.length;
+
+  useEffect(() => {
+    const el = track.current;
+    if (!el) return;
+    const onScroll = () => setActive(Math.round(el.scrollLeft / Math.max(1, el.clientWidth)));
+    el.addEventListener('scroll', onScroll, {passive: true});
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  function go(index: number) {
+    const el = track.current;
+    if (!el) return;
+    const next = (index + count) % count;
+    el.scrollTo({left: next * el.clientWidth, behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'instant' : 'smooth'});
+  }
+
+  return (
+    <div className="find-photo" role="region" aria-roledescription="carousel" aria-label={alt}>
+      <div className="find-photo-track" ref={track} tabIndex={0}
+        onKeyDown={event => {
+          if (event.key === 'ArrowRight') { event.preventDefault(); go(active + 1); }
+          if (event.key === 'ArrowLeft') { event.preventDefault(); go(active - 1); }
+        }}>
+        {STOREFRONT_PHOTOS.map((photo, index) => (
+          <img key={photo.src} src={photo.src} alt={`${alt} — ${index + 1}/${count}`} loading="lazy" width={1080} height={1434}
+            style={{objectPosition: photo.position}} aria-hidden={index !== active} />
+        ))}
+      </div>
+      {/* Controls sit bottom-left: on desktop the contact card covers the photo's right side. */}
+      <div className="find-photo-controls">
+        <button type="button" className="find-photo-nav" onClick={() => go(active - 1)} aria-label="Предыдущее фото"><ChevronLeft aria-hidden="true" /></button>
+        <div className="find-photo-dots">
+          {STOREFRONT_PHOTOS.map((photo, index) => (
+            <button key={photo.src} type="button" className={index === active ? 'active' : ''} onClick={() => go(index)}
+              aria-label={`Фото ${index + 1} из ${count}`} aria-current={index === active} />
+          ))}
+        </div>
+        <button type="button" className="find-photo-nav" onClick={() => go(active + 1)} aria-label="Следующее фото"><ChevronRight aria-hidden="true" /></button>
+      </div>
+    </div>
+  );
+}
 
 export default function MapSection() {
   const {t, lang} = useI18n();
@@ -35,9 +90,7 @@ export default function MapSection() {
             <svg className="find-orbit" viewBox="0 0 600 420" fill="none" aria-hidden="true" preserveAspectRatio="none">
               <ellipse cx="300" cy="210" rx="296" ry="190" transform="rotate(-8 300 210)" />
             </svg>
-            <div className="find-photo">
-              <img src="/images/storefront.webp" alt={`Anasym — ${t.mapAddress}`} loading="lazy" width={935} height={985} />
-            </div>
+            <StorefrontGallery alt={`Anasym — ${t.mapAddress}`} />
 
             <div className="find-card">
               <div className="find-card-brand">
