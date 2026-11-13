@@ -42,10 +42,11 @@ export default function MapSection() {
         attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
         maxZoom: 19,
       }).addTo(map);
-      L.marker([LAT, LNG])
+      const marker = L.marker([LAT, LNG])
         .addTo(map)
-        .bindPopup(`<strong>Anasym</strong><br/>${t.mapAddress}<br/><a class="map-popup-link" href="${MAP_URL}" target="_blank" rel="noopener noreferrer">${t.mapFindOnMap}</a>`, {closeButton: false})
-        .openPopup();
+        .bindPopup(`<strong>Anasym</strong><br/>${t.mapAddress}<br/><a class="map-popup-link" href="${MAP_URL}" target="_blank" rel="noopener noreferrer">${t.mapFindOnMap}</a>`, {closeButton: false});
+      // On phones the open popup would cover the pin and most of the small map, so it opens on tap instead.
+      if (!window.matchMedia('(max-width: 600px)').matches) marker.openPopup();
       mapInstance.current = map;
     });
     return () => {
