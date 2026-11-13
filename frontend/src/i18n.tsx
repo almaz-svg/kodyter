@@ -51,6 +51,7 @@ export interface Translations {
   aboutP2: string;
   aboutButton: string;
   aboutCaption: string;
+  aboutF1a: string; aboutF1b: string; aboutF2a: string; aboutF2b: string; aboutF3a: string; aboutF3b: string;
   photoCaption: string;
 
   /* Map section */
@@ -300,6 +301,7 @@ const kz: Translations = {
   aboutP1:'Anasym — қарапайым ингредиенттер ерекше нәрсеге айналатын орын. Таныс дәмдерді, авторлық рецепттерді және өз ісіне деген сүйіспеншілікті ұштастырамыз.',
   aboutP2:'Баяу таңертеңге, отбасылық мерекеге немесе жай ыстық кездесуге арналған.',
   aboutButton:'Біздің тарих', aboutCaption:'Әр қимылдағы шеберлік',
+  aboutF1a:'Табиғи', aboutF1b:'ингредиенттер', aboutF2a:'Авторлық', aboutF2b:'рецепттер', aboutF3a:'Әр детальға', aboutF3b:'қамқорлық',
   photoCaption:'Әр қимылдағы шеберлік',
 
   mapEyebrow:'МЕКЕН-ЖАЙЫМЫЗ', mapTitle:'Бізді табыңыз',
@@ -480,6 +482,7 @@ const ru: Translations = {
   aboutP1:'Anasym — место, где простые ингредиенты становятся чем-то особенным. Мы соединяем знакомые вкусы, авторские рецепты и любовь к своему делу.',
   aboutP2:'Для неспешного утра, семейного праздника или просто тёплой встречи.',
   aboutButton:'Наша история', aboutCaption:'Мастерство в каждом движении',
+  aboutF1a:'Натуральные', aboutF1b:'ингредиенты', aboutF2a:'Авторские', aboutF2b:'рецепты', aboutF3a:'Забота', aboutF3b:'в каждой детали',
   photoCaption:'Мастерство в каждом движении',
 
   mapEyebrow:'НАШ АДРЕС', mapTitle:'Найдите нас',
@@ -660,6 +663,7 @@ const en: Translations = {
   aboutP1:'Anasym is where simple ingredients become something special. We combine familiar flavours, original recipes and a passion for the craft.',
   aboutP2:'For a slow morning, a family celebration or just a warm gathering.',
   aboutButton:'Our Story', aboutCaption:'Craftsmanship in every move',
+  aboutF1a:'Natural', aboutF1b:'ingredients', aboutF2a:'Original', aboutF2b:'recipes', aboutF3a:'Care in', aboutF3b:'every detail',
   photoCaption:'Craftsmanship in every move',
 
   mapEyebrow:'OUR ADDRESS', mapTitle:'Find Us',

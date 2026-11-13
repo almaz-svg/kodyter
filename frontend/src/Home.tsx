@@ -129,18 +129,28 @@ export default function Home() {
       </section>
 
       {/* ── About ─────────────────────────────────────────────────────── */}
-      <section className="about-section" id="about">
-        <div className="about-photo">
-          <LazyImage src="/images/baker.webp" alt={t.photoCaption} />
-          <span className="photo-caption">{t.photoCaption}</span>
-        </div>
+      <section className="about-section about-v2" id="about">
+        <picture className="about-photo">
+          <source media="(max-width: 820px)" srcSet="/images/about-pies-mobile.webp" />
+          <img src="/images/about-pies.webp" alt={t.aboutCaption} loading="lazy" width={1712} height={1332} />
+        </picture>
+        <img className="about-watermark" src="/images/Logo.webp" alt="" aria-hidden="true" loading="lazy" />
+        <svg className="about-wave" viewBox="0 0 600 160" preserveAspectRatio="none" aria-hidden="true">
+          <path d="M0 158C150 156 260 120 360 70C440 30 520 8 600 6" fill="none" stroke="currentColor" strokeWidth="1.6" />
+        </svg>
         <div className="about-copy">
-          <span className="eyebrow gold">{t.aboutEyebrow}</span>
-          <h2>{t.aboutTitle}</h2>
+          <span className="about-eyebrow"><i />{t.aboutEyebrow}<i /><b>✦</b></span>
+          <h2>{(() => {
+            const [lead, accent] = t.aboutTitle.split(/\s*—\s*/);
+            return accent ? <>{lead} —<br /><em>{accent}</em></> : t.aboutTitle;
+          })()}</h2>
           <p>{t.aboutP1}</p>
-          <p>{t.aboutP2}</p>
-          <Link to="/about" className="button button-outline">{t.aboutButton} <ArrowRight size={18} aria-hidden="true" /></Link>
-          <Branch className="about-branch" />
+          <ul className="about-features">
+            <li><Leaf aria-hidden="true" /><span>{t.aboutF1a}<br />{t.aboutF1b}</span></li>
+            <li><ChefHat aria-hidden="true" /><span>{t.aboutF2a}<br />{t.aboutF2b}</span></li>
+            <li><Heart aria-hidden="true" /><span>{t.aboutF3a}<br />{t.aboutF3b}</span></li>
+          </ul>
+          <Link to="/about" className="button button-gold">{t.aboutButton} <ArrowRight size={18} aria-hidden="true" /></Link>
         </div>
       </section>
 
