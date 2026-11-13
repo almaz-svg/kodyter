@@ -1,5 +1,5 @@
 import {useEffect, useRef, useState} from 'react';
-import {MapPin, Clock, Phone, Navigation, ArrowRight, CakeSlice, Leaf, Heart, ChevronLeft, ChevronRight} from 'lucide-react';
+import {MapPin, Clock, Phone, Navigation, CakeSlice, Leaf, Heart, ChevronLeft, ChevronRight} from 'lucide-react';
 import {Branch} from './ui';
 import {useI18n} from './i18n';
 import './find-section.css';
@@ -116,10 +116,10 @@ export default function MapSection() {
               </li>
             </ul>
             <div className="find-actions">
-              <a className="find-route" href={MAP_URL} target="_blank" rel="noopener noreferrer">
-                <Navigation aria-hidden="true" />{t.mapRoute}<ArrowRight aria-hidden="true" />
+              <a className="find-btn" href={MAP_URL} target="_blank" rel="noopener noreferrer">
+                <MapPin aria-hidden="true" />{t.mapRoute}
               </a>
-              <a className="find-call" href={CONTACT_PHONE_LINK}>
+              <a className="find-btn" href={CONTACT_PHONE_LINK}>
                 <Phone aria-hidden="true" />{t.mapCall}
               </a>
             </div>

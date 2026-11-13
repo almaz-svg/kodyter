@@ -309,7 +309,7 @@ const kz: Translations = {
   mapAddress:'Тараз қ., Қонаев к-сі, 62а',
   mapHours:'Жұмыс уақыты', mapHoursValue:'Дүй–Жек: 08:00–21:00',
   mapPhone:'Телефон', mapAddressLabel:'Мекенжайы', mapCall:'Қоңырау шалу', mapFindOnMap:'Картадан табу',
-  mapSubtitle:'Балғын десерттер үшін Anasym кондитерлігіне келіңіз', mapRoute:'Бағыт құру', mapF1a:'Балғын', mapF1b:'десерттер', mapF2a:'Табиғи', mapF2b:'ингредиенттер', mapF3a:'Жайлы', mapF3b:'атмосфера',
+  mapSubtitle:'Балғын десерттер үшін Anasym кондитерлігіне келіңіз', mapRoute:'Картадан көрсету', mapF1a:'Балғын', mapF1b:'десерттер', mapF2a:'Табиғи', mapF2b:'ингредиенттер', mapF3a:'Жайлы', mapF3b:'атмосфера',
 
   footerTagline:'Дәстүрден шабыт алған дәм.\nСезінуге болатын қамқорлық.',
   footerHistory:'Біздің тарих', footerDelivery:'Жеткізу және төлем',
@@ -491,7 +491,7 @@ const ru: Translations = {
   mapAddress:'г. Тараз, ул. Конаева, 62а',
   mapHours:'Часы работы', mapHoursValue:'Пн–Вс: 08:00–21:00',
   mapPhone:'Телефон', mapAddressLabel:'Адрес', mapCall:'Позвонить', mapFindOnMap:'Найти на карте',
-  mapSubtitle:'Загляните за свежими десертами в нашу кондитерскую Anasym', mapRoute:'Построить маршрут', mapF1a:'Свежие', mapF1b:'десерты', mapF2a:'Натуральные', mapF2b:'ингредиенты', mapF3a:'Уютная', mapF3b:'атмосфера',
+  mapSubtitle:'Загляните за свежими десертами в нашу кондитерскую Anasym', mapRoute:'Показать на карте', mapF1a:'Свежие', mapF1b:'десерты', mapF2a:'Натуральные', mapF2b:'ингредиенты', mapF3a:'Уютная', mapF3b:'атмосфера',
 
   footerTagline:'Вкус, вдохновлённый традициями.\nЗабота, которую можно почувствовать.',
   footerHistory:'Наша история', footerDelivery:'Доставка и оплата',
@@ -673,7 +673,7 @@ const en: Translations = {
   mapAddress:'Taraz, Konaev St, 62a',
   mapHours:'Opening Hours', mapHoursValue:'Mon–Sun: 08:00–21:00',
   mapPhone:'Phone', mapAddressLabel:'Address', mapCall:'Call us', mapFindOnMap:'Find on map',
-  mapSubtitle:'Drop by our Anasym confectionery for fresh desserts', mapRoute:'Get directions', mapF1a:'Fresh', mapF1b:'desserts', mapF2a:'Natural', mapF2b:'ingredients', mapF3a:'Cosy', mapF3b:'atmosphere',
+  mapSubtitle:'Drop by our Anasym confectionery for fresh desserts', mapRoute:'Show on map', mapF1a:'Fresh', mapF1b:'desserts', mapF2a:'Natural', mapF2b:'ingredients', mapF3a:'Cosy', mapF3b:'atmosphere',
 
   footerTagline:'Taste inspired by tradition.\nCare you can feel.',
   footerHistory:'Our Story', footerDelivery:'Delivery & Payment',

@@ -133,3 +133,12 @@
   .find-map{min-height:280px}
 }
 @media(prefers-reduced-motion:reduce){.find-call{transition:none}}
+
+/* Card buttons: "Show on map" and "Call" share one outlined design and equal width. */
+.find-actions{grid-template-columns:1fr 1fr}
+.find-btn{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 10px;border-radius:999px;border:1.5px solid #c9a865;background:#fffaf2;color:#0b3a2c;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s,transform .2s,color .2s}
+.find-btn svg{width:17px;height:17px;color:#9b7433;flex-shrink:0;transition:color .2s}
+.find-btn:hover{background:#0b3a2c;border-color:#0b3a2c;color:#f6efdc;transform:translateY(-2px)}
+.find-btn:hover svg{color:var(--gold)}
+@media(max-width:600px){.find-btn{font-size:13px;gap:6px;padding:0 6px;min-height:48px}}
+@media(prefers-reduced-motion:reduce){.find-btn,.find-btn svg{transition:none}}
