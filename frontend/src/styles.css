@@ -479,7 +479,7 @@
 .feat-ornament svg{width:34px;height:26px}
 .feat-link{position:absolute;right:0;top:50%;transform:translateY(-50%)}
 .feat-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,1.4vw,24px);align-items:stretch;padding:14px 0 10px}
-.feat-wheat{position:absolute;right:-20px;bottom:-40px;width:150px;opacity:.35;transform:rotate(38deg);pointer-events:none}
+.feat-wheat{position:absolute;right:24px;bottom:24px;width:130px;opacity:.3;transform:rotate(38deg);pointer-events:none;-webkit-mask-image:linear-gradient(200deg,#000 45%,transparent 95%);mask-image:linear-gradient(200deg,#000 45%,transparent 95%)}
 
 .feat-card{position:relative;display:flex;flex-direction:column;min-width:0;border-radius:18px;background:#fbf7ef;border:2px solid transparent;box-shadow:0 8px 26px #5a43180f;overflow:hidden;transition:transform .35s cubic-bezier(.2,.7,.3,1),box-shadow .35s,border-color .35s}
 .feat-photo{position:relative;display:block;aspect-ratio:1.05;overflow:hidden;border-radius:14px;margin:8px 8px 0;transition:margin .35s,border-radius .35s}

@@ -1,8 +1,8 @@
 /* Home "Find us" (contacts): storefront photo + contact card on the left, branded map + features on the right. */
-.find-section{position:relative;overflow:hidden;padding:clamp(48px,5vw,80px) 0 clamp(56px,6vw,96px);background:radial-gradient(ellipse at 50% 0%,#fbf6ee 0%,#f5ede2 70%)}
-.find-leaves{position:absolute;left:-30px;top:-10px;width:clamp(200px,20vw,340px);opacity:.9;pointer-events:none;filter:blur(1px);-webkit-mask-image:radial-gradient(ellipse 85% 90% at 0% 0%,#000 55%,transparent 100%);mask-image:radial-gradient(ellipse 85% 90% at 0% 0%,#000 55%,transparent 100%)}
-.find-leaves-bottom{top:auto;bottom:-20px;left:-50px;transform:scaleY(-1) rotate(-12deg);width:clamp(180px,17vw,300px);opacity:.75}
-.find-branch{position:absolute;right:clamp(10px,4vw,80px);top:10px;width:clamp(110px,10vw,170px);opacity:.28;transform:rotate(60deg);pointer-events:none}
+.find-section{position:relative;overflow:hidden;padding:clamp(48px,5vw,80px) 0 clamp(56px,6vw,96px);background:linear-gradient(180deg,var(--cream) 0,#f7f3eb00 180px),radial-gradient(ellipse at 50% 30%,#fbf6ee 0%,#f5ede2 70%)}
+.find-leaves{position:absolute;left:-30px;top:6px;width:clamp(200px,20vw,340px);opacity:.9;pointer-events:none;filter:blur(1px);-webkit-mask-image:linear-gradient(180deg,transparent 0,#000 45%),radial-gradient(ellipse 80% 80% at 12% 30%,#000 40%,transparent 100%);-webkit-mask-composite:source-in;mask-image:linear-gradient(180deg,transparent 0,#000 45%),radial-gradient(ellipse 80% 80% at 12% 30%,#000 40%,transparent 100%);mask-composite:intersect}
+.find-leaves-bottom{top:auto;bottom:8px;left:-50px;transform:scaleY(-1) rotate(-12deg);width:clamp(180px,17vw,300px);opacity:.75}
+.find-branch{position:absolute;right:clamp(16px,4vw,80px);top:24px;width:clamp(110px,10vw,170px);opacity:.28;transform:rotate(60deg);pointer-events:none}
 .find-heading{position:relative;text-align:center;margin-bottom:clamp(30px,3.5vw,56px)}
 .find-eyebrow{display:inline-flex;align-items:center;gap:16px;font-size:clamp(13px,1.05vw,17px);font-weight:600;letter-spacing:2px;color:#a37a36;text-transform:uppercase}
 .find-eyebrow>i{display:block;width:clamp(40px,4vw,70px);height:1px;background:#c9a865}
