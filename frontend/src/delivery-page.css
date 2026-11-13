@@ -1,0 +1,64 @@
+/* Delivery & payment page; shares the intro and closing styles with the About page (about-page.css). */
+.dp-intro{max-width:760px;margin-top:18px;font-size:clamp(15px,1.15vw,18px);line-height:1.75;color:#4f5a50}
+
+.about-page .dp-cards{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:clamp(18px,2.2vw,32px);margin-top:clamp(36px,4vw,60px);align-items:stretch}
+.dp-card{position:relative;overflow:hidden;padding:clamp(28px,3vw,46px);border-radius:26px;background:#fbf7ef;border:1px solid #ecdfc6;box-shadow:0 14px 40px #5a431812}
+.dp-card-icon{display:grid;place-items:center;width:62px;height:62px;border-radius:18px;background:#efe4d0;color:#9b7433;margin-bottom:22px}
+.dp-card-icon svg{width:30px;height:30px;stroke-width:1.5}
+.dp-card h2{font-size:clamp(32px,2.8vw,46px);line-height:1.05}
+.dp-sub{margin-top:8px;font-family:var(--serif);font-style:italic;font-size:clamp(19px,1.5vw,24px);color:#b08a46}
+.dp-card p{margin-top:16px;font-size:clamp(14px,1vw,16px);line-height:1.75;color:#4f5a50}
+.dp-card .dp-sub{margin-top:8px}
+.dp-fee{display:grid;grid-template-columns:auto 1fr;align-items:center;column-gap:16px;margin-top:22px;padding:18px 22px;border-radius:18px;background:linear-gradient(110deg,#f3e3bf,#e7cd94);color:#173b2e}
+.dp-fee span{grid-column:1/-1;font-size:12px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#6b5124}
+.dp-fee strong{font-size:clamp(28px,2.4vw,38px);font-weight:700;line-height:1.2;white-space:nowrap}
+.dp-fee small{font-size:13px;line-height:1.4;color:#5a4a2a}
+
+.dp-card-green{background:radial-gradient(ellipse at 100% 0%,#0f4a39,#03281d 70%);border-color:#0f4a39;color:#f6efdc}
+.dp-card-green .dp-card-icon{background:#ffffff14;color:var(--gold)}
+.dp-card-green h2{color:#f7f0dd}
+.dp-card-green .dp-sub{color:#e3c48a}
+.dp-card-green p{color:#d9dccd}
+.dp-card-green .dp-highlight{padding:14px 18px;border-radius:14px;background:#ffffff10;border:1px solid #d7b77955;color:#f3e8cf;font-weight:500}
+.dp-card-branch{position:absolute;right:-20px;bottom:-30px;width:150px;opacity:.14;transform:rotate(-20deg)}
+
+.about-page .dp-steps{margin-top:clamp(56px,7vw,100px);text-align:center}
+.dp-steps h2{font-size:clamp(32px,3.2vw,50px);margin-top:6px}
+.dp-steps ol{position:relative;list-style:none;padding:0;margin:clamp(30px,3.4vw,50px) 0 0;display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:clamp(14px,1.6vw,24px);counter-reset:none}
+.dp-steps ol::before{content:'';position:absolute;left:12%;right:12%;top:62px;height:1px;background:repeating-linear-gradient(90deg,#c9a865 0 8px,transparent 8px 16px);z-index:0}
+.dp-steps li{position:relative;z-index:1;padding:0 8px}
+.dp-step-num{display:block;font-family:var(--serif);font-size:15px;letter-spacing:2px;color:#b08a46;margin-bottom:8px}
+.dp-step-icon{display:grid;place-items:center;width:72px;height:72px;margin:0 auto 18px;border-radius:50%;background:#fbf7ef;border:1px solid #d9c49a;color:#0b3a2c;box-shadow:0 0 0 8px #f7f3eb}
+.dp-step-icon svg{width:30px;height:30px;stroke-width:1.5}
+.dp-steps h3{font-size:clamp(19px,1.5vw,24px);line-height:1.2}
+.dp-steps li p{margin-top:8px;font-size:14px;line-height:1.65;color:#5d6457}
+
+.dp-facts{list-style:none;padding:clamp(18px,2vw,26px) clamp(16px,2vw,30px);margin:clamp(44px,5vw,70px) 0 0;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));border-radius:20px;background:#efe6d6}
+.dp-facts li{display:flex;align-items:center;justify-content:center;gap:12px;font-size:clamp(13px,1vw,16px);font-weight:600;color:#173b2e;padding:6px 10px}
+.dp-facts li+li{border-left:1px solid #d3c19a}
+.dp-facts svg{width:26px;height:26px;color:#9b7433;stroke-width:1.5;flex-shrink:0}
+
+@media(max-width:900px){
+  .about-page .dp-cards{grid-template-columns:1fr}
+  .dp-steps ol{grid-template-columns:repeat(2,minmax(0,1fr));row-gap:30px}
+  .dp-steps ol::before{display:none}
+}
+@media(max-width:600px){
+  .dp-intro{font-size:14px}
+  .dp-card{border-radius:20px}
+  .dp-card-icon{width:52px;height:52px;margin-bottom:16px}
+  .dp-card-icon svg{width:26px;height:26px}
+  .dp-card p{font-size:14px}
+  .dp-fee{grid-template-columns:1fr;row-gap:2px}
+  .dp-steps ol{grid-template-columns:1fr;row-gap:0;text-align:left}
+  .dp-steps li{display:grid;grid-template-columns:60px 1fr;column-gap:16px;padding:0 0 22px;position:relative}
+  .dp-steps li:not(:last-child)::after{content:'';position:absolute;left:29px;top:62px;bottom:4px;width:1px;background:repeating-linear-gradient(180deg,#c9a865 0 6px,transparent 6px 12px)}
+  .dp-step-num{display:none}
+  .dp-step-icon{grid-row:1/3;width:58px;height:58px;margin:0;box-shadow:none}
+  .dp-step-icon svg{width:24px;height:24px}
+  .dp-steps h3{font-size:19px;align-self:end;margin-top:4px}
+  .dp-steps li p{margin-top:4px;font-size:13.5px}
+  .dp-facts{grid-template-columns:1fr;padding:8px 18px}
+  .dp-facts li{justify-content:flex-start;padding:12px 0}
+  .dp-facts li+li{border-left:0;border-top:1px solid #d3c19a}
+}

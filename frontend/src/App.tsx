@@ -8,11 +8,12 @@ import {Auth,Cart,Checkout,ResetPassword} from './ShopFlow';
 import Portals from './Portals';
 import {MAP_URL} from './MapSection';
 import AboutPage from './AboutPage';
+import DeliveryPage from './DeliveryPage';
 import {ShopProvider,useShop} from './store';
 import {I18nProvider,useI18n} from './i18n';
 import type {Lang} from './i18n';
 import {api,roleHome} from './lib';
-import {Logo,Loading,ErrorBox,Ornament,LazyImage,Branch} from './ui';
+import {Logo,Loading,ErrorBox,Ornament,Branch} from './ui';
 import {PrivacyPolicy,PublicOffer,CookieConsent} from './Legal';
 
 /* ── Language Switcher ────────────────────────────────────────────────── */
@@ -319,6 +320,7 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
   const crumb = type === 'about' ? t.infoAboutCrumb : type === 'delivery' ? t.infoDeliveryCrumb : type === 'contacts' ? t.infoContactsCrumb : t.infoPrivacyCrumb;
   const title = type === 'about' ? t.infoAboutTitle : type === 'delivery' ? t.infoDeliveryTitle : type === 'contacts' ? t.infoContactsTitle : t.infoPrivacyTitle;
   if (type === 'about') return <AboutPage />;
+  if (type === 'delivery') return <DeliveryPage />;
   return (
     <main className="container page info-page">
       <div className="breadcrumb">
@@ -327,22 +329,7 @@ function Info({type}: {type: 'about'|'delivery'|'contacts'|'privacy'}) {
       <span className="eyebrow">{t.infoAboutEyebrow}</span>
       <h1>{title}</h1>
       <Ornament />
-      {type === 'delivery' ? (
-        <div className="info-panels">
-          <section>
-            <Truck />
-            <h2>{t.infoDeliveryH2}</h2>
-            <p dangerouslySetInnerHTML={{__html: t.infoDeliveryP1}} />
-            <p>{t.infoDeliveryP2}</p>
-          </section>
-          <section>
-            <ShoppingBag />
-            <h2>{t.infoPaymentH2}</h2>
-            <p>{t.infoPaymentP1}</p>
-            <p>{t.infoPaymentP2}</p>
-          </section>
-        </div>
-      ) : type === 'contacts' ? (
+      {type === 'contacts' ? (
         <div className="info-panels">
           <section>
             <MapPin />
