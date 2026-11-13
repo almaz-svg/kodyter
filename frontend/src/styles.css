@@ -562,3 +562,5 @@
   .favorites .feat-link{position:relative;align-self:center;margin-top:18px}
   .favorites .feat-link>svg{position:absolute;left:100%;top:50%;margin:-2px 0 0 10px;transform:translateY(-50%)}
 }
+/* Featured card ribbon: the Anaşym lattice emblem, drawn in the ribbon's dark green via a mask of the logo. */
+.feat-ribbon-logo{display:block;width:36px;height:36px;margin:-4px 0 -2px;background:#173b2e;-webkit-mask:url(/images/Logo.webp) center/contain no-repeat;mask:url(/images/Logo.webp) center/contain no-repeat}

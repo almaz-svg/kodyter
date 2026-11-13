@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from 'react';
 import type { ImgHTMLAttributes } from 'react';
-import { ArrowRight, Minus, Plus, LoaderCircle, ShoppingBag, Croissant } from 'lucide-react';
+import { ArrowRight, Minus, Plus, LoaderCircle, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { money, unitPrice, MAX_ORDER_ITEM_QUANTITY } from './lib';
 import type { Product } from './lib';
@@ -229,7 +229,7 @@ export function FeaturedCard({ product }: { product: Product }) {
       <Link to={`/product/${product.id}`} className="feat-photo" tabIndex={-1} aria-hidden="true">
         <LazyImage src={product.image || '/images/croissant.webp'} alt="" />
         {product.weight && <span className="feat-pill">{product.weight}</span>}
-        {product.weight && <span className="feat-ribbon"><Croissant size={22} strokeWidth={1.4} />{product.weight}</span>}
+        {product.weight && <span className="feat-ribbon"><span className="feat-ribbon-logo" aria-hidden="true" />{product.weight}</span>}
         {!product.is_available && <span className="availability">{t.soonAvail}</span>}
       </Link>
       <div className="feat-body">
