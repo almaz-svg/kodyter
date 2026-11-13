@@ -7,11 +7,12 @@ import type {Product,Order,User,AccountType} from './lib';
 import {useShop} from './store';
 import {Qty,ErrorBox,Loading,LazyImage,PriceTag} from './ui';
 import {useI18n} from './i18n';
+import {productName} from './productNames';
 
 /* ── Cart ─────────────────────────────────────────────────────────────── */
 export function Cart() {
   const {cart,quantity,total,settings,settingsError,refreshSettings,storageWarning} = useShop();
-  const {t} = useI18n();
+  const {t, lang} = useI18n();
   return (
     <main className="container page">
       <div className="breadcrumb">
@@ -24,15 +25,15 @@ export function Cart() {
           <div className="cart-list">
             {cart.map(({product:p, quantity:n}) => (
               <article className="cart-row" key={p.id}>
-                <Link to={`/product/${p.id}`}><LazyImage src={p.image} alt={p.name}/></Link>
+                <Link to={`/product/${p.id}`}><LazyImage src={p.image} alt={productName(p, lang)}/></Link>
                 <div className="cart-info">
-                  <Link to={`/product/${p.id}`}><h3>{p.name}</h3></Link>
+                  <Link to={`/product/${p.id}`}><h3>{productName(p, lang)}</h3></Link>
                   <span><PriceTag product={p} quantity={n}/>{p.weight ? ` · ${p.weight}` : ''}</span>
                   <Qty value={n} onChange={v => quantity(p.id,v)}/>
                 </div>
                 <div className="cart-row-end">
                   <strong>{money(unitPrice(p,n)*n)}</strong>
-                  <button className="icon-button remove" aria-label={`Удалить ${p.name}`} onClick={() => quantity(p.id,0)}>
+                  <button className="icon-button remove" aria-label={`Удалить ${productName(p, lang)}`} onClick={() => quantity(p.id,0)}>
                     <Trash2 size={18} aria-hidden="true" />
                   </button>
                 </div>
@@ -219,7 +220,7 @@ export function ResetPassword() {
 /* ── Checkout ─────────────────────────────────────────────────────────── */
 export function Checkout() {
   const {user,cart,total,settings,settingsError,refreshSettings,replaceCart,clear,storageWarning,reportStorageFailure} = useShop();
-  const {t} = useI18n();
+  const {t, lang} = useI18n();
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const [changed,setChanged] = useState(false);
@@ -326,9 +327,9 @@ export function Checkout() {
             </button>
             {cart.map(x => (
               <div className="checkout-item" key={x.product.id}>
-                <LazyImage src={x.product.image} alt={x.product.name}/>
+                <LazyImage src={x.product.image} alt={productName(x.product, lang)}/>
                 <div>
-                  <span>{x.product.name}</span>
+                  <span>{productName(x.product, lang)}</span>
                   <small>{x.quantity} × {money(unitPrice(x.product,x.quantity))}</small>
                   {!x.product.is_available && <strong className="unavailable-text">Нет в наличии</strong>}
                 </div>

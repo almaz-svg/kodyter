@@ -6,6 +6,7 @@ import { money, unitPrice, MAX_ORDER_ITEM_QUANTITY } from './lib';
 import type { Product } from './lib';
 import { useShop } from './store';
 import { useI18n } from './i18n';
+import { productName } from './productNames';
 
 export function Logo({ small = false }: { small?: boolean }) {
   const { t } = useI18n();
@@ -186,7 +187,8 @@ export function PriceTag({ product, quantity }: { product: Product; quantity?: n
 // gold frame, green body under a wave, gold weight ribbon and an outlined Buy button.
 export function FeaturedCard({ product }: { product: Product }) {
   const { add, cart, quantity } = useShop();
-  const { t } = useI18n();
+  const { t, lang } = useI18n();
+  const name = productName(product, lang);
   const selected = cart.find(item => item.product.id === product.id)?.quantity || 0;
   return (
     <article className="feat-card">
@@ -201,7 +203,7 @@ export function FeaturedCard({ product }: { product: Product }) {
           <path className="feat-wave-fill" d="M0 22C70 4 140 2 210 14S340 36 400 18V40H0Z" />
           <path className="feat-wave-line" d="M0 22C70 4 140 2 210 14S340 36 400 18" />
         </svg>
-        <Link to={`/product/${product.id}`}><h3>{product.name}</h3></Link>
+        <Link to={`/product/${product.id}`}><h3>{name}</h3></Link>
         {product.description && <p>{product.description}</p>}
         <div className="feat-bottom">
           <div className="feat-price">
@@ -210,11 +212,11 @@ export function FeaturedCard({ product }: { product: Product }) {
           </div>
           {selected > 0 ? (
             <div className="product-purchase">
-              <Qty value={selected} label={product.name} increaseDisabled={!product.is_available} onChange={n => n < selected ? quantity(product.id, n) : add(product, n - selected)} />
+              <Qty value={selected} label={name} increaseDisabled={!product.is_available} onChange={n => n < selected ? quantity(product.id, n) : add(product, n - selected)} />
               <Link to="/cart" className="product-cart-link">{t.toCart} <ArrowRight size={16} aria-hidden="true" /></Link>
             </div>
           ) : (
-            <button type="button" className="feat-buy" onClick={() => add(product)} disabled={!product.is_available} aria-label={product.is_available ? `${t.buy} ${product.name}` : `${product.name} — ${t.outOfStock}`}>
+            <button type="button" className="feat-buy" onClick={() => add(product)} disabled={!product.is_available} aria-label={product.is_available ? `${t.buy} ${name}` : `${name} — ${t.outOfStock}`}>
               <ShoppingBag size={18} aria-hidden="true" />
               {product.is_available ? t.buy : t.outOfStock}
             </button>

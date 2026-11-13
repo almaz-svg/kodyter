@@ -39,6 +39,8 @@ function harness(fetcher, { storageThrows = false } = {}) {
     'react-router-dom': { Link: 'a', useNavigate: () => value => navigation.push(value), useSearchParams: () => [new URLSearchParams('uid=fixture&token=fixture')] },
     'lucide-react': new Proxy({}, { get: () => 'icon' }),
     './ui': { Qty: 'qty', ErrorBox: 'error', Loading: 'loading' },
+    // Russian names pass through unchanged, so assertions keep matching the database text.
+    './productNames': { productName: product => product.name },
   };
   function load(filename, suffix = '') {
     const exports = {};

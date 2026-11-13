@@ -6,6 +6,7 @@ import type {Product,Category} from './lib';
 import {useShop} from './store';
 import {FeaturedCard,PriceTag,Loading,ErrorBox,Qty,CatalogCartSummary,LazyImage} from './ui';
 import {useI18n,categoryName} from './i18n';
+import {productName} from './productNames';
 
 export function Catalog() {
   const [params,setParams] = useSearchParams();
@@ -83,7 +84,7 @@ export function ProductPage() {
   const [error,setError] = useState('');
   const [n,setN] = useState(1);
   const {add} = useShop();
-  const {t} = useI18n();
+  const {t, lang} = useI18n();
 
   useEffect(() => {
     setProduct(null); setError('');
@@ -96,11 +97,11 @@ export function ProductPage() {
       {error ? <ErrorBox message={error}/> : !product ? <Loading/> : (
         <div className="product-detail">
           <div className="detail-image">
-            <LazyImage src={product.image || '/images/croissant.webp'} alt={product.name} />
+            <LazyImage src={product.image || '/images/croissant.webp'} alt={productName(product, lang)} />
           </div>
           <div className="detail-copy">
             <span className="eyebrow">{t.catalogEyebrow}</span>
-            <h1>{product.name}</h1>
+            <h1>{productName(product, lang)}</h1>
             <span className={`stock ${product.is_available?'in-stock':''}`}>
               {product.is_available ? 'В наличии' : 'Временно недоступно'}{product.weight?` · ${product.weight}`:''}
             </span>
