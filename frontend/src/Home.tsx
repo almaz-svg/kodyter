@@ -142,7 +142,7 @@ export default function Home() {
           <span className="about-eyebrow"><i />{t.aboutEyebrow}<i /><b>✦</b></span>
           <h2>{(() => {
             const [lead, accent] = t.aboutTitle.split(/\s*—\s*/);
-            return accent ? <>{lead} —<br /><em>{accent}</em></> : t.aboutTitle;
+            return accent ? <>{lead}<br /><em>{accent}</em></> : t.aboutTitle;
           })()}</h2>
           <p>{t.aboutP1}</p>
           <ul className="about-features">
