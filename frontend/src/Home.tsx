@@ -70,9 +70,9 @@ export default function Home() {
       {/* ── Hero ──────────────────────────────────────────────────────── */}
       <section className="hero">
         <picture className="hero-picture">
-          <source media="(max-width: 600px)" srcSet="/images/croissant.webp" />
-          <img className="hero-image" src="/images/hero-croissants.webp" alt="Золотистые круассаны на деревянной доске"
-            fetchPriority="high" width={1672} height={941} />
+          <source media="(max-width: 600px)" srcSet="/images/hero-cakes-mobile.webp" />
+          <img className="hero-image" src="/images/hero-cakes.webp" alt="Пирог с клубникой и киви, тарталетка со сливками и песочное печенье"
+            fetchPriority="high" width={1672} height={707} />
         </picture>
         <div className="hero-shade" />
         <div className="container hero-content">
