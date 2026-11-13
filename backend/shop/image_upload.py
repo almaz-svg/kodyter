@@ -1,4 +1,6 @@
 """Product photos are stored in Supabase Storage, never on the server's disk: Vercel has no writable persistent disk."""
+import json
+import logging
 import uuid
 from urllib import error as urlerror
 from urllib import request as urlrequest
@@ -10,6 +12,7 @@ from django.conf import settings
 MAX_IMAGE_BYTES = 4 * 1024 * 1024
 UPLOAD_TIMEOUT_SECONDS = 15
 EXTENSIONS = {'image/jpeg': 'jpg', 'image/png': 'png', 'image/webp': 'webp'}
+logger = logging.getLogger(__name__)
 
 
 class ImageUploadError(Exception):
@@ -50,6 +53,22 @@ def _post_to_storage(url, data, content_type, key):
         response.read()
 
 
+def _storage_error_text(error):
+    """Supabase answers with JSON such as {"statusCode": "404", "error": "Bucket not found", "message": ...}."""
+    try:
+        body = error.read().decode('utf-8', 'replace')[:500]
+    except Exception:  # noqa: BLE001 - the body is only used for diagnostics
+        body = ''
+    return body
+
+
+def _create_public_bucket(base, key, bucket):
+    """Create the photo bucket once, as public, so the returned public URLs work."""
+    payload = json.dumps({'id': bucket, 'name': bucket, 'public': True}).encode()
+    _post_to_storage(f'{base}/storage/v1/bucket', payload, 'application/json', key)
+    logger.warning('Created missing public storage bucket %r for photo uploads.', bucket)
+
+
 def upload_product_image(data):
     """Store one photo in the public bucket and return its public URL."""
     if len(data) > MAX_IMAGE_BYTES:
@@ -60,8 +79,33 @@ def upload_product_image(data):
     base, key = _storage_base()
     bucket = settings.SUPABASE_STORAGE_BUCKET
     path = f'products/{uuid.uuid4().hex}.{EXTENSIONS[content_type]}'
+    object_url = f'{base}/storage/v1/object/{bucket}/{path}'
     try:
-        _post_to_storage(f'{base}/storage/v1/object/{bucket}/{path}', data, content_type, key)
+        try:
+            _post_to_storage(object_url, data, content_type, key)
+        except urlerror.HTTPError as error:
+            body = _storage_error_text(error)
+            if 'bucket not found' not in body.lower():
+                raise _StorageRejected(error.code, body) from error
+            # The bucket was never created in this Supabase project: create it and try once more.
+            _create_public_bucket(base, key, bucket)
+            _post_to_storage(object_url, data, content_type, key)
+    except _StorageRejected as rejected:
+        logger.error('Photo storage rejected the upload: HTTP %s %s', rejected.status, rejected.body)
+        if rejected.status in (401, 403) or 'signature' in rejected.body.lower() or 'jwt' in rejected.body.lower():
+            raise ImageUploadError('Хранилище фото не принимает ключ доступа. Проверьте SUPABASE_SERVICE_ROLE_KEY на сервере.') from rejected
+        raise ImageUploadError('Хранилище фото отклонило файл. Попробуйте ещё раз или выберите другое фото.') from rejected
+    except urlerror.HTTPError as error:
+        logger.error('Photo storage error: HTTP %s %s', error.code, _storage_error_text(error))
+        raise ImageUploadError('Не удалось сохранить фото: хранилище ответило ошибкой. Попробуйте ещё раз.') from error
     except (urlerror.URLError, TimeoutError, OSError) as error:
-        raise ImageUploadError('Не удалось сохранить фото. Попробуйте ещё раз.') from error
+        logger.error('Photo storage unreachable: %r', error)
+        raise ImageUploadError('Не удалось связаться с хранилищем фото. Попробуйте ещё раз.') from error
     return f'{base}/storage/v1/object/public/{bucket}/{path}'
+
+
+class _StorageRejected(Exception):
+    def __init__(self, status, body):
+        super().__init__(status)
+        self.status = status
+        self.body = body

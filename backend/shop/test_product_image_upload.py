@@ -93,3 +93,40 @@ class ProductImageUploadTests(APITestCase):
         catalog = self.client.get('/api/products/').data
         self.assertIn('Круассан новый', [item['name'] for item in catalog])
         self.assertEqual(next(item for item in catalog if item['name'] == 'Круассан новый')['image'], url)
+
+
+def storage_http_error(status, body):
+    import io
+    from urllib.error import HTTPError
+    return HTTPError('https://example.supabase.co/storage', status, 'error', {}, io.BytesIO(body.encode()))
+
+
+@override_settings(**STORAGE)
+class StorageErrorHandlingTests(APITestCase):
+    def setUp(self):
+        self.admin = User.objects.create_user(email='admin2@upload.test', password=PASSWORD, name='Admin', role='ADMIN')
+        self.client.force_authenticate(user=self.admin)
+
+    def test_missing_bucket_is_created_and_upload_retried(self):
+        calls = []
+
+        def fake_post(url, data, content_type, key):
+            calls.append(url)
+            if len(calls) == 1:
+                raise storage_http_error(400, '{"statusCode":"404","error":"Bucket not found","message":"Bucket not found"}')
+
+        with patch('shop.image_upload._post_to_storage', side_effect=fake_post), self.assertLogs('shop.image_upload', 'WARNING'):
+            response = self.client.post(UPLOAD_URL, {'file': photo(JPEG)}, format='multipart')
+        self.assertEqual(response.status_code, 201)
+        self.assertEqual(len(calls), 3)
+        self.assertTrue(calls[1].endswith('/storage/v1/bucket'))
+        self.assertIn('/storage/v1/object/public/product-images/products/', response.data['url'])
+
+    def test_rejected_key_gives_a_clear_message_and_is_logged(self):
+        error = storage_http_error(403, '{"statusCode":"403","error":"Unauthorized","message":"invalid signature"}')
+        with patch('shop.image_upload._post_to_storage', side_effect=error), self.assertLogs('shop.image_upload', 'ERROR') as logs:
+            response = self.client.post(UPLOAD_URL, {'file': photo(JPEG)}, format='multipart')
+        self.assertEqual(response.status_code, 400)
+        self.assertIn('SUPABASE_SERVICE_ROLE_KEY', response.data['detail'])
+        self.assertIn('invalid signature', '\n'.join(logs.output))
+        self.assertNotIn('test-only-service-key', '\n'.join(logs.output))
