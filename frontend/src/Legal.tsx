@@ -76,7 +76,7 @@ export function PrivacyPolicy() {
           {isKz
             ? 'Anasym авторлық кондитерлігі пайдаланушылардың жеке деректерін өңдеу саясаты'
             : isEn
-            ? 'Privacy Policy and Personal Data Processing for Anasym Bakery customers'
+            ? 'Privacy Policy and Personal Data Processing for Anasym customers'
             : 'Политика в отношении обработки и защиты персональных данных пользователей кондитерской Anasym'}
         </p>
         <div className="legal-meta-row">
@@ -102,7 +102,7 @@ export function PrivacyPolicy() {
             {isKz
               ? 'Осы Құпиялылық саясаты (бұдан әрі — Саясат) Anasym кондитерлігінің (бұдан әрі — Оператор, мекенжайы: Тараз қ., Қонаев к-сі, 62а) anasym-bakery.vercel.app веб-сайтын пайдаланушылардың жеке мәліметтерін жинау, өңдеу және сақтау тәртібін белгілейді.'
               : isEn
-              ? 'This Privacy Policy defines the procedure and rules for collecting, storing, and processing personal data by Anasym Bakery (operator address: Taraz, Konaev St, 62a) when users access and use anasym-bakery.vercel.app.'
+              ? 'This Privacy Policy defines the procedure and rules for collecting, storing, and processing personal data by Anasym (operator address: Taraz, Konaev St, 62a) when users access and use anasym-bakery.vercel.app.'
               : 'Настоящая Политика конфиденциальности определяет порядок обработки и защиты персональных данных, которые кондитерская «Anasym» (далее — Оператор, адрес: г. Тараз, ул. Конаева, 62а) получает от физических лиц при использовании сайта anasym-bakery.vercel.app.'}
           </p>
           <p>
@@ -238,7 +238,7 @@ export function PrivacyPolicy() {
             <h2>{isKz ? 'Байланыс және реквизиттер' : isEn ? '7. Contacts & Operator Details' : '7. Контакты и реквизиты'}</h2>
           </div>
           <p>
-            <strong>{isKz ? 'Кондитерлік атауы:' : isEn ? 'Operator:' : 'Кондитерская:'}</strong> Anasym Bakery<br />
+            <strong>{isKz ? 'Кондитерлік атауы:' : isEn ? 'Operator:' : 'Кондитерская:'}</strong> Anasym<br />
             <strong>{isKz ? 'Мекенжайы:' : isEn ? 'Address:' : 'Адрес:'}</strong>{' '}
             {isKz ? 'Қазақстан Республикасы, Тараз қ., Қонаев к-сі, 62а' : isEn ? 'Republic of Kazakhstan, Taraz, Konaev St, 62a' : 'Республика Казахстан, г. Тараз, ул. Конаева, 62а'}<br />
             <strong>{isKz ? 'Жұмыс уақыты:' : isEn ? 'Working Hours:' : 'Режим работы:'}</strong>{' '}
@@ -274,7 +274,7 @@ export function PublicOffer() {
           {isKz
             ? 'Anasym кондитерлік және нан өнімдерін қашықтықтан сату, жеткізу және қабылдау шарттары'
             : isEn
-            ? 'Terms and conditions for ordering, delivery, and payment of Anasym bakery products'
+            ? 'Terms and conditions for ordering, delivery, and payment of Anasym products'
             : 'Публичная оферта на приобретение, доставку и оплату кондитерских и хлебобулочных изделий'}
         </p>
         <div className="legal-meta-row">
@@ -300,7 +300,7 @@ export function PublicOffer() {
             {isKz
               ? 'Осы құжат Сатушының (Anasym кондитерлігі) кез келген жеке тұлғаға (Сатып алушыға) anasym-bakery.vercel.app сайтында ұсынылған кондитерлік және нан өнімдерін бөлшек саудада сатып алу туралы ресми жария ұсынысы (офертасы) болып табылады.'
               : isEn
-              ? 'This document constitutes a public offer by Anasym Bakery to any individual (Customer) to purchase confectionery and bakery goods presented on anasym-bakery.vercel.app.'
+              ? 'This document constitutes a public offer by Anasym to any individual (Customer) to purchase confectionery and bakery goods presented on anasym-bakery.vercel.app.'
               : 'Настоящий документ является официальным публичным предложением (офертой) кондитерской «Anasym» (Продавец) любому физическому лицу (Покупателю) заключить договор розничной купли-продажи кондитерских и хлебобулочных изделий на условиях, изложенных ниже.'}
           </p>
           <p>
@@ -413,7 +413,7 @@ export function PublicOffer() {
             <h2>{isKz ? 'Сатушының реквизиттері' : isEn ? '6. Seller Details' : '6. Реквизиты продавца'}</h2>
           </div>
           <p>
-            <strong>{isKz ? 'Сатушы:' : isEn ? 'Seller:' : 'Продавец:'}</strong> Кондитерская «Anasym Bakery»<br />
+            <strong>{isKz ? 'Сатушы:' : isEn ? 'Seller:' : 'Продавец:'}</strong> Кондитерская «Anasym»<br />
             <strong>{isKz ? 'Өндіріс және дүкен мекенжайы:' : isEn ? 'Bakery Address:' : 'Адрес кондитерской:'}</strong>{' '}
             {isKz ? 'Қазақстан Республикасы, Тараз қ., Қонаев к-сі, 62а' : isEn ? 'Republic of Kazakhstan, Taraz, Konaev St, 62a' : 'Республика Казахстан, г. Тараз, ул. Конаева, 62а'}<br />
             <strong>{isKz ? 'Жұмыс уақыты:' : isEn ? 'Working Hours:' : 'Режим работы:'}</strong>{' '}
