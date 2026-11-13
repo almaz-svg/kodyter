@@ -93,3 +93,43 @@
   .find-marker-label b{font-size:18px}
 }
 @media(prefers-reduced-motion:reduce){.find-route,.find-locate{transition:none}}
+
+/* Layout v2: photo, contact card and map share one row, so the card and the map have the same top and bottom;
+   the features sit under the map. The photo spans the first two columns and slides under the card. */
+.find-layout{grid-template-columns:minmax(0,.8fr) minmax(390px,.95fr) minmax(0,1.25fr);grid-template-rows:auto auto;column-gap:clamp(20px,2.4vw,40px);row-gap:26px;align-items:stretch}
+.find-visual{grid-column:1/3;grid-row:1;min-height:clamp(460px,34vw,560px)}
+.find-visual::before{top:3%;height:90%;width:auto}
+.find-photo{top:5%;height:88%;width:auto;left:3%}
+.find-card{position:relative;grid-column:2;grid-row:1;right:auto;top:auto;transform:none;width:auto;margin:30px 0;display:flex;flex-direction:column}
+.find-card-list{flex:1;display:flex;flex-direction:column;justify-content:space-evenly}
+.find-actions{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:10px;margin-top:14px}
+.find-route{margin-top:0;min-height:50px;padding:0 12px;gap:8px;font-size:14px;white-space:nowrap}
+.find-route svg{width:17px;height:17px;flex-shrink:0}
+.find-call{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 12px;border-radius:16px;border:1.5px solid #c9a865;color:#0b3a2c;background:#fffaf2;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s,transform .2s}
+.find-call svg{width:17px;height:17px;color:#9b7433;flex-shrink:0}
+.find-call:hover{background:#f3e7cf;border-color:#b58a3e;transform:translateY(-2px)}
+.find-map-card{grid-column:3;grid-row:1;margin:30px 0;display:flex}
+.find-map{flex:1;height:auto;min-height:300px}
+.find-features{grid-column:3;grid-row:2;align-self:start}
+
+@media(max-width:1100px){
+  .find-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:none;row-gap:0;max-width:640px;margin:0 auto}
+  .find-visual{grid-column:1;grid-row:auto;min-height:0;display:flex;flex-direction:column;align-items:center}
+  .find-visual::before{left:4%;top:0;height:auto;width:78%}
+  .find-orbit{left:-8%;top:2%;width:116%;height:70%}
+  .find-photo{position:relative;left:auto;top:auto;height:auto;width:84%;margin:10px 0 0 6%}
+  .find-card{grid-column:1;grid-row:auto;margin:-70px 0 0}
+  .find-map-card{grid-column:1;grid-row:auto;margin:28px 0 0}
+  .find-map{min-height:320px}
+  .find-features{grid-column:1;grid-row:auto;margin-top:24px}
+  .find-photo-controls{bottom:82px;left:50%;transform:translateX(-50%)}
+}
+@media(max-width:600px){
+  .find-photo{border-radius:26px;border-width:5px}
+  .find-card{border-radius:24px;padding:20px 18px}
+  .find-actions{grid-template-columns:1fr 1fr;gap:8px}
+  .find-route,.find-call{font-size:13px;padding:0 8px;gap:6px;min-height:48px}
+  .find-route svg:last-child{display:none}
+  .find-map{min-height:280px}
+}
+@media(prefers-reduced-motion:reduce){.find-call{transition:none}}

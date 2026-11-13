@@ -91,48 +91,51 @@ export default function MapSection() {
               <ellipse cx="300" cy="210" rx="296" ry="190" transform="rotate(-8 300 210)" />
             </svg>
             <StorefrontGallery alt={`Anasym — ${t.mapAddress}`} />
+          </div>
 
-            <div className="find-card">
-              <div className="find-card-brand">
-                <img src="/images/Logo.webp" alt="" aria-hidden="true" />
-                <div>
-                  <strong>Anasym</strong>
-                  <span>{t.brandSub}</span>
-                </div>
+          <div className="find-card">
+            <div className="find-card-brand">
+              <img src="/images/Logo.webp" alt="" aria-hidden="true" />
+              <div>
+                <strong>Anasym</strong>
+                <span>{t.brandSub}</span>
               </div>
-              <ul className="find-card-list">
-                <li>
-                  <span className="find-icon"><MapPin aria-hidden="true" /></span>
-                  <div><small>{t.mapAddressLabel}</small><span>{t.mapAddress}</span></div>
-                </li>
-                <li>
-                  <span className="find-icon"><Clock aria-hidden="true" /></span>
-                  <div><small>{t.mapHours}</small><span>{t.mapHoursValue}</span></div>
-                </li>
-                <li>
-                  <span className="find-icon"><Phone aria-hidden="true" /></span>
-                  <div><small>{t.mapPhone}</small><a href={CONTACT_PHONE_LINK} aria-label={`${t.mapCall}: ${CONTACT_PHONE}`}>{CONTACT_PHONE}</a></div>
-                </li>
-              </ul>
+            </div>
+            <ul className="find-card-list">
+              <li>
+                <span className="find-icon"><MapPin aria-hidden="true" /></span>
+                <div><small>{t.mapAddressLabel}</small><span>{t.mapAddress}</span></div>
+              </li>
+              <li>
+                <span className="find-icon"><Clock aria-hidden="true" /></span>
+                <div><small>{t.mapHours}</small><span>{t.mapHoursValue}</span></div>
+              </li>
+              <li>
+                <span className="find-icon"><Phone aria-hidden="true" /></span>
+                <div><small>{t.mapPhone}</small><a href={CONTACT_PHONE_LINK} aria-label={`${t.mapCall}: ${CONTACT_PHONE}`}>{CONTACT_PHONE}</a></div>
+              </li>
+            </ul>
+            <div className="find-actions">
               <a className="find-route" href={MAP_URL} target="_blank" rel="noopener noreferrer">
                 <Navigation aria-hidden="true" />{t.mapRoute}<ArrowRight aria-hidden="true" />
               </a>
+              <a className="find-call" href={CONTACT_PHONE_LINK}>
+                <Phone aria-hidden="true" />{t.mapCall}
+              </a>
             </div>
           </div>
 
-          <div className="find-side">
-            <div className="find-map-card">
-              <iframe className="find-map" src={mapEmbedUrl(lang)} title={`${t.mapTitle} — ${t.mapAddress}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
-              <a className="find-locate" href={MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={t.mapRoute}>
-                <Navigation aria-hidden="true" />
-              </a>
-            </div>
-            <ul className="find-features">
-              <li><CakeSlice aria-hidden="true" /><span>{t.mapF1a}<br />{t.mapF1b}</span></li>
-              <li><Leaf aria-hidden="true" /><span>{t.mapF2a}<br />{t.mapF2b}</span></li>
-              <li><Heart aria-hidden="true" /><span>{t.mapF3a}<br />{t.mapF3b}</span></li>
-            </ul>
+          <div className="find-map-card">
+            <iframe className="find-map" src={mapEmbedUrl(lang)} title={`${t.mapTitle} — ${t.mapAddress}`} loading="lazy" referrerPolicy="no-referrer-when-downgrade" allowFullScreen />
+            <a className="find-locate" href={MAP_URL} target="_blank" rel="noopener noreferrer" aria-label={t.mapRoute}>
+              <Navigation aria-hidden="true" />
+            </a>
           </div>
+          <ul className="find-features">
+            <li><CakeSlice aria-hidden="true" /><span>{t.mapF1a}<br />{t.mapF1b}</span></li>
+            <li><Leaf aria-hidden="true" /><span>{t.mapF2a}<br />{t.mapF2b}</span></li>
+            <li><Heart aria-hidden="true" /><span>{t.mapF3a}<br />{t.mapF3b}</span></li>
+          </ul>
         </div>
       </div>
     </section>
