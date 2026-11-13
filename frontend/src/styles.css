@@ -539,3 +539,11 @@
   .feat-wheat{display:none}
 }
 @media(prefers-reduced-motion:reduce){.feat-card,.feat-photo,.feat-photo img,.feat-ribbon,.feat-body::before,.feat-wave,.feat-buy{transition:none}}
+/* About features: every label is exactly two lines, so the three items line up on desktop and phones. */
+.about-features>li>span{white-space:nowrap}
+.about-features>li{align-items:center}
+@media(max-width:820px){
+  .about-features{display:flex;justify-content:center;align-items:flex-start}
+  .about-features>li{flex:0 1 auto;padding:0 clamp(8px,3.4vw,18px);font-size:clamp(12px,3.4vw,14px);line-height:1.45}
+  .about-features>li:first-child{padding-left:clamp(8px,3.4vw,18px)}
+}
