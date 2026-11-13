@@ -139,7 +139,7 @@ export default function Home() {
           <path d="M0 158C150 156 260 120 360 70C440 30 520 8 600 6" fill="none" stroke="currentColor" strokeWidth="1.6" />
         </svg>
         <div className="about-copy">
-          <span className="about-eyebrow"><i />{t.aboutEyebrow}<i /><b>✦</b></span>
+          <span className="about-eyebrow"><b>✦</b><i />{t.aboutEyebrow}<i /><b>✦</b></span>
           <h2>{(() => {
             const [lead, accent] = t.aboutTitle.split(/\s*—\s*/);
             return accent ? <>{lead}<br /><em>{accent}</em></> : t.aboutTitle;
