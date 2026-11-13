@@ -168,3 +168,19 @@
 .find-features li{padding:0 clamp(8px,1vw,16px);font-size:clamp(12.5px,.84vw,15px)}
 .find-features svg{width:clamp(24px,1.75vw,30px)}
 @media(max-width:600px){.find-features li{padding:0 clamp(8px,3vw,14px)}}
+
+/* Phones: keep the blurred leaves fully inside the block and let them fade out on every side, so no straight
+   edge shows where the block begins. */
+@media(max-width:600px){
+  .find-leaves{top:18px;left:-34px;width:190px;opacity:.85;
+    -webkit-mask-image:radial-gradient(ellipse 58% 62% at 42% 50%,#000 28%,transparent 78%);
+    mask-image:radial-gradient(ellipse 58% 62% at 42% 50%,#000 28%,transparent 78%);
+    -webkit-mask-composite:source-over;mask-composite:add}
+}
+/* Phones: the blurred photo leaves cannot fade cleanly at this size, so a mirrored gold line-art sprig
+   (matching the one on the right) takes their place. */
+.find-branch-left{display:none}
+@media(max-width:600px){
+  .find-leaves{display:none}
+  .find-branch-left{display:block;right:auto;left:-10px;top:30px;transform:scaleX(-1) rotate(60deg)}
+}

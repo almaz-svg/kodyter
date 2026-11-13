@@ -78,6 +78,7 @@ export default function MapSection() {
       <img className="find-leaves" src="/images/leaves-corner.webp" alt="" aria-hidden="true" loading="lazy" />
       <img className="find-leaves find-leaves-bottom" src="/images/leaves-corner.webp" alt="" aria-hidden="true" loading="lazy" />
       <Branch className="find-branch" />
+      <Branch className="find-branch find-branch-left" />
       <div className="container">
         <header className="find-heading">
           <span className="find-eyebrow"><i />{t.mapEyebrow}<i /></span>
