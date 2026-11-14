@@ -366,7 +366,7 @@ function Shell() {
     <>
       <a className="skip-link" href="#main-content">{t.skipToContent}</a>
       {!isAuthPage && <Header />}
-      <div id="main-content">
+      <div id="main-content" className="page-transition" key={location.pathname}>
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalog" element={<Catalog />} />
