@@ -96,10 +96,11 @@
 
 /* Layout v2: photo, contact card and map share one row, so the card and the map have the same top and bottom;
    the features sit under the map. The photo spans the first two columns and slides under the card. */
-.find-layout{grid-template-columns:minmax(0,.8fr) minmax(390px,.95fr) minmax(0,1.25fr);grid-template-rows:auto auto;column-gap:clamp(20px,2.4vw,40px);row-gap:26px;align-items:stretch}
-.find-visual{grid-column:1/3;grid-row:1;min-height:clamp(460px,34vw,560px)}
-.find-visual::before{top:3%;height:90%;width:auto}
-.find-photo{top:5%;height:88%;width:auto;left:3%}
+.find-section>.container{max-width:1440px}
+.find-layout{grid-template-columns:minmax(0,1.1fr) minmax(320px,.95fr) minmax(0,1.25fr);grid-template-rows:auto auto;column-gap:clamp(24px,2.8vw,48px);row-gap:26px;align-items:stretch}
+.find-visual{grid-column:1;grid-row:1;min-height:clamp(480px,36vw,620px)}
+.find-visual::before{top:2%;left:2%;width:90%;height:92%;aspect-ratio:auto}
+.find-photo{top:3%;left:4%;width:88%;height:90%;aspect-ratio:auto}
 .find-card{position:relative;grid-column:2;grid-row:1;right:auto;top:auto;transform:none;width:auto;margin:30px 0;display:flex;flex-direction:column}
 .find-card-list{flex:1;display:flex;flex-direction:column;justify-content:space-evenly}
 .find-actions{display:grid;grid-template-columns:minmax(0,1.45fr) minmax(0,1fr);gap:10px;margin-top:14px}
@@ -108,9 +109,9 @@
 .find-call{display:flex;align-items:center;justify-content:center;gap:8px;min-height:50px;padding:0 12px;border-radius:16px;border:1.5px solid #c9a865;color:#0b3a2c;background:#fffaf2;font-size:14px;font-weight:600;text-decoration:none;white-space:nowrap;transition:background .2s,border-color .2s,transform .2s}
 .find-call svg{width:17px;height:17px;color:#9b7433;flex-shrink:0}
 .find-call:hover{background:#f3e7cf;border-color:#b58a3e;transform:translateY(-2px)}
-.find-map-card{grid-column:3;grid-row:1;margin:30px 0;display:flex}
-.find-map{flex:1;height:auto;min-height:300px}
-.find-features{grid-column:3;grid-row:2;align-self:start}
+.find-map-card{grid-column:3;grid-row:1;margin:20px 0;display:flex}
+.find-map{flex:1;height:auto;min-height:360px}
+.find-features{grid-column:1/-1;grid-row:2;align-self:start}
 
 @media(max-width:1100px){
   .find-layout{grid-template-columns:minmax(0,1fr);grid-template-rows:none;row-gap:0;max-width:640px;margin:0 auto}
