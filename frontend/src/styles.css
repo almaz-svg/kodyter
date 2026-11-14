@@ -568,3 +568,8 @@
 .catalog-feat-grid{row-gap:clamp(26px,2.6vw,40px);padding-top:18px}
 /* About eyebrow: a star on both ends, each tucked in towards its line. */
 .about-eyebrow>b:first-child{margin:0 -6px 0 0}
+/* Mobile drawer: three equal language buttons. */
+.lang-switcher-full{display:grid;grid-template-columns:repeat(3,1fr);gap:4px;padding:4px}
+.mobile-lang-row .lang-switcher-full .lang-btn{min-height:44px;padding:8px 6px;font-size:15px;color:#e3d3a4}
+.mobile-lang-row .lang-switcher-full .lang-btn:not(.lang-active):hover{background:#ffffff1a;color:#f5e8b8}
+.mobile-lang-row .lang-switcher-full .lang-btn.lang-active{color:var(--green)}

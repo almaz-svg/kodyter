@@ -18,10 +18,23 @@ import {Logo,Loading,ErrorBox,Ornament,Branch} from './ui';
 import {PrivacyPolicy,PublicOffer,CookieConsent} from './Legal';
 
 /* ── Language Switcher ────────────────────────────────────────────────── */
-function LangSwitcher() {
+function LangSwitcher({full = false}: {full?: boolean}) {
   const {lang, setLang, t} = useI18n();
   const langs: Lang[] = ['kz','ru','en'];
   const labels: Record<Lang,string> = {kz: t.langKz, ru: t.langRu, en: t.langEn};
+  // Mobile drawer: all three languages side by side, the current one highlighted.
+  if (full) {
+    const order: Lang[] = ['ru','kz','en'];
+    return (
+      <div className="lang-switcher lang-switcher-full" role="group" aria-label="Language / Тіл / Язык">
+        {order.map(l => (
+          <button key={l} type="button" className={`lang-btn${l === lang ? ' lang-active' : ''}`} aria-pressed={l === lang} lang={l === 'kz' ? 'kk' : l} onClick={() => setLang(l)}>
+            {labels[l]}
+          </button>
+        ))}
+      </div>
+    );
+  }
   const next = langs[(langs.indexOf(lang) + 1) % langs.length];
   return (
     <div className="lang-switcher" aria-label="Language / Тіл / Язык">
@@ -196,7 +209,7 @@ function Header() {
 
         <div className="mobile-drawer-footer">
           <div className="mobile-lang-row">
-            <LangSwitcher />
+            <LangSwitcher full />
           </div>
           <p className="mobile-drawer-address">{t.mapAddress}</p>
         </div>
