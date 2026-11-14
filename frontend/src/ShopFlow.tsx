@@ -1,11 +1,11 @@
 import {useEffect,useState} from 'react';
 import type {FormEvent} from 'react';
 import {Link,useNavigate,useSearchParams} from 'react-router-dom';
-import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,LockKeyhole} from 'lucide-react';
+import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,LockKeyhole,UserRound,Store,Eye,EyeOff,Info} from 'lucide-react';
 import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey,unitPrice} from './lib';
 import type {Product,Order,User,AccountType} from './lib';
 import {useShop} from './store';
-import {Qty,ErrorBox,Loading,LazyImage,PriceTag} from './ui';
+import {Qty,ErrorBox,Loading,LazyImage,PriceTag,Branch} from './ui';
 import {useI18n} from './i18n';
 import {productName} from './productNames';
 import './auth.css';
@@ -80,6 +80,7 @@ export function Auth() {
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const [sent,setSent] = useState(false);
+  const [showPassword,setShowPassword] = useState(false);
   const returnTo = params.get('returnTo')==='/checkout' ? '/checkout' : '/account';
 
   useEffect(() => {
@@ -106,15 +107,16 @@ export function Auth() {
   if (authError) return <main className="container page"><ErrorBox message={authError} retry={() => window.location.reload()}/></main>;
 
   return (
-    <main className="auth-page">
+    <main className={`auth-page${mode==='register' ? ' auth-page-register' : ''}`}>
       <div className="auth-art">
-        <LazyImage src="/images/baker.webp" alt={t.authH2}/>
+        <LazyImage key={mode==='register' ? 'cakes' : 'pies'} src={mode==='register' ? '/images/hero-cakes.webp' : '/images/baker.webp'} alt={t.authH2}/>
         <div>
           <span className="eyebrow gold auth-art-eyebrow">{t.authWelcome}<i aria-hidden="true" /></span>
           <h2>{t.authH2}</h2>
         </div>
       </div>
       <div className="auth-content">
+        <Branch className="auth-sprig" />
         <Link to="/catalog" className="back-link"><ArrowLeft size={20} aria-hidden="true" />{t.authBack}</Link>
         <div className="auth-form-wrap">
           <span className="eyebrow auth-eyebrow"><i aria-hidden="true" />{t.authEyebrow}<i aria-hidden="true" /></span>
@@ -137,8 +139,21 @@ export function Auth() {
               {mode==='register' && (
                 <fieldset className="account-type">
                   <legend>{t.authAccountType}</legend>
-                  <label className="account-type-option"><input type="radio" name="account_type" value="INDIVIDUAL" checked={accountType==='INDIVIDUAL'} onChange={() => setAccountType('INDIVIDUAL')}/>{t.authAccountIndividual}</label>
-                  <label className="account-type-option"><input type="radio" name="account_type" value="BUSINESS" checked={accountType==='BUSINESS'} onChange={() => setAccountType('BUSINESS')}/>{t.authAccountBusiness}</label>
+                  <div className="account-type-cards">
+                    <label className={`account-type-option${accountType==='INDIVIDUAL' ? ' is-selected' : ''}`}>
+                      <input type="radio" name="account_type" value="INDIVIDUAL" checked={accountType==='INDIVIDUAL'} onChange={() => setAccountType('INDIVIDUAL')}/>
+                      <UserRound className="account-type-icon" strokeWidth={1.4} aria-hidden="true"/>
+                      <span className="account-type-text">{t.authAccountIndividual}</span>
+                    </label>
+                    <label className={`account-type-option${accountType==='BUSINESS' ? ' is-selected' : ''}`}>
+                      <input type="radio" name="account_type" value="BUSINESS" checked={accountType==='BUSINESS'} onChange={() => setAccountType('BUSINESS')}/>
+                      <Store className="account-type-icon" strokeWidth={1.4} aria-hidden="true"/>
+                      <span className="account-type-text">{(() => {
+                        const m = t.authAccountBusiness.match(/^(.*?)\s*(\(.*\))$/);
+                        return m ? <>{m[1]}<small>{m[2]}</small></> : t.authAccountBusiness;
+                      })()}</span>
+                    </label>
+                  </div>
                   {accountType==='BUSINESS' && (
                     <>
                       <label>{t.authCompanyName}<input name="company_name" required maxLength={160} placeholder={t.authCompanyNamePlaceholder}/></label>
@@ -149,11 +164,18 @@ export function Auth() {
               )}
               <label>{t.authEmail}<input name="email" type="email" autoComplete="email" required placeholder="you@example.com"/></label>
               {mode !== 'reset' && (
-                <label>{t.authPassword}<input name="password" type="password" autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?10:1} placeholder={mode==='register'?t.authNewPasswordPlaceholder:t.authPasswordPlaceholder}/></label>
+                <label>{t.authPassword}
+                  <span className="auth-password">
+                    <input name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?10:1} placeholder={mode==='register'?t.authNewPasswordPlaceholder:t.authPasswordPlaceholder}/>
+                    <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={e => {e.preventDefault(); setShowPassword(v => !v);}}>
+                      {showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}
+                    </button>
+                  </span>
+                </label>
               )}
               {mode==='register' && (
                 <>
-                  <small className="muted">{t.authRegisterNote}</small>
+                  <p className="auth-note"><Info size={20} strokeWidth={1.6} aria-hidden="true"/>{t.authRegisterNote}</p>
                   <p className="auth-legal-consent">
                     {t.authLegalNotice}{' '}
                     <Link to="/terms" target="_blank">{t.footerTerms}</Link>{' '}
@@ -168,9 +190,9 @@ export function Auth() {
               </button>
             </form>
           )}
-          <button className="text-button auth-switch" onClick={() => {setMode(mode==='reset'?'login':'reset');setError('');setSent(false)}}>
+          {mode !== 'register' && <button className="text-button auth-switch" onClick={() => {setMode(mode==='reset'?'login':'reset');setError('');setSent(false)}}>
             {mode==='reset' ? t.authBackToLogin : t.authForgot}
-          </button>
+          </button>}
           <div className="auth-safe"><LockKeyhole size={19} aria-hidden="true" />{t.authSafe}</div>
         </div>
       </div>

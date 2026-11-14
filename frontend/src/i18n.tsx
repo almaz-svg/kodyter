@@ -153,6 +153,8 @@ export interface Translations {
   authPasswordPlaceholder: string;
   authNewPasswordPlaceholder: string;
   authRegisterNote: string;
+  authShowPassword: string;
+  authHidePassword: string;
   authButtonLogin: string;
   authButtonRegister: string;
   authButtonReset: string;
@@ -375,7 +377,7 @@ const kz: Translations = {
   authPassword:'Құпия сөз',
   authPasswordPlaceholder:'Құпия сөзді енгізіңіз',
   authNewPasswordPlaceholder:'10 таңбадан кем емес',
-  authRegisterNote:'Тіркелу сатып алушы кабинетін жасайды.',
+  authRegisterNote:'Тіркелу сатып алушы кабинетін жасайды.', authShowPassword:'Құпия сөзді көрсету', authHidePassword:'Құпия сөзді жасыру',
   authButtonLogin:'Кіру', authButtonRegister:'Аккаунт жасау',
   authButtonReset:'Сілтеме жіберу', authButtonBusy:'Күте тұрыңыз…',
   authForgot:'Құпия сөзді ұмыттыңыз ба?', authBackToLogin:'Кіруге оралу',
@@ -557,7 +559,7 @@ const ru: Translations = {
   authPassword:'Пароль',
   authPasswordPlaceholder:'Введите пароль',
   authNewPasswordPlaceholder:'Не менее 10 символов',
-  authRegisterNote:'Регистрация создаёт кабинет покупателя.',
+  authRegisterNote:'Регистрация создаёт кабинет покупателя.', authShowPassword:'Показать пароль', authHidePassword:'Скрыть пароль',
   authButtonLogin:'Войти', authButtonRegister:'Создать аккаунт',
   authButtonReset:'Отправить ссылку', authButtonBusy:'Подождите…',
   authForgot:'Не помните пароль?', authBackToLogin:'Вернуться ко входу',
@@ -739,7 +741,7 @@ const en: Translations = {
   authPassword:'Password',
   authPasswordPlaceholder:'Enter password',
   authNewPasswordPlaceholder:'At least 10 characters',
-  authRegisterNote:'Registration creates a customer account.',
+  authRegisterNote:'Registration creates a customer account.', authShowPassword:'Show password', authHidePassword:'Hide password',
   authButtonLogin:'Sign in', authButtonRegister:'Create account',
   authButtonReset:'Send link', authButtonBusy:'Please wait…',
   authForgot:"Forgot your password?", authBackToLogin:'Back to sign in',
