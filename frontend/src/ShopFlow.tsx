@@ -8,6 +8,7 @@ import {useShop} from './store';
 import {Qty,ErrorBox,Loading,LazyImage,PriceTag} from './ui';
 import {useI18n} from './i18n';
 import {productName} from './productNames';
+import './auth.css';
 
 /* ── Cart ─────────────────────────────────────────────────────────────── */
 export function Cart() {
@@ -109,14 +110,14 @@ export function Auth() {
       <div className="auth-art">
         <LazyImage src="/images/baker.webp" alt={t.authH2}/>
         <div>
-          <span className="eyebrow gold">{t.authWelcome}</span>
+          <span className="eyebrow gold auth-art-eyebrow">{t.authWelcome}<i aria-hidden="true" /></span>
           <h2>{t.authH2}</h2>
         </div>
       </div>
       <div className="auth-content">
-        <Link to="/catalog" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t.authBack}</Link>
+        <Link to="/catalog" className="back-link"><ArrowLeft size={20} aria-hidden="true" />{t.authBack}</Link>
         <div className="auth-form-wrap">
-          <span className="eyebrow">{t.authEyebrow}</span>
+          <span className="eyebrow auth-eyebrow"><i aria-hidden="true" />{t.authEyebrow}<i aria-hidden="true" /></span>
           <h1>{mode==='login' ? t.authLoginTitle : mode==='register' ? t.authRegisterTitle : t.authResetTitle}</h1>
           <p>{returnTo==='/checkout' ? t.authCheckoutSub : mode==='reset' ? t.authResetSub : t.authLoginSub}</p>
           {mode !== 'reset' && (
@@ -163,14 +164,14 @@ export function Auth() {
               )}
               <button className="button button-green full-width" disabled={busy}>
                 {busy ? t.authButtonBusy : mode==='login' ? t.authButtonLogin : mode==='register' ? t.authButtonRegister : t.authButtonReset}
-                <ArrowRight size={18} aria-hidden="true" />
+                <ArrowRight size={22} aria-hidden="true" />
               </button>
             </form>
           )}
           <button className="text-button auth-switch" onClick={() => {setMode(mode==='reset'?'login':'reset');setError('');setSent(false)}}>
             {mode==='reset' ? t.authBackToLogin : t.authForgot}
           </button>
-          <div className="auth-safe"><LockKeyhole size={15} aria-hidden="true" />{t.authSafe}</div>
+          <div className="auth-safe"><LockKeyhole size={19} aria-hidden="true" />{t.authSafe}</div>
         </div>
       </div>
     </main>
