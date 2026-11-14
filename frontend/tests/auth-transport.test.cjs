@@ -41,6 +41,8 @@ function harness(fetcher, { storageThrows = false } = {}) {
     './ui': { Qty: 'qty', ErrorBox: 'error', Loading: 'loading' },
     // Russian names pass through unchanged, so assertions keep matching the database text.
     './productNames': { productName: product => product.name },
+    // Stylesheet side effect only; nothing to evaluate.
+    './auth.css': {},
   };
   function load(filename, suffix = '') {
     const exports = {};
