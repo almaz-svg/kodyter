@@ -56,11 +56,23 @@ class AdminCategories(generics.ListCreateAPIView):
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
 
-class AdminCategory(generics.UpdateAPIView):
+class CategoryInUse(APIException):
+    status_code = 409
+    default_detail = 'В этой категории есть товары, поэтому удалить её нельзя. Сначала перенесите товары в другую категорию или удалите их — либо просто скройте категорию.'
+
+class AdminCategory(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [IsAdmin]
     serializer_class = CategorySerializer
     queryset = Category.objects.all()
-    http_method_names = ['patch', 'options']
+    http_method_names = ['patch', 'delete', 'options']
+
+    def perform_destroy(self, instance):
+        if instance.products.exists():
+            raise CategoryInUse()
+        try:
+            instance.delete()
+        except ProtectedError:
+            raise CategoryInUse()
 
 class AdminProducts(generics.ListCreateAPIView):
     permission_classes = [IsAdmin]

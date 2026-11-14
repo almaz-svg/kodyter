@@ -165,6 +165,23 @@ class OrderContractTests(APITestCase):
         saved = self.client.get(f"/api/orders/{order['id']}/").json()
         self.assertEqual(saved['items'][0]['name'], 'Croissant')
 
+    def test_admin_deletes_empty_category_but_one_with_products_is_protected(self):
+        from .models import Category
+        self.client.force_login(self.admin)
+        spare = self.client.post('/api/admin/categories/', {'name': 'Seasonal', 'slug': 'seasonal'})
+        self.assertEqual(spare.status_code, 201, spare.content)
+        spare_id = spare.json()['id']
+        self.assertEqual(self.client.delete(f'/api/admin/categories/{spare_id}/').status_code, 204)
+        self.assertFalse(Category.objects.filter(pk=spare_id).exists())
+
+        response = self.client.delete(f"/api/admin/categories/{self.category['id']}/")
+        self.assertEqual(response.status_code, 409, response.content)
+        self.assertIn('нельзя', response.json()['detail'])
+        self.assertTrue(Category.objects.filter(pk=self.category['id']).exists())
+
+        self.client.logout()
+        self.assertIn(self.client.delete(f"/api/admin/categories/{self.category['id']}/").status_code, (401, 403))
+
     def test_changed_price_returns_conflict_then_explicit_new_price_succeeds(self):
         data = self.payload()
         self.client.force_login(self.admin)
