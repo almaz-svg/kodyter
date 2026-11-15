@@ -435,3 +435,11 @@
 .portal-step-agree { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 10px; padding: 12px 14px; border: 1px solid #e0c58b; border-radius: 8px; background: #fbf1dc; color: #5c4a1f; font-size: 14px; font-weight: 400; line-height: 1.5; cursor: pointer; }
 .portal-step-agree input { width: 20px; height: 20px; min-height: 20px; margin: 1px 0 0; padding: 0; flex-shrink: 0; accent-color: var(--portal-green); }
 .portal-step-agree strong { color: #3e3110; }
+
+/* Phones: the date range gets its own full-width row so both dates are readable */
+@media (max-width: 760px) {
+  .portal-filters > .portal-date-range { grid-column: 1 / -1; }
+  .portal-date-range > div { gap: 10px; }
+  .portal-date-range > div > input { min-width: 0; padding: 0 12px; font-size: 15px; text-align: left; }
+  .portal-date-range > span { font-size: 13px; }
+}
