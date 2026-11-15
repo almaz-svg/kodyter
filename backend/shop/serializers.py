@@ -201,6 +201,19 @@ class AvailableOrderSerializer(serializers.ModelSerializer):
         fields = ['id', 'number', 'status', 'created_at', 'total', 'address', 'items_count', 'items']
         read_only_fields = fields
 
+class TeamOrderSerializer(serializers.ModelSerializer):
+    """What one courier sees about the whole team's deliveries: who carries which order, without customer contacts."""
+    items_count = serializers.SerializerMethodField()
+    courier_name = serializers.CharField(source='courier.name', read_only=True)
+
+    def get_items_count(self, order):
+        return sum(item.quantity for item in order.items.all())
+
+    class Meta:
+        model = Order
+        fields = ['id', 'number', 'status', 'created_at', 'total', 'address', 'items_count', 'courier', 'courier_name']
+        read_only_fields = fields
+
 class PaymentRequestSerializer(serializers.Serializer):
     method = serializers.ChoiceField(choices=['CASH'])
     idempotency_key = serializers.UUIDField()

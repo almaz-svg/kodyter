@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { ArrowRight, Banknote, Check, ChevronRight, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
-import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type CashierSummary, type AdminOverview } from './lib';
+import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview } from './lib';
 import { LazyImage } from './ui';
 import { uploadProductPhoto } from './imageUpload';
 import './portals.css';
@@ -171,7 +171,7 @@ function OrdersPanel({ user }: { user: User }) {
   const [dateInvalid, setDateInvalid] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<number | null>(null);
-  const [view, setView] = useState<'available' | 'active' | 'history'>('available');
+  const [view, setView] = useState<'available' | 'active' | 'history' | 'team'>('available');
   const [claiming, setClaiming] = useState<number | null>(null);
   const [picked, setPicked] = useState<number[]>([]);
   const claimLock = useRef(false);
@@ -188,6 +188,7 @@ function OrdersPanel({ user }: { user: User }) {
   if (orderLimit > ORDER_PAGE_SIZE) params.set('limit', String(orderLimit));
   const remote = useRemote<Order[]>(`/orders/?${params.toString()}`, true);
   const available = useRemote<AvailableOrder[]>(isCourier ? '/courier/available-orders/' : null, true);
+  const team = useRemote<TeamOrders>(isCourier ? '/courier/team-orders/' : null, true);
   const couriers = useRemote<User[]>(isAdmin ? '/admin/couriers/' : null, true);
   const summaryFrom = fromDate || toDate || localToday();
   const summaryTo = toDate && toDate >= summaryFrom ? toDate : summaryFrom;
@@ -210,7 +211,7 @@ function OrdersPanel({ user }: { user: User }) {
     setDateInput(next); setDateInvalid(!valid);
     if (valid) setFilters(current => ({ ...current, date_from: next.date_from, date_to: next.date_to }));
   };
-  const refresh = () => { remote.retry(); available.retry(); summary.retry(); if (isAdmin) { couriers.retry(); overview.retry(); } };
+  const refresh = () => { remote.retry(); available.retry(); team.retry(); summary.retry(); if (isAdmin) { couriers.retry(); overview.retry(); } };
   const claim = async (order: AvailableOrder) => {
     if (claimLock.current) return;
     claimLock.current = true; setClaiming(order.id); setClaimError(''); setNotice('');
@@ -269,11 +270,12 @@ function OrdersPanel({ user }: { user: User }) {
       </div>}
       <p className="portal-help">В кассе отражаются только подтверждённые наличные. Для сводки за другой день выберите дату ниже.</p>
     </section>}
-    <div className="portal-section-title"><div><p className="portal-eyebrow">{isCourier ? 'ДОСТАВКА ANASYM' : 'СВЕЖЕЕ И ВОВРЕМЯ'}</p><h2>{isCourier ? showAvailable ? 'Доступные заказы' : view === 'history' ? 'История доставок' : 'Мои активные доставки' : isAdmin || isCashier ? 'Все заказы' : 'Ваши заказы'}<span className="portal-count">{showAvailable ? available.data?.length || 0 : orders.length}</span></h2></div><div className="portal-refresh"><span><i />Обновляем каждые 5 секунд</span><button className="portal-icon-button" type="button" onClick={refresh} aria-label="Обновить заказы"><RefreshCw size={18} aria-hidden="true" /></button></div></div>
+    <div className="portal-section-title"><div><p className="portal-eyebrow">{isCourier ? 'ДОСТАВКА ANASYM' : 'СВЕЖЕЕ И ВОВРЕМЯ'}</p><h2>{isCourier ? showAvailable ? 'Доступные заказы' : view === 'team' ? 'Заказы курьеров' : view === 'history' ? 'История доставок' : 'Мои активные доставки' : isAdmin || isCashier ? 'Все заказы' : 'Ваши заказы'}<span className="portal-count">{showAvailable ? available.data?.length || 0 : view === 'team' ? team.data?.orders.length || 0 : orders.length}</span></h2></div><div className="portal-refresh"><span><i />Обновляем каждые 5 секунд</span><button className="portal-icon-button" type="button" onClick={refresh} aria-label="Обновить заказы"><RefreshCw size={18} aria-hidden="true" /></button></div></div>
     {isCourier && <div className="portal-segment portal-courier-tabs" aria-label="Разделы доставок">
       <button type="button" className={view === 'available' ? 'active' : ''} aria-pressed={view === 'available'} onClick={() => chooseView('available')}>Доступные <span>{available.data?.length || 0}</span></button>
       <button type="button" className={view === 'active' ? 'active' : ''} aria-pressed={view === 'active'} onClick={() => chooseView('active')}>Мои активные <span>{active}</span></button>
       <button type="button" className={view === 'history' ? 'active' : ''} aria-pressed={view === 'history'} onClick={() => chooseView('history')}>История <span>{allOrders.length - active}</span></button>
+      <button type="button" className={view === 'team' ? 'active' : ''} aria-pressed={view === 'team'} onClick={() => chooseView('team')}>Заказы <span>{team.data?.orders.length || 0}</span></button>
     </div>}
     {(isAdmin || isCashier) && <div className={`portal-filters ${isCashier ? 'portal-cashier-filters' : ''}`}>
       <label className="portal-search"><Search size={18} aria-hidden="true" /><input name="order-search" autoComplete="off" aria-label="Поиск по номеру заказа или телефону" placeholder="Номер заказа или телефон" value={search} onChange={e => setSearch(e.target.value)} /></label>
@@ -284,7 +286,7 @@ function OrdersPanel({ user }: { user: User }) {
     </div>}
     <ErrorNotice message={claimError} />
     {notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
-    {showAvailable ? <>
+    {isCourier && view === 'team' ? <TeamOrdersView user={user} team={team} onTransferred={message => { setNotice(message); refresh(); }} /> : showAvailable ? <>
       <p className="portal-queue-note">Эти заказы видят все активные курьеры. Заказ закрепляется за тем, кто первым его примет. Можно взять сразу несколько: отметьте нужные заказы и нажмите «Принять выбранные».</p>
       {picked.length > 0 && <div className="portal-pick-bar" role="status"><span>Выбрано заказов: <b>{picked.length}</b></span><div><button type="button" className="portal-text-button" disabled={claiming !== null} onClick={() => setPicked([])}>Снять выбор</button><button type="button" className="portal-button portal-button-small" disabled={claiming !== null} onClick={() => void claimPicked()}>{claiming === -1 ? 'Принимаем…' : `Принять выбранные (${picked.length})`}<ArrowRight size={17} aria-hidden="true" /></button></div></div>}
       <ErrorNotice message={available.error} retry={available.retry} />
@@ -584,4 +586,43 @@ function CashPanel() {
       <p className="portal-help">Сумма покупок — все заказы, оформленные за период, кроме отменённых (с доставкой). Наличные считаются по дню, когда оплата была подтверждена.</p>
     </section>}
   </section>;
+}
+
+// Courier "Заказы" tab: who carries which order, and handing one's own order to a colleague.
+function TeamOrdersView({ user, team, onTransferred }: { user: User; team: { data: TeamOrders | null; error: string; loading: boolean; retry: () => void }; onTransferred: (message: string) => void }) {
+  const [target, setTarget] = useState<Record<number, string>>({});
+  const [busy, setBusy] = useState<number | null>(null);
+  const [confirming, setConfirming] = useState<number | null>(null);
+  const [error, setError] = useState('');
+  const lock = useRef(false);
+  const nameOf = (id: string | undefined) => team.data?.couriers.find(courier => courier.id === Number(id))?.name || 'другому курьеру';
+  const transfer = async (orderId: number, number: string) => {
+    const courierId = Number(target[orderId]);
+    if (!courierId || lock.current) return;
+    const name = nameOf(target[orderId]);
+    lock.current = true; setBusy(orderId); setError('');
+    try {
+      await api(`/orders/${orderId}/transfer/`, json({ courier_id: courierId }));
+      setTarget(current => { const next = { ...current }; delete next[orderId]; return next; }); setConfirming(null);
+      onTransferred(`Заказ №${number} передан курьеру ${name}.`);
+    } catch (err) { setError(failure(err)); team.retry(); }
+    finally { lock.current = false; setBusy(null); }
+  };
+  const orders = team.data?.orders || [];
+  const colleagues = team.data?.couriers || [];
+  return <>
+    <p className="portal-queue-note">Здесь видно, какой курьер везёт какой заказ. Свой заказ можно передать другому курьеру — он сразу появится у него в «Мои активные».</p>
+    <ErrorNotice message={team.error} retry={team.retry} />
+    <ErrorNotice message={error} />
+    {team.loading && !team.data ? <div className="portal-loading" role="status"><RefreshCw size={22} aria-hidden="true" /> Загружаем заказы курьеров…</div> : <div className="portal-available-grid portal-team-grid">
+      {orders.length ? orders.map(order => { const mine = order.courier === user.id; return <article key={order.id} className={`portal-available-card portal-team-card${mine ? ' is-mine' : ''}`}>
+        <div className="portal-order-card-top"><strong>Заказ №{order.number}</strong>{mine && <span className="portal-team-mine">Ваш заказ</span>}</div>
+        <p className="portal-order-date">{dateTime(order.created_at)}</p><Status status={order.status} />
+        <p className="portal-team-courier"><Truck size={17} aria-hidden="true" /><span>Курьер:</span><strong>{mine ? `${order.courier_name} (вы)` : order.courier_name}</strong></p>
+        <p className="portal-queue-address"><MapPin size={17} aria-hidden="true" /><span>{order.address}</span></p>
+        <div className="portal-order-card-bottom"><span>{order.items_count} шт.</span><strong>{money(order.total)}</strong></div>
+        {mine && (colleagues.length ? <div className="portal-team-transfer"><label><span>Передать курьеру</span><select value={target[order.id] || ''} disabled={busy !== null} onChange={event => { setConfirming(null); setTarget(current => ({ ...current, [order.id]: event.target.value })); }}><option value="">Выберите курьера</option>{colleagues.map(courier => <option key={courier.id} value={courier.id}>{courier.name}</option>)}</select></label>{confirming === order.id ? <div className="portal-payment-confirm"><p>Передать заказ №{order.number} курьеру <strong>{nameOf(target[order.id])}</strong>? Заказ исчезнет из ваших активных доставок.</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small" disabled={busy !== null} onClick={() => void transfer(order.id, order.number)}>{busy === order.id ? 'Передаём…' : 'Да, передать'}<ArrowRight size={16} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy !== null} onClick={() => setConfirming(null)}>Отмена</button></div></div> : <button type="button" className="portal-button portal-button-small" disabled={busy !== null || !target[order.id]} onClick={() => { setConfirming(order.id); setError(''); }}>Передать<ArrowRight size={16} aria-hidden="true" /></button>}</div> : <p className="portal-help">Других активных курьеров сейчас нет.</p>)}
+      </article>; }) : <EmptyState icon={<Truck size={32} aria-hidden="true" />} title="Сейчас никто не везёт заказы">Здесь появятся заказы, которые курьеры взяли в работу.</EmptyState>}
+    </div>}
+  </>;
 }

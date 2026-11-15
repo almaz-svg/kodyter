@@ -91,6 +91,31 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(self.client.get('/api/courier/available-orders/').status_code, 401)
         self.assertEqual(self.client.post(f'/api/orders/{order.pk}/claim/', {}).status_code, 401)
 
+    def test_courier_sees_team_orders_and_transfers_own_order(self):
+        first, second = self.couriers
+        mine = self.make_order(status='READY', courier=first)
+        theirs = self.make_order(status='IN_TRANSIT', courier=second)
+        self.make_order(status='DELIVERED', courier=second)
+        self.make_order()
+        self.client.force_login(first)
+        team = self.client.get('/api/courier/team-orders/').json()
+        self.assertEqual([(row['id'], row['courier_name']) for row in team['orders']], [(mine.pk, first.name), (theirs.pk, second.name)])
+        self.assertNotIn('phone', team['orders'][0])
+        self.assertEqual(team['couriers'], [{'id': second.pk, 'name': second.name}])
+        self.assertEqual(self.client.post(f'/api/orders/{theirs.pk}/transfer/', {'courier_id': first.pk}).status_code, 409)
+        self.assertEqual(self.client.post(f'/api/orders/{mine.pk}/transfer/', {'courier_id': first.pk}).status_code, 400)
+        response = self.client.post(f'/api/orders/{mine.pk}/transfer/', {'courier_id': second.pk})
+        self.assertEqual(response.status_code, 200)
+        mine.refresh_from_db()
+        self.assertEqual(mine.courier, second)
+        User.objects.filter(pk=first.pk).update(is_active=False)
+        self.client.force_login(second)
+        self.assertEqual(self.client.post(f'/api/orders/{mine.pk}/transfer/', {'courier_id': first.pk}).status_code, 400)
+
+    def test_only_couriers_use_team_orders(self):
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.get('/api/courier/team-orders/').status_code, 403)
+
     def test_status_filter_accepts_several_statuses(self):
         confirmed, preparing = self.make_order(status='CONFIRMED'), self.make_order(status='PREPARING')
         self.make_order(status='NEW')

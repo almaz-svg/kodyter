@@ -336,3 +336,13 @@
 .portal-cash-grid article > span { font-size: 14px; }
 .portal-cash-grid small { font-size: 13px; }
 @media (max-width: 480px) { .portal-cash-grid .portal-cash-main strong { font-size: 32px; } .portal-cash-period .portal-date-range { width: 100%; } }
+
+/* Courier team orders */
+.portal-team-card.is-mine { border-color: #647e5a; box-shadow: inset 3px 0 0 var(--portal-green); }
+.portal-team-mine { font-size: 12px; font-weight: 700; color: #fff; background: var(--portal-green); border-radius: 999px; padding: 3px 10px; white-space: nowrap; }
+.portal-team-courier { display: flex; align-items: center; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; padding: 9px 12px; border-radius: 6px; background: #e3ebec; color: #446969; font-size: 14px; }
+.portal-team-courier strong { color: var(--portal-green); font-weight: 700; }
+.portal-team-transfer { display: grid; gap: 10px; margin-top: 14px; padding-top: 14px; border-top: 1px dashed var(--portal-line); }
+.portal-team-transfer label { display: grid; gap: 6px; margin: 0; font-size: 13px; font-weight: 600; }
+.portal-team-transfer select { margin: 0; min-height: 44px; }
+.portal-team-transfer .portal-payment-confirm p { font-size: 14px; margin: 0 0 10px; }

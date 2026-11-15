@@ -31,6 +31,7 @@ urlpatterns = [
     path('admin/businesses/', catalog.AdminBusinesses.as_view()),
     path('admin/businesses/<int:pk>/', catalog.AdminBusiness.as_view()),
     path('courier/available-orders/', staff.AvailableOrders.as_view()),
+    path('courier/team-orders/', staff.TeamOrders.as_view()),
     path('admin/overview/', staff.AdminOverview.as_view()),
     path('cashier/summary/', staff.CashierSummary.as_view()),
     path('orders/', orders.Orders.as_view()),
@@ -39,5 +40,6 @@ urlpatterns = [
     path('orders/<int:pk>/assign/', orders.Assign.as_view()),
     path('orders/<int:pk>/problem/', orders.ReportProblem.as_view()),
     path('orders/<int:pk>/claim/', staff.ClaimOrder.as_view()),
+    path('orders/<int:pk>/transfer/', staff.TransferOrder.as_view()),
     path('orders/<int:pk>/payment/', staff.ReceivePayment.as_view()),
 ]

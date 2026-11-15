@@ -8,10 +8,10 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Order, OrderItem, Payment
+from .models import Order, OrderItem, Payment, User
 from .order_views import Conflict, order_response
 from .security import IsAdmin, IsCashierOrAdmin, IsCourier, lock_active_actor
-from .serializers import AvailableOrderSerializer, PaymentRequestSerializer
+from .serializers import AvailableOrderSerializer, PaymentRequestSerializer, TeamOrderSerializer
 
 
 AVAILABLE_STATUSES = ('NEW', 'CONFIRMED', 'PREPARING', 'READY')
@@ -41,6 +41,38 @@ class ClaimOrder(APIView):
         order.courier = actor
         order.save(update_fields=['courier'])
         return order_response(order, request.user)
+
+
+class TeamOrders(APIView):
+    permission_classes = [IsCourier]
+
+    def get(self, request):
+        orders = Order.objects.filter(courier__isnull=False).exclude(status__in=('DELIVERED', 'CANCELLED')).select_related('courier').prefetch_related('items').order_by('created_at', 'pk')
+        couriers = User.objects.filter(role='COURIER', is_active=True).exclude(pk=request.user.pk).order_by('name', 'pk')
+        return Response({'orders': TeamOrderSerializer(orders, many=True).data, 'couriers': [{'id': courier.pk, 'name': courier.name} for courier in couriers]})
+
+
+class TransferOrder(APIView):
+    """A courier hands one of their unfinished orders to another active courier."""
+    permission_classes = [IsCourier]
+
+    @transaction.atomic
+    def post(self, request, pk):
+        actor = lock_active_actor(request.user, ('COURIER',))
+        order = Order.objects.select_for_update().filter(pk=pk, courier=actor).first()
+        if order is None:
+            raise Conflict('Передать можно только свой заказ. Обновите список заказов.')
+        if order.status in ('DELIVERED', 'CANCELLED'):
+            raise Conflict('Заказ уже завершён, передать его нельзя.')
+        courier_id = serializers.IntegerField(min_value=1).run_validation(request.data.get('courier_id'))
+        if courier_id == actor.pk:
+            raise serializers.ValidationError({'courier_id': 'Выберите другого курьера.'})
+        courier = User.objects.select_for_update().filter(pk=courier_id, role='COURIER', is_active=True).first()
+        if courier is None:
+            raise serializers.ValidationError({'courier_id': 'Выберите активного курьера.'})
+        order.courier = courier
+        order.save(update_fields=['courier'])
+        return Response(TeamOrderSerializer(Order.objects.select_related('courier').prefetch_related('items').get(pk=order.pk)).data)
 
 
 class ReceivePayment(APIView):
