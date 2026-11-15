@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
+import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview } from './lib';
 import { LazyImage } from './ui';
 import { uploadProductPhoto } from './imageUpload';
@@ -163,10 +163,10 @@ function Profile({ user, onUserChange }: Props) {
 
 const positions = (count: number) => `${count} ${count % 10 === 1 && count % 100 !== 11 ? 'позиция' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'позиции' : 'позиций'}`;
 
-// Progress bar on the order card: customers see three plain steps, admins also see the kitchen step.
+// Progress bar on the order card: customers see plain-language steps, admins see the workflow status on the current step.
 function OrderProgress({ order, customer }: { order: Order; customer: boolean }) {
   const steps: { label: string; statuses: Order['status'][]; icon: ReactNode }[] = customer
-    ? [{ label: 'Новый', statuses: ['NEW', 'CONFIRMED', 'PREPARING', 'READY'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'В доставке', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Завершён', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }]
+    ? [{ label: 'Ваш заказ в обработке', statuses: ['NEW'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'Заказ подтверждён', statuses: ['CONFIRMED', 'PREPARING', 'READY'], icon: <CircleCheck size={18} aria-hidden="true" /> }, { label: 'Заказ передан курьеру', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Завершён', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }]
     : [{ label: 'Новый', statuses: ['NEW'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'Готовится', statuses: ['CONFIRMED', 'PREPARING', 'READY'], icon: <ChefHat size={18} aria-hidden="true" /> }, { label: 'В доставке', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Доставлен', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }];
   const current = steps.findIndex(step => step.statuses.includes(order.status));
   const reachedAt = (step: typeof steps[number]) => step.statuses.includes('NEW') ? order.created_at : order.status_history.find(entry => step.statuses.includes(entry.to_status as Order['status']))?.created_at;
