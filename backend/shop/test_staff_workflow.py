@@ -231,6 +231,18 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'HANDED_OVER'}).status_code, 403)
         self.assertEqual(self.client.get('/api/admin/couriers/').status_code, 403)
 
+    def test_unpriced_product_is_unavailable_and_cannot_be_ordered(self):
+        category = Category.objects.create(name='Bakery', slug='bakery-unpriced')
+        free = Product.objects.create(category=category, name='Без цены', price='0.00')
+        priced = Product.objects.create(category=category, name='С ценой', price='500.00')
+        catalog = {row['id']: row['is_available'] for row in APIClient().get('/api/products/').json()}
+        self.assertEqual((catalog[free.pk], catalog[priced.pk]), (False, True))
+        self.client.force_login(self.customer)
+        body = {'recipient_name': 'Buyer', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': '', 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4()), 'items': [{'product_id': free.pk, 'quantity': 1, 'expected_price': '0.00'}]}
+        response = self.client.post('/api/orders/', body, format='json')
+        self.assertEqual(response.status_code, 409)
+        self.assertIn('не указана цена', response.json()['detail'])
+
     def test_customer_cancels_own_order_only_before_confirmation(self):
         new = self.make_order(courier=self.couriers[0])
         confirmed = self.make_order(status='CONFIRMED')

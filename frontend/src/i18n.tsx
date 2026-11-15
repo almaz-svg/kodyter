@@ -242,6 +242,7 @@ export interface Translations {
 
   /* Product card */
   soonAvail: string;
+  priceSoon: string;
   buy: string;
   outOfStock: string;
   inCart: (n: number) => string;
@@ -438,6 +439,7 @@ const kz: Translations = {
   addedToCart:'Себетке қосылды', loggedOut:'Жүйеден шықтыңыз',
 
   soonAvail:'Жақында болады',
+  priceSoon:'Бағасы нақтылануда',
   buy:'Сатып алу', outOfStock:'Жоқ',
   inCart:(n)=>`Себетте: ${n} дана`,
   perItem:'1 данасы', toCart:'Себетке',
@@ -622,6 +624,7 @@ const ru: Translations = {
   addedToCart:'Добавлено в корзину', loggedOut:'Вы вышли из аккаунта',
 
   soonAvail:'Скоро в наличии',
+  priceSoon:'Цена уточняется',
   buy:'Купить', outOfStock:'Нет в наличии',
   inCart:(n)=>`В корзине: ${n} шт.`,
   perItem:'За 1 шт.', toCart:'В корзину',
@@ -806,6 +809,7 @@ const en: Translations = {
   addedToCart:'Added to cart', loggedOut:'You have signed out',
 
   soonAvail:'Coming soon',
+  priceSoon:'Price coming soon',
   buy:'Buy', outOfStock:'Out of stock',
   inCart:(n)=>`In cart: ${n}`,
   perItem:'Per item', toCart:'To cart',

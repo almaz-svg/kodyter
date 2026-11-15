@@ -116,6 +116,8 @@ class Orders(APIView):
             product = products.get(item['product_id'])
             if not product or not product.is_visible or not product.category.is_visible or not product.is_available:
                 raise Conflict('Один из товаров больше недоступен. Обновите корзину перед оформлением.')
+            if product.price <= 0:
+                raise Conflict(f'У товара «{product.name}» ещё не указана цена, поэтому его пока нельзя заказать. Уберите его из корзины.')
             # Server prices are authoritative. The unit price depends on the buyer's account and on this line's quantity:
             # wholesale only for an approved business and only from WHOLESALE_MIN_QTY units of this product.
             # A zero or negative price is never orderable.

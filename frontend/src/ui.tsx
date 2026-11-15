@@ -172,6 +172,8 @@ export function PriceTag({ product, quantity }: { product: Product; quantity?: n
   const { t } = useI18n();
   const offer = product.wholesale_price;
   const min = product.wholesale_min_qty;
+  // A product without a price yet is not sold; show that instead of "0 ₸".
+  if (Number(product.price) <= 0) return <strong className="price-soon">{t.priceSoon}</strong>;
   if (offer == null || min == null) return <strong>{money(product.price)}</strong>;
   const units = quantity ?? 0;
   const hint = units >= min ? t.wholesaleApplied : units > 0 ? t.wholesaleAddMore(min - units, money(offer)) : t.wholesaleFrom(min, money(offer));

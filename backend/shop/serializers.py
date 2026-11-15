@@ -103,6 +103,9 @@ class PublicProductSerializer(serializers.ModelSerializer):
 
     def to_representation(self, product):
         data = super().to_representation(product)
+        # A product without a price yet cannot be bought, so shoppers see it as unavailable instead of "0 ₸" in the cart.
+        if product.price <= 0:
+            data['is_available'] = False
         user = getattr(self.context.get('request'), 'user', None)
         approved = getattr(user, 'account_type', None) == User.AccountType.BUSINESS and getattr(user, 'business_approved', False)
         if approved and product.wholesale_price is not None:
