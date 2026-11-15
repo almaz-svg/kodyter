@@ -29,13 +29,10 @@ class Conflict(APIException):
 
 def scoped_orders(user):
     orders = Order.objects.select_related('courier', 'payment').prefetch_related('items', 'status_history', 'problems')
-    if user.role in ('ADMIN', 'CASHIER'):
+    if user.role in ('ADMIN', 'CASHIER', 'PASTRY'):
         return orders
     if user.role == 'COURIER':
         return orders.filter(courier=user)
-    if user.role == 'PASTRY':
-        # The pastry kitchen works on confirmed orders until they are ready for pickup.
-        return orders.filter(status__in=('CONFIRMED', 'PREPARING', 'READY'))
     return orders.filter(customer=user)
 
 def locked_order(user, pk):
@@ -159,7 +156,7 @@ class Transition(APIView):
             reason = serializers.CharField(max_length=2000).run_validation(request.data.get('reason'))
             order.cancellation_reason = reason
         else:
-            role_targets = {'ADMIN': ('CONFIRMED', 'PREPARING', 'READY'), 'PASTRY': ('PREPARING', 'READY'), 'COURIER': ('HANDED_OVER', 'IN_TRANSIT', 'DELIVERED')}
+            role_targets = {'ADMIN': ('CONFIRMED', 'PREPARING', 'READY'), 'PASTRY': ('CONFIRMED', 'PREPARING', 'READY'), 'COURIER': ('HANDED_OVER', 'IN_TRANSIT', 'DELIVERED')}
             if target not in role_targets.get(actor.role, ()):
                 raise PermissionDenied('Этот переход недоступен вашей роли.')
             next_state = {'NEW': 'CONFIRMED', 'CONFIRMED': 'PREPARING', 'PREPARING': 'READY', 'READY': 'HANDED_OVER', 'HANDED_OVER': 'IN_TRANSIT', 'IN_TRANSIT': 'DELIVERED'}

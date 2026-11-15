@@ -199,16 +199,17 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.client.force_login(other)
         self.assertEqual(self.client.delete(f'/api/admin/couriers/{third.pk}/').status_code, 403)
 
-    def test_pastry_chef_sees_kitchen_orders_and_moves_them_to_ready(self):
+    def test_pastry_chef_sees_all_orders_and_runs_the_kitchen_steps(self):
         self.client.force_login(self.admin)
         created = self.client.post('/api/admin/pastry-chefs/', {'name': 'Baker', 'email': 'baker@staff.test', 'phone': '+77010000001', 'password': 'Pastry-password-55'})
         self.assertEqual(created.status_code, 201)
         self.assertEqual(created.json()['role'], 'PASTRY')
         chef = User.objects.get(email='baker@staff.test')
-        new, confirmed = self.make_order(), self.make_order(status='CONFIRMED')
+        new, delivered = self.make_order(), self.make_order(status='DELIVERED')
         self.client.force_login(chef)
-        self.assertEqual([row['id'] for row in self.client.get('/api/orders/').json()], [confirmed.pk])
-        self.assertEqual(self.client.get(f'/api/orders/{new.pk}/').status_code, 404)
+        self.assertEqual(sorted(row['id'] for row in self.client.get('/api/orders/').json()), sorted([new.pk, delivered.pk]))
+        confirmed = new
+        self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'CONFIRMED'}).json()['status'], 'CONFIRMED')
         self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'PREPARING'}).json()['status'], 'PREPARING')
         self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'READY'}).json()['status'], 'READY')
         self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'HANDED_OVER'}).status_code, 403)

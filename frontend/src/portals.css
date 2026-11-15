@@ -430,3 +430,8 @@
 .portal-courier-controls .portal-danger-text { font-size: 13px; }
 .portal-staff-delete { flex: 1 1 100%; margin-top: 4px; padding: 14px 16px; border: 1px solid #e8c7bb; border-radius: 8px; background: #fbefe9; color: #6e3424; }
 .portal-staff-delete p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }
+
+/* Tick-to-continue before each step for pastry chefs and couriers */
+.portal-step-agree { display: flex; align-items: flex-start; gap: 10px; margin: 0 0 10px; padding: 12px 14px; border: 1px solid #e0c58b; border-radius: 8px; background: #fbf1dc; color: #5c4a1f; font-size: 14px; font-weight: 400; line-height: 1.5; cursor: pointer; }
+.portal-step-agree input { width: 20px; height: 20px; min-height: 20px; margin: 1px 0 0; padding: 0; flex-shrink: 0; accent-color: var(--portal-green); }
+.portal-step-agree strong { color: #3e3110; }
