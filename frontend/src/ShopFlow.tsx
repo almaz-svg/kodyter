@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react';
 import type {FormEvent} from 'react';
 import {Link,useNavigate,useSearchParams} from 'react-router-dom';
-import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,LockKeyhole,UserRound,Store,Eye,EyeOff,Info} from 'lucide-react';
+import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,Croissant,LockKeyhole,UserRound,Store,Eye,EyeOff,Info} from 'lucide-react';
 import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey,unitPrice} from './lib';
 import type {Product,Order,User,AccountType} from './lib';
 import {useShop} from './store';
@@ -299,26 +299,39 @@ export function Checkout() {
     } finally { setBusy(false); }
   }
 
-  if (success) return (
-    <main className="container page order-success-page">
-      {storageWarning && <p className="error-box" role="status">{storageWarning}</p>}
-      <div className="order-success">
-        <div className="success-icon"><Check size={38} strokeWidth={2.5} aria-hidden="true" /></div>
-        <span className="eyebrow">{t.successEyebrow}</span>
-        <h1>{t.successTitle}</h1>
-        <p className="success-number">№ <strong>{success.number}</strong></p>
-        <p>{t.successP}</p>
-        <div className="success-receipt">
-          {success.items?.length > 0 && <ul className="success-items">{success.items.map(item => <li key={item.id}><span>{item.name}</span><b>{item.quantity} {t.cartPieces}</b><strong>{money(Number(item.price) * item.quantity)}</strong></li>)}</ul>}
-          <span>{t.successTotalLabel}</span>
-          <strong>{money(success.total)}</strong>
-          <small><Truck size={16} aria-hidden="true" />{t.successPayNote}</small>
+  if (success) {
+    const pastries = (success.items || []).filter(item => item.image).slice(0, 2);
+    return (
+    <main className="page order-success-page">
+      <Branch className="success-bg-branch success-bg-branch-left" />
+      <Branch className="success-bg-branch success-bg-branch-right" />
+      {pastries.map((item, index) => <div key={item.id} className={`success-pastry success-pastry-${index ? 'right' : 'left'}`} aria-hidden="true"><LazyImage src={item.image} alt="" /></div>)}
+      <div className="container">
+        {storageWarning && <p className="error-box" role="status">{storageWarning}</p>}
+        <div className="order-success">
+          <div className="success-crest">
+            <Branch className="success-sprig success-sprig-left" />
+            <div className="success-icon"><Check size={34} strokeWidth={2.6} aria-hidden="true" /></div>
+            <Branch className="success-sprig success-sprig-right" />
+          </div>
+          <span className="eyebrow success-eyebrow"><i />{t.successEyebrow}<i /></span>
+          <h1>{t.successTitle}</h1>
+          <p className="success-number">№ <strong>{success.number}</strong></p>
+          <p className="success-text">{t.successP}</p>
+          <div className="success-divider" aria-hidden="true"><i /><Croissant size={22} strokeWidth={1.4} /><i /></div>
+          <section className="success-receipt" aria-label={t.successDetails}>
+            <header><ShoppingBag size={22} strokeWidth={1.6} aria-hidden="true" /><h2>{t.successDetails}</h2><Branch className="success-card-branch" /></header>
+            {success.items?.length > 0 && <ul className="success-items">{success.items.map(item => <li key={item.id}><span>{item.name}</span><b>{item.quantity} {t.cartPieces}</b><strong>{money(Number(item.price) * item.quantity)}</strong></li>)}</ul>}
+            <div className="success-total"><span>{t.successTotalLabel}</span><strong>{money(success.total)}</strong></div>
+            <small className="success-pay"><Truck size={18} strokeWidth={1.6} aria-hidden="true" />{t.successPayNote}</small>
+          </section>
+          <Link to="/account" className="button success-track">{t.successTrack} <ArrowRight size={18} aria-hidden="true" /></Link>
+          <Link to="/catalog" className="success-back">{t.successBack}</Link>
         </div>
-        <Link to="/account" className="button button-green">{t.successTrack} <ArrowRight size={17} aria-hidden="true" /></Link>
-        <Link to="/catalog" className="text-link">{t.successBack}</Link>
       </div>
     </main>
-  );
+    );
+  }
 
   return (
     <main className="container page checkout-page">

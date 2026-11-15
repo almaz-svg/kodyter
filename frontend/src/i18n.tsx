@@ -222,6 +222,7 @@ export interface Translations {
   successTitle: string;
   successP: string;
   successTotalLabel: string;
+  successDetails: string;
   successPayNote: string;
   successTrack: string;
   successBack: string;
@@ -425,7 +426,7 @@ const kz: Translations = {
   successEyebrow:'ТАҢДАУЫҢЫЗҒА РАХМЕТ',
   successTitle:'Тапсырыс қабылданды',
   successP:'Тапсырысыңызды сақтадық.\nОның мәртебесі жеке кабинетте жаңартылатын болады.',
-  successTotalLabel:'Жеткізумен барлығы',
+  successTotalLabel:'Жеткізумен барлығы', successDetails:'Тапсырыс мәліметтері',
   successPayNote:'Алу кезінде төлем',
   successTrack:'Тапсырысты қадағалау',
   successBack:'Каталогқа оралу',
@@ -609,7 +610,7 @@ const ru: Translations = {
   successEyebrow:'СПАСИБО ЗА ВАШ ВЫБОР',
   successTitle:'Заказ принят',
   successP:'Мы сохранили ваш заказ.\nЕго статус будет обновляться в личном кабинете.',
-  successTotalLabel:'Итого с доставкой',
+  successTotalLabel:'Итого с доставкой', successDetails:'Детали заказа',
   successPayNote:'Оплата при получении',
   successTrack:'Следить за заказом',
   successBack:'Вернуться в каталог',
@@ -793,7 +794,7 @@ const en: Translations = {
   successEyebrow:'THANK YOU FOR YOUR ORDER',
   successTitle:'Order Placed',
   successP:'We have saved your order.\nIts status will update in your account.',
-  successTotalLabel:'Total incl. delivery',
+  successTotalLabel:'Total incl. delivery', successDetails:'Order details',
   successPayNote:'Payment on delivery',
   successTrack:'Track my order',
   successBack:'Back to Catalog',
