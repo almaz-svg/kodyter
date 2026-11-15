@@ -131,15 +131,16 @@ class AdminCourier(generics.UpdateAPIView, generics.DestroyAPIView):
         from the staff lists and frees its email for a new account. A courier's unfinished orders move to others.
         """
         user = User.objects.select_for_update().get(pk=self.get_object().pk)
-        moved = waiting = 0
-        if user.role == 'COURIER':
-            moved, waiting = release_courier_orders(user)
         user.first_name = user.email  # the original login, kept for the record
         user.email = f'removed-{user.pk}-{user.email}'
         user.last_name = REMOVED_STAFF_MARK
         user.is_active = False
         user.set_unusable_password()  # also ends every open session of this account
         user.save(update_fields=['first_name', 'email', 'last_name', 'is_active', 'password'])
+        moved = waiting = 0
+        if user.role == 'COURIER':
+            # Only after the account is closed: otherwise dispatch would see this courier as free and hand the orders back.
+            moved, waiting = release_courier_orders(user)
         return Response({'detail': 'Сотрудник удалён из команды.', 'moved_orders': moved, 'waiting_orders': waiting})
 
     def update(self, request, *args, **kwargs):

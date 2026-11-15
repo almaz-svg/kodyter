@@ -170,6 +170,22 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(summary['paid_count'], 1)
         self.assertEqual(summary['unpaid_delivered_count'], 0)
 
+    def test_removed_courier_never_gets_their_orders_back(self):
+        leaving, busy = self.couriers
+        waiting_order = self.make_order(status='READY', courier=leaving)
+        self.make_order(status='IN_TRANSIT', courier=busy)
+        self.client.force_login(self.admin)
+        response = self.client.delete(f'/api/admin/couriers/{leaving.pk}/')
+        self.assertEqual((response.json()['moved_orders'], response.json()['waiting_orders']), (0, 1))
+        waiting_order.refresh_from_db()
+        self.assertIsNone(waiting_order.courier_id)
+        # When the busy courier finishes, the waiting order goes to them.
+        self.client.force_login(busy)
+        on_road = Order.objects.get(courier=busy, status='IN_TRANSIT')
+        self.client.post(f'/api/orders/{on_road.pk}/transition/', {'status': 'DELIVERED'})
+        waiting_order.refresh_from_db()
+        self.assertEqual(waiting_order.courier_id, busy.pk)
+
     def test_removed_courier_keeps_history_and_hands_orders_to_free_couriers(self):
         leaving, other = self.couriers
         delivered = self.make_order(status='DELIVERED', courier=leaving)
