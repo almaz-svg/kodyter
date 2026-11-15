@@ -21,6 +21,7 @@ class User(AbstractUser):
         ADMIN = 'ADMIN', 'Администратор'
         COURIER = 'COURIER', 'Курьер'
         CASHIER = 'CASHIER', 'Кассир'
+        PASTRY = 'PASTRY', 'Кондитер'
 
     class AccountType(models.TextChoices):
         # Chosen at registration. A business ('заведение') pays the wholesale price where one is set.

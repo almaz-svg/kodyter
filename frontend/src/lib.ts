@@ -1,7 +1,7 @@
-export type Role = 'CUSTOMER'|'ADMIN'|'COURIER'|'CASHIER';
+export type Role = 'CUSTOMER'|'ADMIN'|'COURIER'|'CASHIER'|'PASTRY';
 /** Largest number of units of one product in one order line. The server enforces the same value (MAX_ORDER_ITEM_QUANTITY). */
 export const MAX_ORDER_ITEM_QUANTITY = 200;
-const roleRoutes:Record<Role,string> = {CUSTOMER:'/account',ADMIN:'/admin',COURIER:'/courier',CASHIER:'/cashier'};
+const roleRoutes:Record<Role,string> = {CUSTOMER:'/account',ADMIN:'/admin',COURIER:'/courier',CASHIER:'/cashier',PASTRY:'/pastry'};
 export const roleHome=(role?:Role|null)=>role?roleRoutes[role]:'/account';
 export type PaymentStatus = 'UNPAID'|'PAID';
 export type AccountType = 'INDIVIDUAL'|'BUSINESS';

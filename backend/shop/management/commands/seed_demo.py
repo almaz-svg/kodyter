@@ -36,7 +36,7 @@ class Command(BaseCommand):
         for name, slug, price, weight, image, description, ingredients, allergens in products:
             Product.objects.get_or_create(name=name, category=cats[slug], defaults={'price': price, 'weight': weight, 'image': image, 'description': description, 'ingredients': ingredients, 'allergens': allergens})
         output = Path(os.getenv('DEMO_ACCOUNTS_FILE', str(settings.BASE_DIR.parent / '.secrets' / 'demo-accounts.txt'))).resolve()
-        accounts = [('ADMIN', 'admin@anasym.test', 'Демо администратор'), ('CUSTOMER', 'customer@anasym.test', 'Демо покупатель'), ('COURIER', 'courier@anasym.test', 'Демо курьер'), ('CASHIER', 'cashier@anasym.test', 'Демо кассир')]
+        accounts = [('ADMIN', 'admin@anasym.test', 'Демо администратор'), ('CUSTOMER', 'customer@anasym.test', 'Демо покупатель'), ('COURIER', 'courier@anasym.test', 'Демо курьер'), ('CASHIER', 'cashier@anasym.test', 'Демо кассир'), ('PASTRY', 'pastry@anasym.test', 'Демо кондитер')]
         generated = []
         for role, email, name in accounts:
             if not User.objects.filter(email__iexact=email).exists():

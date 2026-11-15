@@ -138,6 +138,12 @@ class AdminCashiers(AdminCouriers):
 class AdminCashier(AdminCourier):
     queryset = User.objects.filter(role='CASHIER')
 
+class AdminPastryChefs(AdminCouriers):
+    role = 'PASTRY'
+
+class AdminPastryChef(AdminCourier):
+    queryset = User.objects.filter(role='PASTRY')
+
 class AdminBusinesses(generics.ListAPIView):
     """Business ('заведение') accounts with their approval state, for the administrator to review."""
     permission_classes = [IsAdmin]

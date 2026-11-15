@@ -33,6 +33,9 @@ def scoped_orders(user):
         return orders
     if user.role == 'COURIER':
         return orders.filter(courier=user)
+    if user.role == 'PASTRY':
+        # The pastry kitchen works on confirmed orders until they are ready for pickup.
+        return orders.filter(status__in=('CONFIRMED', 'PREPARING', 'READY'))
     return orders.filter(customer=user)
 
 def locked_order(user, pk):
@@ -142,9 +145,9 @@ class Transition(APIView):
     @transaction.atomic
     def post(self, request, pk):
         order = locked_order(request.user, pk)
-        if request.user.role not in ('ADMIN', 'COURIER'):
+        if request.user.role not in ('ADMIN', 'COURIER', 'PASTRY'):
             raise PermissionDenied('Ваша роль не может менять статус заказа.')
-        actor = lock_active_actor(request.user, ('ADMIN', 'COURIER'))
+        actor = lock_active_actor(request.user, ('ADMIN', 'COURIER', 'PASTRY'))
         target = request.data.get('status')
         if target not in Order.Status.values:
             raise serializers.ValidationError({'status': 'Неизвестный статус.'})
@@ -156,7 +159,7 @@ class Transition(APIView):
             reason = serializers.CharField(max_length=2000).run_validation(request.data.get('reason'))
             order.cancellation_reason = reason
         else:
-            role_targets = {'ADMIN': ('CONFIRMED', 'PREPARING', 'READY'), 'COURIER': ('HANDED_OVER', 'IN_TRANSIT', 'DELIVERED')}
+            role_targets = {'ADMIN': ('CONFIRMED', 'PREPARING', 'READY'), 'PASTRY': ('PREPARING', 'READY'), 'COURIER': ('HANDED_OVER', 'IN_TRANSIT', 'DELIVERED')}
             if target not in role_targets.get(actor.role, ()):
                 raise PermissionDenied('Этот переход недоступен вашей роли.')
             next_state = {'NEW': 'CONFIRMED', 'CONFIRMED': 'PREPARING', 'PREPARING': 'READY', 'READY': 'HANDED_OVER', 'HANDED_OVER': 'IN_TRANSIT', 'IN_TRANSIT': 'DELIVERED'}

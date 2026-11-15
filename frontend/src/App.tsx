@@ -375,7 +375,7 @@ function Shell() {
           <Route path="/login" element={<Auth />} />
           <Route path="/reset-password" element={<ResetPassword />} />
           <Route path="/checkout" element={<Protected customerOnly><Checkout /></Protected>} />
-          {['/account','/admin','/courier','/cashier'].map(path => (
+          {['/account','/admin','/courier','/cashier','/pastry'].map(path => (
             <Route key={path} path={path} element={<Protected><Account /></Protected>} />
           ))}
           {(['about','delivery','contacts'] as const).map(type => (

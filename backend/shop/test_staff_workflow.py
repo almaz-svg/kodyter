@@ -170,6 +170,21 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(summary['paid_count'], 1)
         self.assertEqual(summary['unpaid_delivered_count'], 0)
 
+    def test_pastry_chef_sees_kitchen_orders_and_moves_them_to_ready(self):
+        self.client.force_login(self.admin)
+        created = self.client.post('/api/admin/pastry-chefs/', {'name': 'Baker', 'email': 'baker@staff.test', 'phone': '+77010000001', 'password': 'Pastry-password-55'})
+        self.assertEqual(created.status_code, 201)
+        self.assertEqual(created.json()['role'], 'PASTRY')
+        chef = User.objects.get(email='baker@staff.test')
+        new, confirmed = self.make_order(), self.make_order(status='CONFIRMED')
+        self.client.force_login(chef)
+        self.assertEqual([row['id'] for row in self.client.get('/api/orders/').json()], [confirmed.pk])
+        self.assertEqual(self.client.get(f'/api/orders/{new.pk}/').status_code, 404)
+        self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'PREPARING'}).json()['status'], 'PREPARING')
+        self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'READY'}).json()['status'], 'READY')
+        self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'HANDED_OVER'}).status_code, 403)
+        self.assertEqual(self.client.get('/api/admin/couriers/').status_code, 403)
+
     def test_customer_cancels_own_order_only_before_confirmation(self):
         new = self.make_order(courier=self.couriers[0])
         confirmed = self.make_order(status='CONFIRMED')

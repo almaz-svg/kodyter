@@ -28,6 +28,8 @@ urlpatterns = [
     path('admin/couriers/<int:pk>/', catalog.AdminCourier.as_view()),
     path('admin/cashiers/', catalog.AdminCashiers.as_view()),
     path('admin/cashiers/<int:pk>/', catalog.AdminCashier.as_view()),
+    path('admin/pastry-chefs/', catalog.AdminPastryChefs.as_view()),
+    path('admin/pastry-chefs/<int:pk>/', catalog.AdminPastryChef.as_view()),
     path('admin/businesses/', catalog.AdminBusinesses.as_view()),
     path('admin/businesses/<int:pk>/', catalog.AdminBusiness.as_view()),
     path('courier/available-orders/', staff.AvailableOrders.as_view()),
