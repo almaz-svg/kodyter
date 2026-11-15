@@ -59,6 +59,21 @@ class ProductImageUploadTests(APITestCase):
         response = self.client.post(UPLOAD_URL, {'file': photo(JPEG)}, format='multipart')
         self.assertEqual(response.status_code, 503)
 
+    def test_local_development_without_keys_saves_the_photo_in_the_project(self):
+        import tempfile
+        from pathlib import Path
+        with tempfile.TemporaryDirectory() as folder, override_settings(SUPABASE_URL='', SUPABASE_SERVICE_ROLE_KEY='', DEBUG=True, IS_VERCEL=False, LOCAL_UPLOAD_DIR=Path(folder)):
+            self.client.force_authenticate(user=self.admin)
+            response = self.client.post(UPLOAD_URL, {'file': photo(PNG, 'photo.png', 'image/png')}, format='multipart')
+            self.assertEqual(response.status_code, 201)
+            url = response.data['url']
+            self.assertRegex(url, r'^/media/uploads/[0-9a-f]{32}\.png$')
+            self.assertEqual((Path(folder) / url.rsplit('/', 1)[1]).read_bytes(), PNG)
+            created = self.client.post('/api/admin/products/', {'name': 'Local photo', 'category': self.category.pk, 'price': '500.00', 'image': url}, format='json')
+            self.assertEqual(created.status_code, 201)
+        with override_settings(SUPABASE_URL='', SUPABASE_SERVICE_ROLE_KEY='', DEBUG=True, IS_VERCEL=True):
+            self.assertEqual(self.client.post(UPLOAD_URL, {'file': photo(JPEG)}, format='multipart').status_code, 503)
+
     @patch('shop.image_upload._post_to_storage')
     def test_jpeg_is_stored_and_public_url_returned(self, post):
         self.client.force_authenticate(user=self.admin)

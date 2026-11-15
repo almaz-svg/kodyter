@@ -152,6 +152,10 @@ IMAGE_ALLOWED_HOSTS = [host.strip().lower() for host in os.getenv('IMAGE_ALLOWED
 SUPABASE_URL = os.getenv('SUPABASE_URL', '').rstrip('/')
 SUPABASE_SERVICE_ROLE_KEY = os.getenv('SUPABASE_SERVICE_ROLE_KEY', '')
 SUPABASE_STORAGE_BUCKET = os.getenv('SUPABASE_STORAGE_BUCKET', 'product-images')
+# Local development without Supabase keys keeps uploaded photos here; Django serves them at /media/ only in DEBUG.
+MEDIA_URL = '/media/'
+MEDIA_ROOT = BASE_DIR / 'media'
+LOCAL_UPLOAD_DIR = MEDIA_ROOT / 'uploads'
 DEMO_MODE = os.getenv('DEMO_MODE', 'false').lower() == 'true'
 # Django's default sends 500 tracebacks only to ADMINS when DEBUG is off; stderr reaches Docker and Vercel logs.
 LOGGING = {

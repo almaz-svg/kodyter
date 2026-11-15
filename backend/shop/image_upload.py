@@ -69,6 +69,15 @@ def _create_public_bucket(base, key, bucket):
     logger.warning('Created missing public storage bucket %r for photo uploads.', bucket)
 
 
+def _save_locally(data, extension):
+    """Local development only: keep the photo inside the project so the admin form works without Supabase keys."""
+    folder = settings.LOCAL_UPLOAD_DIR
+    folder.mkdir(parents=True, exist_ok=True)
+    name = f'{uuid.uuid4().hex}.{extension}'
+    (folder / name).write_bytes(data)
+    return f'/media/uploads/{name}'
+
+
 def upload_product_image(data):
     """Store one photo in the public bucket and return its public URL."""
     if len(data) > MAX_IMAGE_BYTES:
@@ -76,7 +85,12 @@ def upload_product_image(data):
     content_type = detect_image_type(data)
     if content_type is None:
         raise ImageUploadError('Поддерживаются только JPEG, PNG и WebP.')
-    base, key = _storage_base()
+    try:
+        base, key = _storage_base()
+    except StorageNotConfigured:
+        if settings.DEBUG and not getattr(settings, 'IS_VERCEL', False):
+            return _save_locally(data, EXTENSIONS[content_type])
+        raise
     bucket = settings.SUPABASE_STORAGE_BUCKET
     path = f'products/{uuid.uuid4().hex}.{EXTENSIONS[content_type]}'
     object_url = f'{base}/storage/v1/object/{bucket}/{path}'
