@@ -163,16 +163,26 @@ function Profile({ user, onUserChange }: Props) {
 
 const positions = (count: number) => `${count} ${count % 10 === 1 && count % 100 !== 11 ? 'позиция' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'позиции' : 'позиций'}`;
 
-// Progress bar on the order card: customers see plain-language steps, admins see the workflow status on the current step.
-function OrderProgress({ order, customer }: { order: Order; customer: boolean }) {
-  const steps: { label: string; statuses: Order['status'][]; icon: ReactNode }[] = customer
-    ? [{ label: 'Ваш заказ в обработке', statuses: ['NEW'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'Заказ подтверждён', statuses: ['CONFIRMED', 'PREPARING', 'READY'], icon: <CircleCheck size={18} aria-hidden="true" /> }, { label: 'Заказ передан курьеру', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Завершён', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }]
-    : [{ label: 'Новый', statuses: ['NEW'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'Готовится', statuses: ['CONFIRMED', 'PREPARING', 'READY'], icon: <ChefHat size={18} aria-hidden="true" /> }, { label: 'В доставке', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Доставлен', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }];
-  const current = steps.findIndex(step => step.statuses.includes(order.status));
-  const reachedAt = (step: typeof steps[number]) => step.statuses.includes('NEW') ? order.created_at : order.status_history.find(entry => step.statuses.includes(entry.to_status as Order['status']))?.created_at;
-  return <ol className="portal-progress" style={{ ['--steps' as string]: steps.length }} aria-label={`Статус заказа: ${customer ? steps[current]?.label : statusLabel[order.status]}`}>
-    {steps.map((step, index) => { const at = index <= current ? reachedAt(step) : undefined; return <li key={step.label} className={index < current ? 'done' : index === current ? 'current' : ''}>
-      <span className="portal-progress-dot">{step.icon}</span><strong>{index === current && !customer ? statusLabel[order.status] : step.label}</strong>{at && <small>{dateTime(at)}</small>}
+// Progress bar on the order card, with steps that fit each role.
+// Customers see plain-language steps; admins see the exact workflow status on the current step;
+// couriers follow the pickup and the road; the cashier's last step is the cash being received.
+type ProgressStep = { label: string; statuses: Order['status'][]; icon: ReactNode };
+const progressSteps: Record<User['role'], ProgressStep[]> = {
+  CUSTOMER: [{ label: 'Ваш заказ в обработке', statuses: ['NEW'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'Заказ подтверждён', statuses: ['CONFIRMED', 'PREPARING', 'READY'], icon: <CircleCheck size={18} aria-hidden="true" /> }, { label: 'Заказ передан курьеру', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Завершён', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }],
+  ADMIN: [{ label: 'Новый', statuses: ['NEW'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'Готовится', statuses: ['CONFIRMED', 'PREPARING', 'READY'], icon: <ChefHat size={18} aria-hidden="true" /> }, { label: 'В доставке', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Доставлен', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }],
+  COURIER: [{ label: 'Готовится в пекарне', statuses: ['NEW', 'CONFIRMED', 'PREPARING'], icon: <ChefHat size={18} aria-hidden="true" /> }, { label: 'Готов к выдаче', statuses: ['READY'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'Забран, в пути', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Доставлен', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }],
+  CASHIER: [{ label: 'Заказ принят', statuses: ['NEW', 'CONFIRMED', 'PREPARING', 'READY'], icon: <Package size={18} aria-hidden="true" /> }, { label: 'В доставке', statuses: ['HANDED_OVER', 'IN_TRANSIT'], icon: <Truck size={18} aria-hidden="true" /> }, { label: 'Доставлен', statuses: ['DELIVERED'], icon: <Check size={18} aria-hidden="true" /> }, { label: 'Оплачен', statuses: [], icon: <Banknote size={18} aria-hidden="true" /> }],
+};
+
+function OrderProgress({ order, role }: { order: Order; role: User['role'] }) {
+  const steps = progressSteps[role] || progressSteps.CUSTOMER;
+  // The cashier's "Оплачен" step has no order status: it is reached once the payment exists.
+  const current = role === 'CASHIER' && order.payment_status === 'PAID' ? steps.length - 1 : steps.findIndex(step => step.statuses.includes(order.status));
+  const reachedAt = (step: ProgressStep, index: number) => !step.statuses.length ? order.paid_at || undefined : index === 0 ? order.created_at : order.status_history.find(entry => step.statuses.includes(entry.to_status as Order['status']))?.created_at;
+  const exact = role === 'ADMIN';
+  return <ol className="portal-progress" style={{ ['--steps' as string]: steps.length }} aria-label={`Статус заказа: ${exact ? statusLabel[order.status] : steps[current]?.label}`}>
+    {steps.map((step, index) => { const at = index <= current ? reachedAt(step, index) : undefined; return <li key={step.label} className={index < current ? 'done' : index === current ? 'current' : ''}>
+      <span className="portal-progress-dot">{step.icon}</span><strong>{index === current && exact ? statusLabel[order.status] : step.label}</strong>{at && <small>{dateTime(at)}</small>}
     </li>; })}
   </ol>;
 }
@@ -216,7 +226,6 @@ function OrdersPanel({ user }: { user: User }) {
   useEffect(() => { const timer = window.setTimeout(() => setFilters(value => ({ ...value, search })), 350); return () => window.clearTimeout(timer); }, [search]);
   const allOrders = remote.data || [];
   const isCustomer = user.role === 'CUSTOMER';
-  const fancyList = isAdmin || isCustomer;
   const orders = isCourier ? allOrders.filter(order => terminal(order) === (view === 'history')) : isCustomer && customerView !== 'all' ? allOrders.filter(order => terminal(order) === (customerView === 'done')) : allOrders;
   const active = allOrders.filter(order => !terminal(order)).length;
   const showAvailable = isCourier && view === 'available';
@@ -324,8 +333,8 @@ function OrdersPanel({ user }: { user: User }) {
     </> : <>
       <ErrorNotice message={remote.error} retry={remote.retry} />{isAdmin && <ErrorNotice message={couriers.error} retry={couriers.retry} />}
       {remote.loading ? <div className="portal-loading" role="status"><RefreshCw size={22} aria-hidden="true" /> Загружаем заказы…</div> : remote.data && <div className={`portal-orders-layout ${selected ? 'has-selection' : ''} ${!orders.length && !selected ? 'portal-empty-layout' : ''}`}>
-        <div className={`portal-order-list${fancyList ? ' portal-order-list-fancy' : ''}`}>{orders.length ? orders.map(order => <button type="button" key={order.id} className={`portal-order-card ${selected === order.id ? 'selected' : ''}`} aria-pressed={selected === order.id} onClick={() => setSelected(order.id)}>
-          <div className="portal-order-card-top">{fancyList && <span className="portal-order-icon" aria-hidden="true"><Package size={20} strokeWidth={1.6} /></span>}<strong>Заказ №{order.number}</strong><ChevronRight size={19} aria-hidden="true" /></div><div className="portal-order-date">{dateTime(order.created_at)}</div>
+        <div className="portal-order-list portal-order-list-fancy">{orders.length ? orders.map(order => <button type="button" key={order.id} className={`portal-order-card ${selected === order.id ? 'selected' : ''}`} aria-pressed={selected === order.id} onClick={() => setSelected(order.id)}>
+          <div className="portal-order-card-top"><span className="portal-order-icon" aria-hidden="true"><Package size={20} strokeWidth={1.6} /></span><strong>Заказ №{order.number}</strong><ChevronRight size={19} aria-hidden="true" /></div><div className="portal-order-date">{dateTime(order.created_at)}</div>
           <div className="portal-order-badges"><Status status={order.status} customer={!isStaff} /><PaymentStatusLabel order={order} /></div>
           {isStaff && <p className="portal-order-recipient">{order.recipient_name}<span>{order.address}</span></p>}
           {!isCourier && isStaff && (order.courier_name ? <p className="portal-order-courier"><Truck size={14} aria-hidden="true" /><span>Курьер:</span> <strong>{order.courier_name}</strong></p> : !terminal(order) && <p className="portal-order-courier is-waiting"><Clock3 size={14} aria-hidden="true" /><span>Ищем свободного курьера</span></p>)}
@@ -382,12 +391,11 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   const isAdmin = user.role === 'ADMIN';
   const isCourier = user.role === 'COURIER';
   const isCashier = user.role === 'CASHIER';
-  const fancy = isAdmin || user.role === 'CUSTOMER';
   const nextStatuses: Record<string, string> = isAdmin ? { NEW: 'CONFIRMED', CONFIRMED: 'PREPARING', PREPARING: 'READY' } : isCourier ? { READY: 'HANDED_OVER', HANDED_OVER: 'IN_TRANSIT', IN_TRANSIT: 'DELIVERED' } : {};
   const next = nextStatuses[order.status];
   const nextLabels: Record<string, string> = { CONFIRMED: 'Подтвердить заказ', PREPARING: 'Начать приготовление', READY: 'Заказ готов', HANDED_OVER: 'Забрать заказ из пекарни', IN_TRANSIT: 'Начать доставку', DELIVERED: 'Подтвердить доставку' };
-  return <article ref={detailRef} className={`portal-card portal-order-detail${fancy ? ' portal-detail-fancy' : ''}`}><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2></div><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div>{fancy && order.status !== 'CANCELLED' ? <OrderProgress order={order} customer={user.role === 'CUSTOMER'} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
-    <section className="portal-detail-section"><h3><ShoppingBag size={17} aria-hidden="true" /> {fancy ? 'Состав заказа' : 'Что в заказе'}<span className="portal-items-count">{fancy ? positions(order.items.length) : `${order.items.reduce((sum, item) => sum + item.quantity, 0)} шт.`}</span></h3><ul className="portal-order-items">{order.items.map(item => <li key={item.id}><div className="portal-item-thumb">{item.image && <LazyImage src={item.image} alt="" />}<em aria-hidden="true">×{item.quantity}</em></div><div><strong>{item.name}</strong><span><mark>{item.quantity} шт.</mark> по {money(item.price)}</span></div><b>{money(Number(item.price) * item.quantity)}</b></li>)}</ul><dl className="portal-totals"><div><dt>Выпечка</dt><dd>{money(order.subtotal)}</dd></div><div><dt>Доставка</dt><dd>{Number(order.delivery_fee) ? money(order.delivery_fee) : 'Бесплатно'}</dd></div><div className="portal-total"><dt>Итого</dt><dd>{money(order.total)}</dd></div></dl></section>
+  return <article ref={detailRef} className="portal-card portal-order-detail portal-detail-fancy"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2></div><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div>{order.status !== 'CANCELLED' ? <OrderProgress order={order} role={user.role} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
+    <section className="portal-detail-section"><h3><ShoppingBag size={17} aria-hidden="true" /> Состав заказа<span className="portal-items-count">{positions(order.items.length)}</span></h3><ul className="portal-order-items">{order.items.map(item => <li key={item.id}><div className="portal-item-thumb">{item.image && <LazyImage src={item.image} alt="" />}<em aria-hidden="true">×{item.quantity}</em></div><div><strong>{item.name}</strong><span><mark>{item.quantity} шт.</mark> по {money(item.price)}</span></div><b>{money(Number(item.price) * item.quantity)}</b></li>)}</ul><dl className="portal-totals"><div><dt>Выпечка</dt><dd>{money(order.subtotal)}</dd></div><div><dt>Доставка</dt><dd>{Number(order.delivery_fee) ? money(order.delivery_fee) : 'Бесплатно'}</dd></div><div className="portal-total"><dt>Итого</dt><dd>{money(order.total)}</dd></div></dl></section>
     {order.cancellation_reason && <div className="portal-notice portal-error"><div><strong>Причина отмены</strong><p>{order.cancellation_reason}</p></div></div>}
     <div className="portal-detail-grid">
     <section className="portal-detail-section portal-detail-delivery"><h3><MapPin size={17} aria-hidden="true" /> Куда доставить</h3><dl className="portal-delivery"><div><dt>Адрес</dt><dd className="portal-delivery-address">{order.address}</dd></div><div><dt>Получатель</dt><dd className="portal-delivery-name">{order.recipient_name}</dd></div><div><dt>Телефон</dt><dd><a className="portal-phone" href={`tel:${order.phone}`}><Phone size={14} aria-hidden="true" />{order.phone}</a></dd></div>{user.role !== 'CUSTOMER' && (order.courier_name || !['DELIVERED', 'CANCELLED'].includes(order.status)) && <div><dt>Курьер</dt><dd className={`portal-delivery-courier${order.courier_name ? '' : ' is-waiting'}`}><Truck size={16} aria-hidden="true" />{order.courier_name || 'Ещё не назначен — заказ уйдёт первому свободному курьеру'}</dd></div>}</dl>{order.comment && <div className="portal-comment"><span>Комментарий к заказу</span><p>{order.comment}</p></div>}</section>
