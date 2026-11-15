@@ -300,12 +300,10 @@ export function Checkout() {
   }
 
   if (success) {
-    const pastries = (success.items || []).filter(item => item.image).slice(0, 2);
     return (
     <main className="page order-success-page">
       <Branch className="success-bg-branch success-bg-branch-left" />
       <Branch className="success-bg-branch success-bg-branch-right" />
-      {pastries.map((item, index) => <div key={item.id} className={`success-pastry success-pastry-${index ? 'right' : 'left'}`} aria-hidden="true"><LazyImage src={item.image} alt="" /></div>)}
       <div className="container">
         {storageWarning && <p className="error-box" role="status">{storageWarning}</p>}
         <div className="order-success">
@@ -321,7 +319,7 @@ export function Checkout() {
           <div className="success-divider" aria-hidden="true"><i /><Croissant size={22} strokeWidth={1.4} /><i /></div>
           <section className="success-receipt" aria-label={t.successDetails}>
             <header><ShoppingBag size={22} strokeWidth={1.6} aria-hidden="true" /><h2>{t.successDetails}</h2><Branch className="success-card-branch" /></header>
-            {success.items?.length > 0 && <ul className="success-items">{success.items.map(item => <li key={item.id}><span>{item.name}</span><b>{item.quantity} {t.cartPieces}</b><strong>{money(Number(item.price) * item.quantity)}</strong></li>)}</ul>}
+            {success.items?.length > 0 && <ul className="success-items">{success.items.map(item => <li key={item.id}><div className="success-item-photo">{item.image ? <LazyImage src={item.image} alt="" /> : <Croissant size={22} strokeWidth={1.4} aria-hidden="true" />}</div><span>{item.name}</span><b>{item.quantity} {t.cartPieces}</b><strong>{money(Number(item.price) * item.quantity)}</strong></li>)}</ul>}
             <div className="success-total"><span>{t.successTotalLabel}</span><strong>{money(success.total)}</strong></div>
             <small className="success-pay"><Truck size={18} strokeWidth={1.6} aria-hidden="true" />{t.successPayNote}</small>
           </section>
