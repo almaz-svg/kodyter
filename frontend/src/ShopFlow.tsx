@@ -15,11 +15,11 @@ export function Cart() {
   const {cart,quantity,total,settings,settingsError,refreshSettings,storageWarning} = useShop();
   const {t, lang} = useI18n();
   return (
-    <main className="container page">
+    <main className="container page cart-page">
       <div className="breadcrumb">
         <Link to="/">{t.breadcrumbHome}</Link><span>/</span>{t.cartTitle}
       </div>
-      <h1>{t.cartTitle}</h1>
+      <h1>{t.cartTitle}{cart.length > 0 && <span className="cart-count-badge">{cart.reduce((sum, item) => sum + item.quantity, 0)} {t.cartPieces}</span>}</h1>
       {storageWarning && <p className="error-box" role="status">{storageWarning}</p>}
       {!cart.length ? <EmptyCart /> : (
         <div className="checkout-layout">
@@ -34,6 +34,7 @@ export function Cart() {
                 </div>
                 <div className="cart-row-end">
                   <strong>{money(unitPrice(p,n)*n)}</strong>
+                  {n > 1 && <small>{n} × {money(unitPrice(p,n))}</small>}
                   <button className="icon-button remove" aria-label={`Удалить ${productName(p, lang)}`} onClick={() => quantity(p.id,0)}>
                     <Trash2 size={18} aria-hidden="true" />
                   </button>
@@ -48,7 +49,7 @@ export function Cart() {
             <div className="summary-line"><span>{t.cartItems}</span><span>{money(total)}</span></div>
             <div className="summary-line"><span>{t.cartDelivery}</span><span>{settings ? money(settings.delivery_fee) : t.cartPending}</span></div>
             <div className="summary-total"><span>{t.cartTotal}</span><strong>{settings ? money(total+Number(settings.delivery_fee)) : '—'}</strong></div>
-            <Link className="button button-green full-width" to="/checkout">{t.cartOrder} <ArrowRight size={18} aria-hidden="true" /></Link>
+            <Link className="button button-gold full-width" to="/checkout">{t.cartOrder} <ArrowRight size={18} aria-hidden="true" /></Link>
             <p className="summary-note"><ShieldCheck size={17} aria-hidden="true" />{t.cartPayNote}</p>
           </aside>
         </div>

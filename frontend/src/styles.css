@@ -587,3 +587,44 @@
 .mobile-lang-row .lang-switcher-full .lang-btn:not(.lang-active):hover{background:#ffffff1a;color:#f5e8b8}
 .mobile-lang-row .lang-switcher-full .lang-btn.lang-active{color:var(--green)}
 .checkout-cash-warning{display:flex;align-items:flex-start;gap:12px;margin:18px 0 6px;padding:14px 16px;background:#fbf1dc;border:1px solid #e0c58b;border-radius:6px;font-size:13px;font-weight:400;line-height:1.55;color:#5c4a1f;cursor:pointer}.checkout-cash-warning input{width:20px;min-height:20px;height:20px;margin:2px 0 0;padding:0;flex-shrink:0;accent-color:var(--green)}.checkout-cash-warning strong{display:block;font-size:14px;font-weight:700;color:#4a3a12;margin-bottom:3px}
+/* Cart page */
+.cart-page h1{display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.cart-count-badge{font-family:'Manrope',Arial,sans-serif;font-size:14px;font-weight:700;letter-spacing:0;background:var(--green);color:var(--cream);border-radius:999px;padding:6px 14px;line-height:1.2}
+.cart-page .cart-list{display:grid;gap:16px;align-content:start}
+.cart-page .cart-row,.cart-page .cart-row:first-child{background:#fffdf8;border:1px solid #e6dcc6;border-radius:14px;padding:18px;gap:22px;box-shadow:0 6px 22px #3a2c0d0d;transition:box-shadow .2s,border-color .2s}
+.cart-page .cart-row:hover{border-color:#cdb27a;box-shadow:0 10px 28px #3a2c0d17}
+.cart-page .cart-row>a,.cart-page .cart-row img{width:124px}
+.cart-page .cart-row img{height:124px;border-radius:10px}
+.cart-page .cart-info h3{font-size:28px;line-height:1.1}
+.cart-page .cart-info>span{font-size:14px;font-weight:600;color:#7b6230;margin:8px 0 14px}
+.cart-page .cart-info .qty-wrap{display:inline-flex}
+.cart-page .cart-info .qty{width:150px;height:44px;border:1.5px solid var(--green);border-radius:999px;background:#fff;justify-content:space-between;padding:0 3px}
+.cart-page .cart-info .qty button{width:36px;min-width:36px;height:36px;border-radius:50%;background:#e8ede2;color:var(--green);transition:background .15s,color .15s}
+.cart-page .cart-info .qty button:hover:not(:disabled){background:var(--green);color:var(--cream)}
+.cart-page .cart-info .qty>input{font-size:17px;font-weight:700;color:var(--green)}
+.cart-page .cart-row-end{gap:6px;padding:4px 0}
+.cart-page .cart-row-end strong{font-size:22px;font-weight:700;color:var(--green);white-space:nowrap}
+.cart-page .cart-row-end small{font-size:13px;color:#7a7462}
+.cart-page .cart-row-end .remove{margin-top:auto;border:1px solid #e3d6bd;border-radius:50%;width:40px;height:40px;min-width:40px;min-height:40px;color:#8a5a45;transition:background .15s,color .15s,border-color .15s}
+.cart-page .cart-row-end .remove:hover{background:#9b553b;border-color:#9b553b;color:#fff}
+.cart-page .cart-list>.back-link{margin-top:8px;font-size:14px;font-weight:600;color:var(--green)}
+.cart-page .order-summary{background:var(--green);color:var(--cream);border:0;border-radius:16px;padding:32px;box-shadow:0 18px 40px #052d2433;top:24px}
+.cart-page .order-summary h2{color:#f4ead2;font-size:34px}
+.cart-page .summary-line{font-size:15px;color:#d8dfcf;margin:14px 0}
+.cart-page .summary-line span:last-child{color:#fff;font-weight:600}
+.cart-page .summary-total{border-top:1px solid #ffffff2b;margin-top:20px;padding:22px 0 24px;font-size:17px;color:#f4ead2}
+.cart-page .summary-total strong{font-size:38px;color:var(--gold)}
+.cart-page .order-summary .button{min-height:56px;font-size:15px;border-radius:999px;box-shadow:0 8px 20px #00000026}
+.cart-page .order-summary .summary-note{margin-top:16px;font-size:13px;color:#e9d7a9;background:#ffffff12;border-radius:999px;padding:9px 14px}
+.cart-page .order-summary .error-box{color:#89482f}
+@media(max-width:600px){
+  .cart-page .cart-row,.cart-page .cart-row:first-child{padding:14px;gap:12px 14px;border-radius:12px}
+  .cart-page .cart-row>a,.cart-page .cart-row img{width:84px}
+  .cart-page .cart-row img{height:84px}
+  .cart-page .cart-info h3{font-size:22px}
+  .cart-page .cart-info .qty{width:136px}
+  .cart-page .cart-row-end{flex-direction:row;align-items:center;justify-content:space-between;gap:10px}
+  .cart-page .cart-row-end .remove{margin-top:0}
+  .cart-page .order-summary{padding:24px;border-radius:14px}
+  .cart-page .summary-total strong{font-size:32px}
+}

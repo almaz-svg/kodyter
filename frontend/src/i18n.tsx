@@ -177,6 +177,7 @@ export interface Translations {
   cartTotal: string;
   cartOrder: string;
   cartPayNote: string;
+  cartPieces: string;
   cartPending: string;
 
   /* Checkout */
@@ -394,7 +395,7 @@ const kz: Translations = {
   cartToCatalog:'Каталогқа өту',
   cartContinue:'Таңдауды жалғастыру',
   cartItems:'Бұйымдар', cartDelivery:'Жеткізу', cartTotal:'Барлығы',
-  cartOrder:'Тапсырыс рәсімдеу', cartPayNote:'Алу кезінде төлем',
+  cartOrder:'Тапсырыс рәсімдеу', cartPayNote:'Алу кезінде төлем', cartPieces:'дана',
   cartPending:'Нақтылануда',
 
   checkoutBack:'Себетке оралу', checkoutTitle:'Тапсырысты рәсімдеу',
@@ -578,7 +579,7 @@ const ru: Translations = {
   cartToCatalog:'Перейти в каталог',
   cartContinue:'Продолжить выбирать',
   cartItems:'Изделия', cartDelivery:'Доставка', cartTotal:'Итого',
-  cartOrder:'Оформить заказ', cartPayNote:'Оплата при получении',
+  cartOrder:'Оформить заказ', cartPayNote:'Оплата при получении', cartPieces:'шт.',
   cartPending:'Уточняется',
 
   checkoutBack:'Назад в корзину', checkoutTitle:'Оформление заказа',
@@ -762,7 +763,7 @@ const en: Translations = {
   cartToCatalog:'Go to Catalog',
   cartContinue:'Keep shopping',
   cartItems:'Products', cartDelivery:'Delivery', cartTotal:'Total',
-  cartOrder:'Place Order', cartPayNote:'Payment on delivery',
+  cartOrder:'Place Order', cartPayNote:'Payment on delivery', cartPieces:'pcs',
   cartPending:'TBC',
 
   checkoutBack:'Back to Cart', checkoutTitle:'Place Order',
