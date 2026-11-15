@@ -550,10 +550,10 @@ function ProductsPanel() {
       <div className="product-editor-grid">
         <div className="product-editor-main">
           <section className="product-card"><h4><Package size={20} aria-hidden="true" />Основная информация</h4><div className="product-fields">
-            <label>Название <i>*</i><input value={draft.name} onChange={e => field('name', e.target.value)} required maxLength={160} /></label>
-            <label>Категория <i>*</i><select value={draft.category} onChange={e => field('category', e.target.value)} required><option value="">Выберите категорию</option>{categories.data?.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-            <label>Цена, ₸ <i>*</i><input type="number" min="0" step="0.01" value={draft.price} onChange={e => field('price', e.target.value)} required /></label>
-            <label>Оптовая цена для заведений, ₸ <small>(необязательно)</small><input type="number" min="0.01" step="0.01" value={draft.wholesale_price} onChange={e => field('wholesale_price', e.target.value)} /></label>
+            <label><span>Название <i>*</i></span><input value={draft.name} onChange={e => field('name', e.target.value)} required maxLength={160} /></label>
+            <label><span>Категория <i>*</i></span><select value={draft.category} onChange={e => field('category', e.target.value)} required><option value="">Выберите категорию</option>{categories.data?.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+            <label><span>Цена, ₸ <i>*</i></span><input type="number" min="0" step="0.01" value={draft.price} onChange={e => field('price', e.target.value)} required /></label>
+            <label><span>Оптовая цена для заведений, ₸ <small>(необязательно)</small></span><input type="number" min="0.01" step="0.01" value={draft.wholesale_price} onChange={e => field('wholesale_price', e.target.value)} /></label>
             <label>Вес или объём<input value={draft.weight} onChange={e => field('weight', e.target.value)} placeholder="120 г" maxLength={80} /></label>
           </div></section>
           <section className="product-card"><h4><FileText size={20} aria-hidden="true" />Описание</h4><label className="product-full"><span className="sr-only">Описание</span><textarea value={draft.description} onChange={e => field('description', e.target.value)} placeholder="Описание товара" maxLength={5000} /></label></section>

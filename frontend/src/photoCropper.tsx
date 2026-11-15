@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from 'react';
+import { createPortal } from 'react-dom';
 import { Check, Minus, Plus, RotateCw, X } from 'lucide-react';
 
 // Catalog cards show product photos as squares, so the square frame is the default.
@@ -21,14 +22,16 @@ export function PhotoCropper({ source, onCancel, onDone }: Props) {
   const drag = useRef<{ x: number; y: number; start: { x: number; y: number } } | null>(null);
 
   useEffect(() => {
+    let current = true;
     const url = typeof source === 'string' ? source : URL.createObjectURL(source);
     const img = new Image();
     // Photos already in storage come from another host; the canvas needs CORS to read them back.
     if (typeof source === 'string') img.crossOrigin = 'anonymous';
-    img.onload = () => setImage(img);
-    img.onerror = () => setError('Не удалось открыть фото. Выберите файл JPEG, PNG или WebP.');
+    // A load that was replaced (or whose object URL was revoked) must not report an error.
+    img.onload = () => { if (current) { setError(''); setImage(img); } };
+    img.onerror = () => { if (current) setError('Не удалось открыть фото. Выберите файл JPEG, PNG или WebP.'); };
     img.src = url;
-    return () => { if (typeof source !== 'string') URL.revokeObjectURL(url); };
+    return () => { current = false; if (typeof source !== 'string') URL.revokeObjectURL(url); };
   }, [source]);
 
   useEffect(() => {
@@ -80,7 +83,8 @@ export function PhotoCropper({ source, onCancel, onDone }: Props) {
     }
   };
 
-  return <div className="cropper-backdrop" role="dialog" aria-modal="true" aria-label="Настройка фото товара" onKeyDown={event => { if (event.key === 'Escape') onCancel(); }}>
+  // Rendered into <body>: an animated ancestor (transform) would otherwise pin this fixed overlay to the form instead of the screen.
+  return createPortal(<div className="cropper-backdrop" role="dialog" aria-modal="true" aria-label="Настройка фото товара" onKeyDown={event => { if (event.key === 'Escape') onCancel(); }}>
     <div className="cropper">
       <div className="cropper-head"><h3>Настройте фото</h3><button type="button" className="portal-icon-button" onClick={onCancel} aria-label="Закрыть без сохранения"><X size={20} aria-hidden="true" /></button></div>
       <p className="cropper-hint">Перетащите фото, чтобы выбрать кадр. Приблизьте ползунком или колёсиком мыши.</p>
@@ -96,5 +100,5 @@ export function PhotoCropper({ source, onCancel, onDone }: Props) {
       {error && <p className="cropper-error" role="alert">{error}</p>}
       <div className="cropper-actions"><button type="button" className="portal-button product-save" disabled={!image} onClick={() => void save()}><Check size={18} aria-hidden="true" />Сохранить фото</button><button type="button" className="product-secondary" onClick={onCancel}>Отмена</button></div>
     </div>
-  </div>;
+  </div>, document.body);
 }

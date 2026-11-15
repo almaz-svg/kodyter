@@ -539,7 +539,8 @@
 @media (max-width: 600px) { .portal .portal-product-search { max-width: none; } }
 
 /* Product photo cropper */
-.cropper-backdrop { position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 16px; background: #0b1f18b3; }
+/* The cropper lives in <body>, outside .portal, so it carries the portal colours itself. */
+.cropper-backdrop { --portal-green: #07382c; --portal-cream: #f6f1e7; --portal-gold: #d4b16b; --portal-line: #dedfd4; --portal-muted: #737c70; font-family: 'Manrope', Arial, sans-serif; color: var(--portal-green); position: fixed; inset: 0; z-index: 200; display: grid; place-items: center; padding: 16px; background: #0b1f18b3; }
 .cropper { width: min(480px, 100%); max-height: calc(100vh - 32px); overflow: auto; padding: 20px 22px; border-radius: 16px; background: #fffdf8; box-shadow: 0 24px 60px #00000040; }
 .cropper-head { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
 .cropper-head h3 { margin: 0; font-family: Georgia, serif; font-size: 21px; font-weight: 500; color: var(--portal-green); }
@@ -560,3 +561,5 @@
 .cropper-error { margin: 12px 0 0; padding: 10px 12px; border-radius: 8px; background: #faf0e9; color: #89482f; font-size: 13px; }
 .cropper-actions { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 16px; }
 .product-reframe { width: 100%; justify-content: center; min-height: 40px; margin-top: 10px; font-size: 13px; }
+
+.product-editor label > span { display: block; }
