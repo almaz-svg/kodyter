@@ -190,6 +190,56 @@ function OrderProgress({ order, role }: { order: Order; role: User['role'] }) {
   </ol>;
 }
 
+// Pastry kitchen dashboard: every product to cook across confirmed and preparing orders, summed up,
+// with a tick per receipt (or for the whole product) that every pastry chef sees.
+function KitchenBoard({ orders, onOpen, onChanged }: { orders: Order[]; onOpen: (id: number) => void; onChanged: () => void }) {
+  const [busy, setBusy] = useState<string | null>(null);
+  const [error, setError] = useState('');
+  const kitchen = orders.filter(order => order.status === 'CONFIRMED' || order.status === 'PREPARING');
+  const fresh = orders.filter(order => order.status === 'NEW');
+  const ready = orders.filter(order => order.status === 'READY');
+  const groups = new Map<string, { key: string; name: string; image: string; total: number; left: number; lines: { orderId: number; number: string; itemId: number; quantity: number; prepared: boolean; started: boolean }[] }>();
+  for (const order of kitchen) for (const item of order.items) {
+    const key = String(item.product_id || item.name);
+    const group = groups.get(key) || { key, name: item.name, image: item.image, total: 0, left: 0, lines: [] };
+    group.total += item.quantity;
+    if (!item.is_prepared) group.left += item.quantity;
+    group.lines.push({ orderId: order.id, number: order.number, itemId: item.id, quantity: item.quantity, prepared: !!item.is_prepared, started: order.status === 'PREPARING' });
+    groups.set(key, group);
+  }
+  const rows = [...groups.values()].sort((a, b) => (b.left > 0 ? 1 : 0) - (a.left > 0 ? 1 : 0) || b.left - a.left || a.name.localeCompare(b.name));
+  const left = rows.reduce((sum, row) => sum + row.left, 0);
+  const cooked = kitchen.filter(order => order.items.length > 0 && order.items.every(item => item.is_prepared));
+  const mark = async (ids: number[], prepared: boolean, key: string) => {
+    if (busy) return;
+    setBusy(key); setError('');
+    try { await api('/kitchen/prepared/', json({ item_ids: ids, prepared })); onChanged(); }
+    catch (err) { setError(failure(err)); onChanged(); }
+    finally { setBusy(null); }
+  };
+  return <section className="kitchen-board" aria-label="Пульт кухни">
+    <div className="portal-section-title"><div><p className="portal-eyebrow">ПУЛЬТ КУХНИ</p><h2>Что приготовить</h2></div><ChefHat size={26} aria-hidden="true" /></div>
+    <div className="kitchen-stats">
+      <article className={fresh.length ? 'is-alert' : ''}><span>Ждут подтверждения</span><strong>{fresh.length}</strong><small>новых заказов</small></article>
+      <article><span>В работе</span><strong>{kitchen.length}</strong><small>подтверждены или готовятся</small></article>
+      <article className="is-main"><span>Осталось приготовить</span><strong>{left} шт.</strong><small>{rows.filter(row => row.left > 0).length} позиций</small></article>
+      <article><span>Готовы к выдаче</span><strong>{ready.length}</strong><small>ждут курьера</small></article>
+    </div>
+    {fresh.length > 0 && <div className="kitchen-strip"><span>Новые заказы — откройте и подтвердите:</span>{fresh.map(order => <button type="button" key={order.id} onClick={() => onOpen(order.id)}>№{order.number}<ChevronRight size={15} aria-hidden="true" /></button>)}</div>}
+    {cooked.length > 0 && <div className="kitchen-strip is-done"><span><Check size={16} aria-hidden="true" /> Всё приготовлено — отметьте заказ готовым к выдаче:</span>{cooked.map(order => <button type="button" key={order.id} onClick={() => onOpen(order.id)}>№{order.number}<ChevronRight size={15} aria-hidden="true" /></button>)}</div>}
+    <ErrorNotice message={error} />
+    {rows.length ? <div className="kitchen-list">{rows.map(row => { const done = row.left === 0; const percent = Math.round(((row.total - row.left) / row.total) * 100); return <article key={row.key} className={`kitchen-item${done ? ' is-done' : ''}`}>
+      <div className="kitchen-item-photo">{row.image ? <LazyImage src={row.image} alt="" /> : <ChefHat size={22} aria-hidden="true" />}</div>
+      <div className="kitchen-item-main">
+        <div className="kitchen-item-head"><h3>{row.name}</h3><span className="kitchen-item-count">{done ? 'Готово' : <>Осталось <b>{row.left}</b> из {row.total} шт.</>}</span></div>
+        <div className="kitchen-progress" aria-hidden="true"><i style={{ width: `${percent}%` }} /></div>
+        <div className="kitchen-lines">{row.lines.map(line => <button type="button" key={line.itemId} className={`kitchen-line${line.prepared ? ' is-done' : ''}`} disabled={busy !== null} aria-pressed={line.prepared} title={line.prepared ? 'Снять отметку' : 'Отметить приготовленным'} onClick={() => void mark([line.itemId], !line.prepared, `line-${line.itemId}`)}>{line.prepared ? <Check size={14} aria-hidden="true" /> : <i aria-hidden="true" />}<span>№{line.number}</span><b>{line.quantity} шт.</b>{!line.started && !line.prepared && <em>не начат</em>}</button>)}</div>
+      </div>
+      <button type="button" className={`portal-button portal-button-small kitchen-all${done ? ' is-undo' : ''}`} disabled={busy !== null} onClick={() => void mark(row.lines.filter(line => line.prepared === done).map(line => line.itemId), !done, row.key)}>{busy === row.key ? 'Сохраняем…' : done ? 'Вернуть в работу' : 'Всё готово'}</button>
+    </article>; })}</div> : <EmptyState icon={<ChefHat size={30} aria-hidden="true" />} title="Сейчас готовить нечего">Подтверждённые заказы появятся здесь, сложенные по товарам.</EmptyState>}
+  </section>;
+}
+
 function PaymentStatusLabel({ order }: { order: Order }) {
   return <span className={`portal-status ${order.payment_status === 'PAID' ? 'status-delivered' : 'status-unpaid'}`}><Banknote size={12} aria-hidden="true" />{order.payment_status === 'PAID' ? 'Оплачено наличными' : 'Не оплачено'}</span>;
 }
@@ -309,6 +359,7 @@ function OrdersPanel({ user }: { user: User }) {
       <button type="button" className={view === 'history' ? 'active' : ''} aria-pressed={view === 'history'} onClick={() => chooseView('history')}>История <span>{allOrders.length - active}</span></button>
       <button type="button" className={view === 'team' ? 'active' : ''} aria-pressed={view === 'team'} onClick={() => chooseView('team')}>Заказы <span>{team.data?.orders.length || 0}</span></button>
     </div>}
+    {isPastry && <KitchenBoard orders={allOrders} onOpen={id => setSelected(id)} onChanged={refresh} />}
     {(isCustomer || isPastry) && allOrders.length > 0 && <div className="portal-chip-filters" role="group" aria-label="Какие заказы показать">{([['all', 'Все заказы', <ShoppingBag size={15} aria-hidden="true" />], ['active', 'Активные', <Truck size={15} aria-hidden="true" />], ['done', 'Завершённые', <Check size={15} aria-hidden="true" />]] as const).map(([value, label, icon]) => <button type="button" key={value} className={customerView === value ? 'active' : ''} aria-pressed={customerView === value} onClick={() => { setCustomerView(value); setSelected(null); }}>{icon}{label}</button>)}</div>}
     {(isAdmin || isCashier) && <div className={`portal-filters ${isCashier ? 'portal-cashier-filters' : ''}`}>
       <label className="portal-search"><Search size={18} aria-hidden="true" /><input name="order-search" autoComplete="off" aria-label="Поиск по номеру заказа или телефону" placeholder="Номер заказа или телефон" value={search} onChange={e => setSearch(e.target.value)} /></label>

@@ -34,6 +34,7 @@ urlpatterns = [
     path('admin/businesses/<int:pk>/', catalog.AdminBusiness.as_view()),
     path('courier/available-orders/', staff.AvailableOrders.as_view()),
     path('courier/team-orders/', staff.TeamOrders.as_view()),
+    path('kitchen/prepared/', orders.KitchenPrepared.as_view()),
     path('admin/overview/', staff.AdminOverview.as_view()),
     path('cashier/summary/', staff.CashierSummary.as_view()),
     path('orders/', orders.Orders.as_view()),

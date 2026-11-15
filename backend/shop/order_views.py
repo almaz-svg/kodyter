@@ -195,6 +195,23 @@ class CustomerCancel(APIView):
         dispatch_waiting_orders()
         return order_response(order, request.user)
 
+KITCHEN_STATUSES = ('CONFIRMED', 'PREPARING')
+
+class KitchenPrepared(APIView):
+    """The pastry kitchen ticks order lines as cooked (or unticks them). Only confirmed or preparing orders can change."""
+    @transaction.atomic
+    def post(self, request):
+        if request.user.role not in ('PASTRY', 'ADMIN'):
+            raise PermissionDenied('Отмечать приготовление может кондитер или администратор.')
+        lock_active_actor(request.user, ('PASTRY', 'ADMIN'))
+        ids = serializers.ListField(child=serializers.IntegerField(min_value=1), min_length=1, max_length=500).run_validation(request.data.get('item_ids'))
+        prepared = serializers.BooleanField().run_validation(request.data.get('prepared'))
+        items = list(OrderItem.objects.select_for_update().filter(pk__in=set(ids), order__status__in=KITCHEN_STATUSES))
+        if len(items) != len(set(ids)):
+            raise Conflict('Часть заказов уже готова или отменена. Обновите страницу.')
+        OrderItem.objects.filter(pk__in=[item.pk for item in items]).update(is_prepared=prepared)
+        return Response({'updated': len(items), 'prepared': prepared})
+
 class Assign(APIView):
     @transaction.atomic
     def post(self, request, pk):

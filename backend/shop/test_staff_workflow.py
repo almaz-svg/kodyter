@@ -231,6 +231,26 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/transition/', {'status': 'HANDED_OVER'}).status_code, 403)
         self.assertEqual(self.client.get('/api/admin/couriers/').status_code, 403)
 
+    def test_pastry_chef_ticks_cooked_lines_only_on_kitchen_orders(self):
+        from .models import OrderItem
+        category = Category.objects.create(name='Bakery', slug='bakery-kitchen')
+        bun = Product.objects.create(category=category, name='Bun', price='500.00')
+        cooking = self.make_order(status='PREPARING')
+        done = self.make_order(status='READY')
+        line = OrderItem.objects.create(order=cooking, product=bun, name='Bun', price='500', quantity=3)
+        late = OrderItem.objects.create(order=done, product=bun, name='Bun', price='500', quantity=1)
+        chef = User.objects.create_user(email='chef@staff.test', password='Staff-password-123!', name='Chef', role='PASTRY')
+        self.client.force_login(chef)
+        response = self.client.post('/api/kitchen/prepared/', {'item_ids': [line.pk], 'prepared': True}, format='json')
+        self.assertEqual(response.status_code, 200)
+        line.refresh_from_db()
+        self.assertTrue(line.is_prepared)
+        detail = self.client.get(f'/api/orders/{cooking.pk}/').json()
+        self.assertTrue(detail['items'][0]['is_prepared'])
+        self.assertEqual(self.client.post('/api/kitchen/prepared/', {'item_ids': [line.pk, late.pk], 'prepared': True}, format='json').status_code, 409)
+        self.client.force_login(self.couriers[0])
+        self.assertEqual(self.client.post('/api/kitchen/prepared/', {'item_ids': [line.pk], 'prepared': False}, format='json').status_code, 403)
+
     def test_unpriced_product_is_unavailable_and_cannot_be_ordered(self):
         category = Category.objects.create(name='Bakery', slug='bakery-unpriced')
         free = Product.objects.create(category=category, name='Без цены', price='0.00')

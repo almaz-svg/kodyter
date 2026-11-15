@@ -121,7 +121,7 @@ class CourierUpdateSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.M
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
         model = OrderItem
-        fields = ['id', 'product_id', 'name', 'price', 'quantity', 'image']
+        fields = ['id', 'product_id', 'name', 'price', 'quantity', 'image', 'is_prepared']
         read_only_fields = fields
 
 class StatusHistorySerializer(serializers.ModelSerializer):
