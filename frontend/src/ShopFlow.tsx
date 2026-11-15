@@ -319,18 +319,21 @@ export function Checkout() {
   );
 
   return (
-    <main className="container page">
+    <main className="container page checkout-page">
       <Link to="/cart" className="back-link"><ArrowLeft size={16} aria-hidden="true" />{t.checkoutBack}</Link>
       <h1>{t.checkoutTitle}</h1>
       {storageWarning && <p className="error-box" role="status">{storageWarning}</p>}
       {!cart.length ? <EmptyCart/> : (
         <form onSubmit={submit} className="checkout-layout">
           <section className="checkout-form">
+            <div className="checkout-card">
             <div className="checkout-step"><span>{t.checkoutStep1}</span><h2>{t.checkoutStep1Title}</h2></div>
             <div className="form-grid">
               <label>{t.checkoutName}<input required name="name" autoComplete="name" maxLength={120} value={recipient} onChange={e=>setRecipient(e.target.value)} placeholder={t.checkoutNamePlaceholder}/></label>
               <label>{t.checkoutPhone}<input type="tel" required name="phone" autoComplete="tel" pattern="[+0-9 \(\)\-]{10,30}" value={phone} onChange={e=>setPhone(e.target.value)} placeholder={t.checkoutPhonePlaceholder}/></label>
             </div>
+            </div>
+            <div className="checkout-card">
             <div className="checkout-step"><span>{t.checkoutStep2}</span><h2>{t.checkoutStep2Title}</h2></div>
             <label>{t.checkoutAddress}<input required name="address" autoComplete="street-address" minLength={5} maxLength={500} value={address} onChange={e=>setAddress(e.target.value)} placeholder={t.checkoutAddressPl}/></label>
             <label>{t.checkoutComment}<textarea value={comment} maxLength={2000} onChange={e=>setComment(e.target.value)} placeholder={t.checkoutCommentPl} rows={3}/></label>
@@ -341,8 +344,11 @@ export function Checkout() {
                 <p>{t.checkoutDeliveryDemo}</p>
               </div>
             </div>
+            </div>
+            <div className="checkout-card">
             <div className="checkout-step"><span>{t.checkoutStep3}</span><h2>{t.checkoutStep3Title}</h2></div>
             <p className="muted">{t.checkoutStep3Note}</p>
+            </div>
           </section>
           <aside className="order-summary">
             <h2>{t.checkoutOrderTitle}</h2>
@@ -355,7 +361,7 @@ export function Checkout() {
                 <LazyImage src={x.product.image} alt={productName(x.product, lang)}/>
                 <div>
                   <span>{productName(x.product, lang)}</span>
-                  <small>{x.quantity} × {money(unitPrice(x.product,x.quantity))}</small>
+                  <small><b>{x.quantity} {t.cartPieces}</b> × {money(unitPrice(x.product,x.quantity))}</small>
                   {!x.product.is_available && <strong className="unavailable-text">Нет в наличии</strong>}
                 </div>
                 <strong>{money(unitPrice(x.product,x.quantity)*x.quantity)}</strong>
