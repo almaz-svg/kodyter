@@ -23,6 +23,8 @@ const isPortalDate = (value: string) => {
 
 // Match DEFAULT_ORDER_LIST_LIMIT and MAX_ORDER_LIST_LIMIT in backend/shop/order_views.py.
 const ORDER_PAGE_SIZE = 100;
+// Admin status filter: "Подтверждённые" also covers orders that are being prepared.
+const adminStatusFilters = [['NEW', 'Новые'], ['CONFIRMED,PREPARING', 'Подтверждённые'], ['DELIVERED', 'Доставлен'], ['CANCELLED', 'Отменён']];
 const MAX_ORDER_LIMIT = 500;
 
 function useRemote<T>(path: string | null, poll = false) {
@@ -274,7 +276,7 @@ function OrdersPanel({ user }: { user: User }) {
     </div>}
     {(isAdmin || isCashier) && <div className={`portal-filters ${isCashier ? 'portal-cashier-filters' : ''}`}>
       <label className="portal-search"><Search size={18} aria-hidden="true" /><input name="order-search" autoComplete="off" aria-label="Поиск по номеру заказа или телефону" placeholder="Номер заказа или телефон" value={search} onChange={e => setSearch(e.target.value)} /></label>
-      <label><span>Статус</span><select value={filters.status} onChange={e => updateFilter('status', e.target.value)}><option value="">Все статусы</option>{(isAdmin ? ['NEW', 'CONFIRMED', 'DELIVERED', 'CANCELLED'] : [...statusSteps, 'CANCELLED']).map(status => <option key={status} value={status}>{isAdmin && status === 'NEW' ? 'Новые' : isAdmin && status === 'CONFIRMED' ? 'Подтверждённые' : statusLabel[status]}</option>)}</select></label>
+      <label><span>Статус</span><select value={filters.status} onChange={e => updateFilter('status', e.target.value)}><option value="">Все статусы</option>{(isAdmin ? adminStatusFilters : [...statusSteps, 'CANCELLED'].map(status => [status, statusLabel[status]])).map(([value, label]) => <option key={value} value={value}>{label}</option>)}</select></label>
       <div className="portal-date-range" role="group" aria-label="Период заказов и сводки кассы"><span>Период</span><div><input type="date" min="0001-01-01" max={dateInput.date_to || "9999-12-31"} aria-label="С даты" aria-invalid={dateInvalid || undefined} aria-describedby={dateInvalid ? 'portal-date-error' : undefined} value={dateInput.date_from} onChange={changeDate('date_from')} /><span aria-hidden="true">—</span><input type="date" min={dateInput.date_from || "0001-01-01"} max="9999-12-31" aria-label="По дату" aria-invalid={dateInvalid || undefined} aria-describedby={dateInvalid ? 'portal-date-error' : undefined} value={dateInput.date_to} onChange={changeDate('date_to')} /></div>{dateInvalid && <small id="portal-date-error" className="portal-danger-text">Укажите существующие даты; дата «по» не может быть раньше даты «с». Последний выбранный фильтр сохранён.</small>}</div>
       {isAdmin && <label><span>Курьер</span><select value={filters.courier} onChange={e => updateFilter('courier', e.target.value)}><option value="">Все курьеры</option>{couriers.data?.map(courier => <option key={courier.id} value={courier.id}>{courier.name}{!courier.is_active ? ' (заблокирован)' : ''}</option>)}</select></label>}
       {(Object.values(filters).some(Boolean) || dateInvalid) && <button type="button" className="portal-text-button" onClick={() => { setFilters({ status: '', date_from: '', date_to: '', courier: '', search: '' }); setDateInput({ date_from: '', date_to: '' }); setDateInvalid(false); setSearch(''); }}>Сбросить</button>}

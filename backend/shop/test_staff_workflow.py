@@ -90,6 +90,14 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(self.client.get('/api/courier/available-orders/').status_code, 401)
         self.assertEqual(self.client.post(f'/api/orders/{order.pk}/claim/', {}).status_code, 401)
 
+    def test_status_filter_accepts_several_statuses(self):
+        confirmed, preparing = self.make_order(status='CONFIRMED'), self.make_order(status='PREPARING')
+        self.make_order(status='NEW')
+        self.client.force_login(self.admin)
+        rows = self.client.get('/api/orders/?status=CONFIRMED,PREPARING').json()
+        self.assertEqual(sorted(row['id'] for row in rows), sorted([confirmed.pk, preparing.pk]))
+        self.assertEqual(self.client.get('/api/orders/?status=CONFIRMED,BOGUS').status_code, 400)
+
     def test_cashier_can_read_all_orders_but_cannot_change_operational_data(self):
         order = self.make_order()
         self.client.force_login(self.cashier)

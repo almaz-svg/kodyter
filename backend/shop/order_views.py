@@ -52,9 +52,11 @@ class Orders(APIView):
         orders = scoped_orders(request.user)
         status = request.query_params.get('status')
         if status:
-            if status not in Order.Status.values:
+            # A comma-separated list lets one filter cover several steps, e.g. confirmed and preparing orders.
+            statuses = status.split(',')
+            if any(value not in Order.Status.values for value in statuses):
                 raise serializers.ValidationError({'status': 'Неизвестный статус.'})
-            orders = orders.filter(status=status)
+            orders = orders.filter(status__in=statuses)
         for param, lookup in (('date', 'created_at__date'), ('date_from', 'created_at__date__gte'), ('date_to', 'created_at__date__lte')):
             day = request.query_params.get(param)
             if not day:
