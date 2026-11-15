@@ -1,12 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { ArrowRight, Banknote, Check, ChevronRight, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, X } from 'lucide-react';
+import { ArrowRight, Banknote, Check, ChevronRight, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type CashierSummary, type AdminOverview } from './lib';
 import { LazyImage } from './ui';
 import { uploadProductPhoto } from './imageUpload';
 import './portals.css';
 
 type Props = { user: User; onUserChange: (user: User) => void };
-type Tab = 'orders' | 'products' | 'categories' | 'couriers' | 'cashiers' | 'businesses' | 'profile';
+type Tab = 'orders' | 'products' | 'categories' | 'couriers' | 'cashiers' | 'businesses' | 'cash' | 'profile';
 const terminal = (order: Order) => ['DELIVERED', 'CANCELLED'].includes(order.status);
 const dateTime = (value: string) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 const failure = (error: unknown) => error instanceof Error ? error.message : 'Не удалось выполнить запрос. Проверьте подключение и попробуйте ещё раз.';
@@ -127,7 +127,7 @@ export default function Portals({ user, onUserChange }: Props) {
   const isCourier = user.role === 'COURIER';
   const isCashier = user.role === 'CASHIER';
   const tabs: { value: Tab; name: string; icon: ReactNode }[] = isAdmin
-    ? [{ value: 'orders', name: 'Заказы', icon: <ShoppingBag size={18} aria-hidden="true" /> }, { value: 'products', name: 'Товары', icon: <Package size={18} aria-hidden="true" /> }, { value: 'categories', name: 'Категории', icon: <LayoutGrid size={18} aria-hidden="true" /> }, { value: 'couriers', name: 'Курьеры', icon: <Truck size={18} aria-hidden="true" /> }, { value: 'cashiers', name: 'Кассиры', icon: <Banknote size={18} aria-hidden="true" /> }, { value: 'businesses', name: 'Заведения', icon: <Store size={18} aria-hidden="true" /> }]
+    ? [{ value: 'orders', name: 'Заказы', icon: <ShoppingBag size={18} aria-hidden="true" /> }, { value: 'products', name: 'Товары', icon: <Package size={18} aria-hidden="true" /> }, { value: 'categories', name: 'Категории', icon: <LayoutGrid size={18} aria-hidden="true" /> }, { value: 'couriers', name: 'Курьеры', icon: <Truck size={18} aria-hidden="true" /> }, { value: 'cashiers', name: 'Кассиры', icon: <Banknote size={18} aria-hidden="true" /> }, { value: 'businesses', name: 'Заведения', icon: <Store size={18} aria-hidden="true" /> }, { value: 'cash', name: 'Касса', icon: <Wallet size={18} aria-hidden="true" /> }]
     : [{ value: 'orders', name: isCourier ? 'Доставки' : isCashier ? 'Заказы и касса' : 'Мои заказы', icon: isCourier ? <Truck size={18} aria-hidden="true" /> : isCashier ? <Banknote size={18} aria-hidden="true" /> : <ShoppingBag size={18} aria-hidden="true" /> }, { value: 'profile', name: 'Личные данные', icon: <UserRound size={18} aria-hidden="true" /> }];
   return <main className="portal">
     <div className="portal-heading"><div>
@@ -143,6 +143,7 @@ export default function Portals({ user, onUserChange }: Props) {
     {isAdmin && tab === 'couriers' && <StaffPanel key="couriers" kind="couriers" />}
     {isAdmin && tab === 'businesses' && <BusinessPanel />}
     {isAdmin && tab === 'cashiers' && <StaffPanel key="cashiers" kind="cashiers" />}
+    {isAdmin && tab === 'cash' && <CashPanel />}
   </main>;
 }
 function Profile({ user, onUserChange }: Props) {
@@ -547,5 +548,38 @@ function StaffPanel({ kind }: { kind: 'couriers' | 'cashiers' }) {
     {!isCashier && <p className="portal-queue-note">Курьер входит под своим аккаунтом, видит общую очередь заказов и сам принимает их. Назначить курьера вручную можно в карточке заказа. Заблокированный курьер не видит очередь.</p>}
     {adding && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{isCashier ? 'Новый кассир' : 'Новый курьер'}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть форму нового сотрудника" onClick={() => setAdding(false)}><X size={20} aria-hidden="true" /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Имя<input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} required maxLength={120} autoComplete="off" /></label><label>Телефон<input type="tel" value={draft.phone} onChange={e => setDraft({ ...draft, phone: e.target.value })} required maxLength={30} autoComplete="off" /></label><label>Электронная почта<input type="email" value={draft.email} onChange={e => setDraft({ ...draft, email: e.target.value })} required maxLength={254} autoComplete="off" /></label><label>Пароль для входа<input type="password" value={draft.password} onChange={e => setDraft({ ...draft, password: e.target.value })} required minLength={10} maxLength={128} autoComplete="new-password" /><small>Не менее 10 символов. Передайте пароль сотруднику лично.</small></label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || !draft.name.trim()}>{busy ? 'Добавляем…' : addLabel}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setAdding(false)}>Отмена</button></div></fieldset></form></section>}
     {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><a href={`tel:${person.phone}`}>{person.phone}</a></div><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button></div></article>) : <EmptyState icon={isCashier ? <Banknote size={30} aria-hidden="true" /> : <Truck size={30} aria-hidden="true" />} title={isCashier ? 'Добавьте первого кассира' : 'Соберите команду доставки'}>{isCashier ? 'Создайте отдельный аккаунт для учёта полученных наличных.' : 'Добавьте курьера, чтобы он мог принимать заказы из общей очереди.'}</EmptyState>}</div>}
+  </section>;
+}
+
+const shiftDay = (value: string, days: number) => { const date = new Date(`${value}T12:00:00Z`); date.setUTCDate(date.getUTCDate() + days); return date.toISOString().slice(0, 10); };
+const periodDay = (value: string) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`));
+
+// Admin cash desk: purchases and cash received for any period.
+function CashPanel() {
+  const today = localToday();
+  const [range, setRange] = useState({ from: today, to: today });
+  const valid = isPortalDate(range.from) && isPortalDate(range.to) && range.from <= range.to;
+  const summary = useRemote<CashierSummary>(valid ? `/cashier/summary/?date_from=${range.from}&date_to=${range.to}` : null, true);
+  const presets: [string, string][] = [['Сегодня', today], ['Вчера', shiftDay(today, -1)], ['7 дней', shiftDay(today, -6)], ['30 дней', shiftDay(today, -29)], ['С начала месяца', `${today.slice(0, 8)}01`]];
+  const choose = (label: string, from: string) => setRange({ from, to: label === 'Вчера' ? from : today });
+  const title = range.from === range.to ? periodDay(range.from) : `с ${periodDay(range.from)} по ${periodDay(range.to)}`;
+  const data = summary.data;
+  return <section aria-label="Касса">
+    <div className="portal-section-title"><div><p className="portal-eyebrow">ПРОДАЖИ И НАЛИЧНЫЕ</p><h2>Касса</h2></div></div>
+    <div className="portal-cash-period">
+      <div className="portal-date-range" role="group" aria-label="Период кассы"><span>Период</span><div><input type="date" aria-label="С даты" max={range.to || today} value={range.from} onChange={e => setRange(value => ({ ...value, from: e.target.value }))} /><span aria-hidden="true">—</span><input type="date" aria-label="По дату" min={range.from} value={range.to} onChange={e => setRange(value => ({ ...value, to: e.target.value }))} /></div></div>
+      <div className="portal-cash-presets">{presets.map(([label, from]) => { const active = range.from === from && range.to === (label === 'Вчера' ? from : today); return <button type="button" key={label} className={active ? 'active' : ''} aria-pressed={active} onClick={() => choose(label, from)}>{label}</button>; })}</div>
+    </div>
+    {!valid && <p className="portal-danger-text">Укажите обе даты; дата «по» не может быть раньше даты «с».</p>}
+    <ErrorNotice message={summary.error} retry={summary.retry} />
+    {valid && <section className="portal-cash-summary">
+      <p className="portal-eyebrow">{title}</p>
+      {summary.loading && !data ? <p role="status" className="portal-help">Считаем кассу…</p> : data && <div className="portal-summary-grid portal-cash-grid">
+        <article className="portal-cash-main"><span>Сумма покупок за период</span><strong>{money(data.orders_total)}</strong><small>Заказов: {data.orders_count} · товаров: {data.items_count} шт.{data.cancelled_count ? ` · отменено: ${data.cancelled_count} (не входят в сумму)` : ''}</small></article>
+        <article><span>Получено наличными</span><strong>{money(data.cash_received)}</strong><small>Оплаченных заказов: {data.paid_count}</small></article>
+        <article><span>Доставлены, но ещё не оплачены</span><strong>{money(data.unpaid_delivered_total)}</strong><small>За все дни · заказов: {data.unpaid_delivered_count}</small></article>
+      </div>}
+      <p className="portal-help">Сумма покупок — все заказы, оформленные за период, кроме отменённых (с доставкой). Наличные считаются по дню, когда оплата была подтверждена.</p>
+    </section>}
   </section>;
 }

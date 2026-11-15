@@ -8,7 +8,7 @@ from rest_framework import serializers
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .models import Order, Payment
+from .models import Order, OrderItem, Payment
 from .order_views import Conflict, order_response
 from .security import IsAdmin, IsCashierOrAdmin, IsCourier, lock_active_actor
 from .serializers import AvailableOrderSerializer, PaymentRequestSerializer
@@ -94,4 +94,8 @@ class CashierSummary(APIView):
             raise serializers.ValidationError({'date_to': 'Конец периода раньше начала.'})
         cash = Payment.objects.filter(method='CASH', paid_at__date__gte=start, paid_at__date__lte=end).aggregate(total=Sum('amount'), count=Count('id'))
         unpaid = Order.objects.filter(status='DELIVERED', payment__isnull=True).aggregate(total=Sum('total'), count=Count('id'))
-        return Response({'date': start.isoformat(), 'date_from': start.isoformat(), 'date_to': end.isoformat(), 'currency': 'KZT', 'cash_received': format(cash['total'] or Decimal('0'), '.2f'), 'paid_count': cash['count'], 'unpaid_delivered_total': format(unpaid['total'] or Decimal('0'), '.2f'), 'unpaid_delivered_count': unpaid['count']})
+        # Purchases placed in the period; cancelled orders are counted separately and excluded from the sum.
+        placed = Order.objects.filter(created_at__date__gte=start, created_at__date__lte=end)
+        sales = placed.exclude(status='CANCELLED').aggregate(total=Sum('total'), count=Count('id'))
+        items = OrderItem.objects.filter(order__in=placed.exclude(status='CANCELLED')).aggregate(count=Sum('quantity'))
+        return Response({'date': start.isoformat(), 'date_from': start.isoformat(), 'date_to': end.isoformat(), 'currency': 'KZT', 'cash_received': format(cash['total'] or Decimal('0'), '.2f'), 'paid_count': cash['count'], 'unpaid_delivered_total': format(unpaid['total'] or Decimal('0'), '.2f'), 'unpaid_delivered_count': unpaid['count'], 'orders_total': format(sales['total'] or Decimal('0'), '.2f'), 'orders_count': sales['count'], 'items_count': items['count'] or 0, 'cancelled_count': placed.filter(status='CANCELLED').count()})

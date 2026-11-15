@@ -321,3 +321,18 @@
   .portal-payment-confirm .portal-button { width: 100%; }
   .portal-payment-confirm .portal-form-actions > .portal-text-button { flex: 1; }
 }
+
+/* Admin cash desk */
+.portal-cash-period { display: flex; flex-wrap: wrap; align-items: flex-end; gap: 16px 24px; margin-bottom: 22px; }
+.portal-cash-period .portal-date-range input { min-height: 46px; padding: 0 12px; border: 1px solid var(--portal-line); border-radius: 6px; background: #fffdf7; color: var(--portal-green); font: inherit; font-size: 15px; }
+.portal-cash-presets { display: flex; flex-wrap: wrap; gap: 8px; }
+.portal-cash-presets button { min-height: 40px; padding: 0 14px; border: 1px solid var(--portal-line); border-radius: 999px; background: #fffdf7; color: var(--portal-green); font: inherit; font-size: 14px; cursor: pointer; }
+.portal-cash-presets button:hover { border-color: #647e5a; }
+.portal-cash-presets button.active { background: var(--portal-green); border-color: var(--portal-green); color: #fff; }
+.portal-cash-summary > .portal-eyebrow { font-size: 14px; margin-bottom: 16px; }
+.portal-cash-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.portal-cash-grid .portal-cash-main { grid-column: 1 / -1; background: #fff; border-color: #c9d6bd; }
+.portal-cash-grid .portal-cash-main strong { font-size: 44px; }
+.portal-cash-grid article > span { font-size: 14px; }
+.portal-cash-grid small { font-size: 13px; }
+@media (max-width: 480px) { .portal-cash-grid .portal-cash-main strong { font-size: 32px; } .portal-cash-period .portal-date-range { width: 100%; } }
