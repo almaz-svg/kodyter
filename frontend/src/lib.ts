@@ -24,6 +24,8 @@ export interface TeamOrders {orders:TeamOrder[];couriers:{id:number;name:string}
 export interface AvailableOrder {id:number;number:string;status:Order['status'];created_at:string;total:number|string;address:string;items_count:number;items:{name:string;quantity:number}[]}
 export const statusSteps = ['NEW','CONFIRMED','PREPARING','READY','HANDED_OVER','IN_TRANSIT','DELIVERED'];
 export const statusLabel:Record<string,string> = {NEW:'Новый',CONFIRMED:'Подтверждён',PREPARING:'Готовится',READY:'Готов к выдаче',HANDED_OVER:'Передан курьеру',IN_TRANSIT:'В пути',DELIVERED:'Доставлен',CANCELLED:'Отменён'};
+// Weight as typed in the admin panel; a bare number such as "120" gets the gram unit.
+export const formatWeight=(weight:string|null|undefined,unit='г')=>{const value=(weight||'').trim();return /^\d+(?:[.,]\d+)?$/.test(value)?`${value} ${unit}`:value};
 export const money=(value:number|string)=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(Number(value))+' ₸';
 const fieldNames:Record<string,string>={email:'Почта',password:'Пароль',name:'Имя',recipient_name:'Имя получателя',phone:'Телефон',address:'Адрес',price:'Цена',category:'Категория',image:'Фотография',non_field_errors:''};
 function errorText(value:unknown):string {if(Array.isArray(value))return value.map(errorText).join(' ');if(value&&typeof value==='object')return Object.values(value).map(errorText).join(' ');return String(value??'')}

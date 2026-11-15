@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react';
 import {Link,useParams,useSearchParams} from 'react-router-dom';
-import {ArrowLeft,ArrowRight,Search,ShoppingBag,Leaf,Truck} from 'lucide-react';
-import {api,money} from './lib';
+import {ArrowLeft,ArrowRight,Search,ShoppingBag,Leaf,Truck,Weight} from 'lucide-react';
+import {api,money,formatWeight} from './lib';
 import type {Product,Category} from './lib';
 import {useShop} from './store';
 import {FeaturedCard,PriceTag,Loading,ErrorBox,Qty,CatalogCartSummary,LazyImage} from './ui';
@@ -103,8 +103,9 @@ export function ProductPage() {
             <span className="eyebrow">{t.catalogEyebrow}</span>
             <h1>{productName(product, lang)}</h1>
             <span className={`stock ${product.is_available?'in-stock':''}`}>
-              {product.is_available ? 'В наличии' : 'Временно недоступно'}{product.weight?` · ${product.weight}`:''}
+              {product.is_available ? 'В наличии' : 'Временно недоступно'}
             </span>
+            {product.weight && <p className="detail-weight"><Weight size={18} aria-hidden="true" />{t.weightLabel}: <strong>{formatWeight(product.weight, t.weightUnit)}</strong></p>}
             <p className="detail-description">{product.description}</p>
             <div className="detail-price"><PriceTag product={product} quantity={n} /></div>
             <div className="buy-row">
