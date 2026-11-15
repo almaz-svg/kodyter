@@ -76,6 +76,8 @@ function nodes(tree, result = []) {
   else if (tree && typeof tree === 'object') { result.push(tree); nodes(tree.props?.children, result); }
   return result;
 }
+// Checkout requires the cash-on-delivery acknowledgement before it submits.
+const acceptCash = tree => nodes(tree).find(node => node.type === 'input' && node.props.type === 'checkbox').props.onChange({ target: { checked: true } });
 const submit = tree => nodes(tree).find(node => node.type === 'form').props.onSubmit({ preventDefault() {}, currentTarget: { password: 'fixture-long-password' } });
 const text = node => Array.isArray(node) ? node.map(text).join('') : node && typeof node === 'object' ? text(node.props?.children) : String(node ?? '');
 async function expectTimeout(h, promise) {
@@ -261,9 +263,9 @@ test('unavailable sessionStorage keeps the same checkout key across remounts and
     return response(201, { id: 7, number: 'fixture', total: '3300.00' });
   }, { storageThrows: true });
   h.setShop(shop);
-  h.render(h.flow.Checkout); await tick();
+  acceptCash(h.render(h.flow.Checkout)); await tick();
   await submit(h.render(h.flow.Checkout));
-  h.resetHooks(); h.render(h.flow.Checkout); await tick();
+  h.resetHooks(); acceptCash(h.render(h.flow.Checkout)); await tick();
   fail = false; await submit(h.render(h.flow.Checkout));
   assert.equal(posts.length, 2);
   assert.equal(posts[0].idempotency_key, posts[1].idempotency_key);

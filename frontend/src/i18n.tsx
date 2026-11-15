@@ -211,6 +211,8 @@ export interface Translations {
   checkoutBtnBusy: string;
   checkoutBtnChecking: string;
   checkoutPayNote: string;
+  checkoutCashTitle: string;
+  checkoutCashLabel: string;
   checkoutMyOrders: string;
   checkoutNewOrder: string;
 
@@ -414,6 +416,8 @@ const kz: Translations = {
   checkoutBtnConfirm:'Тапсырысты растау', checkoutBtnUpdated:'Жаңартылған тапсырысты растау',
   checkoutBtnBusy:'Тапсырыс жасалуда…', checkoutBtnChecking:'Тапсырыс тексерілуде…',
   checkoutPayNote:'Алу кезінде төлем',
+  checkoutCashTitle:'Тапсырыс алу кезінде төленеді',
+  checkoutCashLabel:'Тапсырысты алған кезде курьерге қолма-қол ақшамен төлейтінімді түсінемін. Сайтта онлайн төлем жоқ.',
   checkoutMyOrders:'Тапсырыстарымды тексеру',
   checkoutNewOrder:'Жеке жаңа тапсырыс бастау',
 
@@ -596,6 +600,8 @@ const ru: Translations = {
   checkoutBtnConfirm:'Подтвердить заказ', checkoutBtnUpdated:'Подтвердить обновлённый заказ',
   checkoutBtnBusy:'Создаём заказ…', checkoutBtnChecking:'Проверяем заказ…',
   checkoutPayNote:'Оплата при получении',
+  checkoutCashTitle:'Заказ оплачивается при получении',
+  checkoutCashLabel:'Я понимаю, что оплачиваю заказ наличными курьеру при получении. Онлайн-оплаты на сайте нет.',
   checkoutMyOrders:'Проверить мои заказы',
   checkoutNewOrder:'Начать отдельный новый заказ',
 
@@ -778,6 +784,8 @@ const en: Translations = {
   checkoutBtnConfirm:'Confirm Order', checkoutBtnUpdated:'Confirm Updated Order',
   checkoutBtnBusy:'Creating order…', checkoutBtnChecking:'Checking order…',
   checkoutPayNote:'Payment on delivery',
+  checkoutCashTitle:'Pay when you receive the order',
+  checkoutCashLabel:'I understand that I pay the courier in cash when I receive the order. There is no online payment on the site.',
   checkoutMyOrders:'Check my orders',
   checkoutNewOrder:'Start a separate new order',
 

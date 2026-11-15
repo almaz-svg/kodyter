@@ -253,6 +253,7 @@ export function Checkout() {
   const [catalogReady,setCatalogReady] = useState(false);
   const [refreshError,setRefreshError] = useState('');
   const [reviewAccepted,setReviewAccepted] = useState(false);
+  const [cashAccepted,setCashAccepted] = useState(false);
   const [refreshNotice,setRefreshNotice] = useState('');
   const [recipient,setRecipient] = useState(user?.name||'');
   const [phone,setPhone] = useState(user?.phone||'');
@@ -282,7 +283,7 @@ export function Checkout() {
 
   async function submit(e: FormEvent) {
     e.preventDefault();
-    if (busy||refreshing||!catalogReady||recovery||!settings||(changed&&!reviewAccepted)||cart.some(item=>!item.product.is_available)) return;
+    if (busy||refreshing||!catalogReady||recovery||!settings||!cashAccepted||(changed&&!reviewAccepted)||cart.some(item=>!item.product.is_available)) return;
     setBusy(true); setError('');
     try {
       const order = await api<Order>('/orders/', {method:'POST', body:JSON.stringify({recipient_name:recipient,phone,address,comment,items:cart.map(x=>({product_id:x.product.id,quantity:x.quantity,expected_price:unitPrice(x.product,x.quantity).toFixed(2)})),expected_delivery_fee:settings.delivery_fee,idempotency_key:key})});
@@ -369,6 +370,10 @@ export function Checkout() {
                 <span>{t.checkoutReviewLabel}</span>
               </label>
             )}
+            <label className="checkout-cash-warning">
+              <input type="checkbox" checked={cashAccepted} disabled={busy} onChange={e=>setCashAccepted(e.target.checked)}/>
+              <span><strong>{t.checkoutCashTitle}{settings ? ` — ${money(total+Number(settings.delivery_fee))}` : ''}</strong>{t.checkoutCashLabel}</span>
+            </label>
             {error && <ErrorBox message={error}/>}
             {recovery && (
               <div className="checkout-recovery">
@@ -378,7 +383,7 @@ export function Checkout() {
                 </button>
               </div>
             )}
-            <button className="button button-green full-width" disabled={busy||refreshing||!catalogReady||recovery||!settings||(changed&&!reviewAccepted)||cart.some(x=>!x.product.is_available)}>
+            <button className="button button-green full-width" disabled={busy||refreshing||!catalogReady||recovery||!settings||!cashAccepted||(changed&&!reviewAccepted)||cart.some(x=>!x.product.is_available)}>
               {busy ? t.checkoutBtnBusy : refreshing ? t.checkoutBtnChecking : changed ? t.checkoutBtnUpdated : t.checkoutBtnConfirm}
               <ArrowRight size={17} aria-hidden="true" />
             </button>

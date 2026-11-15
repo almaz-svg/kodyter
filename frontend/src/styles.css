@@ -586,3 +586,4 @@
 .mobile-lang-row .lang-switcher-full .lang-btn{min-height:44px;padding:8px 6px;font-size:15px;color:#e3d3a4}
 .mobile-lang-row .lang-switcher-full .lang-btn:not(.lang-active):hover{background:#ffffff1a;color:#f5e8b8}
 .mobile-lang-row .lang-switcher-full .lang-btn.lang-active{color:var(--green)}
+.checkout-cash-warning{display:flex;align-items:flex-start;gap:12px;margin:18px 0 6px;padding:14px 16px;background:#fbf1dc;border:1px solid #e0c58b;border-radius:6px;font-size:13px;font-weight:400;line-height:1.55;color:#5c4a1f;cursor:pointer}.checkout-cash-warning input{width:20px;min-height:20px;height:20px;margin:2px 0 0;padding:0;flex-shrink:0;accent-color:var(--green)}.checkout-cash-warning strong{display:block;font-size:14px;font-weight:700;color:#4a3a12;margin-bottom:3px}
