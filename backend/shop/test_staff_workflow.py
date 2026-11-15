@@ -170,19 +170,34 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(summary['paid_count'], 1)
         self.assertEqual(summary['unpaid_delivered_count'], 0)
 
-    def test_admin_deletes_staff_without_history_and_keeps_staff_with_history(self):
-        fresh, worked = self.couriers
-        self.make_order(status='IN_TRANSIT', courier=worked)
+    def test_removed_courier_keeps_history_and_hands_orders_to_free_couriers(self):
+        leaving, other = self.couriers
+        delivered = self.make_order(status='DELIVERED', courier=leaving)
+        on_road = self.make_order(status='IN_TRANSIT', courier=leaving)
+        at_bakery = self.make_order(status='PREPARING', courier=leaving)
+        from .models import Payment, StatusHistory
+        StatusHistory.objects.create(order=delivered, from_status='IN_TRANSIT', to_status='DELIVERED', actor=leaving, actor_name=leaving.name)
+        Payment.objects.create(order=delivered, amount='2400.00', method='CASH', idempotency_key=uuid.uuid4(), paid_by=leaving, paid_by_name=leaving.name)
+        third = User.objects.create_user(email='third@staff.test', password='Staff-password-123!', name='Courier 3', role='COURIER')
         self.client.force_login(self.admin)
-        self.assertEqual(self.client.delete(f'/api/admin/couriers/{fresh.pk}/').status_code, 204)
-        self.assertFalse(User.objects.filter(pk=fresh.pk).exists())
-        response = self.client.delete(f'/api/admin/couriers/{worked.pk}/')
-        self.assertEqual(response.status_code, 409)
-        self.assertTrue(User.objects.filter(pk=worked.pk).exists())
-        self.assertEqual(self.client.delete(f'/api/admin/cashiers/{self.cashier.pk}/').status_code, 204)
+        response = self.client.delete(f'/api/admin/couriers/{leaving.pk}/')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual((response.json()['moved_orders'], response.json()['waiting_orders']), (2, 0))
+        on_road.refresh_from_db(); at_bakery.refresh_from_db()
+        self.assertIn(on_road.courier_id, (other.pk, third.pk))
+        self.assertIn(at_bakery.courier_id, (other.pk, third.pk))
+        self.assertNotEqual(on_road.courier_id, at_bakery.courier_id)
+        receipt = self.client.get(f'/api/orders/{delivered.pk}/').json()
+        self.assertEqual((receipt['courier_name'], receipt['paid_by_name'], receipt['status_history'][-1]['actor_name']), (leaving.name, leaving.name, leaving.name))
+        self.assertNotIn(leaving.pk, [row['id'] for row in self.client.get('/api/admin/couriers/').json()])
+        self.assertEqual(self.client.delete(f'/api/admin/couriers/{leaving.pk}/').status_code, 404)
+        self.assertEqual(APIClient().post('/api/auth/login/', {'email': 'courier0@staff.test', 'password': 'Staff-password-123!'}, format='json').status_code, 401)
+        rehired = self.client.post('/api/admin/couriers/', {'name': 'Back again', 'email': 'courier0@staff.test', 'password': 'Back-again-pass-12'})
+        self.assertEqual(rehired.status_code, 201)
+        self.assertEqual(self.client.delete(f'/api/admin/cashiers/{self.cashier.pk}/').status_code, 200)
         self.assertEqual(self.client.delete(f'/api/admin/couriers/{self.customer.pk}/').status_code, 404)
-        self.client.force_login(worked)
-        self.assertEqual(self.client.delete(f'/api/admin/couriers/{worked.pk}/').status_code, 403)
+        self.client.force_login(other)
+        self.assertEqual(self.client.delete(f'/api/admin/couriers/{third.pk}/').status_code, 403)
 
     def test_pastry_chef_sees_kitchen_orders_and_moves_them_to_ready(self):
         self.client.force_login(self.admin)

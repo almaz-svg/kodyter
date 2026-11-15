@@ -4,7 +4,7 @@ A courier is free when they are active and have no unfinished delivery. Waiting 
 and the courier who has gone longest without a new order gets the next one, so work is spread evenly.
 """
 from django.conf import settings
-from django.db.models import F, Max
+from django.db.models import Count, F, Max, Q
 
 from .models import Order, User
 
@@ -26,6 +26,37 @@ def _free_courier_ids():
         .order_by(F('last_order').asc(nulls_first=True), 'pk')
         .values_list('pk', flat=True)
     )
+
+
+def release_courier_orders(courier):
+    """Move a leaving courier's unfinished orders to other couriers. Call inside a transaction.
+
+    Orders still at the bakery go back to the queue and are dispatched as usual. Orders already on the road
+    go straight to a free courier, or to the active courier with the fewest unfinished orders when nobody is free.
+    Returns (moved, waiting): orders handed to someone else, and orders left without a courier for now.
+    """
+    open_orders = list(Order.objects.select_for_update().filter(courier=courier).exclude(status__in=FINISHED_STATUSES).order_by('created_at', 'pk'))
+    road = [order for order in open_orders if order.status not in WAITING_STATUSES]
+    queued = [order for order in open_orders if order.status in WAITING_STATUSES]
+    for order in queued:
+        order.courier = None
+        order.save(update_fields=['courier'])
+    moved_road = 0
+    for order in road:
+        target = next((pk for pk in _free_courier_ids() if pk != courier.pk), None)
+        if target is None:
+            busiest_last = (User.objects.filter(role='COURIER', is_active=True).exclude(pk=courier.pk)
+                            .annotate(load=Count('deliveries', filter=~Q(deliveries__status__in=FINISHED_STATUSES)))
+                            .order_by('load', 'pk').values_list('pk', flat=True).first())
+            target = busiest_last
+        if target is None:
+            continue  # No other courier exists; the admin reassigns it once one is added.
+        order.courier_id = target
+        order.save(update_fields=['courier'])
+        moved_road += 1
+    assigned = {order.pk for order in dispatch_waiting_orders()}
+    moved_queued = sum(1 for order in queued if order.pk in assigned)
+    return moved_road + moved_queued, (len(road) - moved_road) + (len(queued) - moved_queued)
 
 
 def dispatch_waiting_orders():

@@ -6,9 +6,9 @@ from rest_framework.exceptions import APIException
 from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
-from .models import Category, Product, User
+from .models import REMOVED_STAFF_MARK, Category, Product, User
 from django.db import transaction
-from .dispatch import dispatch_waiting_orders
+from .dispatch import dispatch_waiting_orders, release_courier_orders
 from .security import IsAdmin
 from .serializers import BusinessAccountSerializer, CategorySerializer, ProductSerializer, PublicProductSerializer, RegisterSerializer, UserSerializer, CourierUpdateSerializer
 
@@ -102,7 +102,8 @@ class AdminCouriers(APIView):
     role = 'COURIER'
 
     def get(self, request):
-        return Response(UserSerializer(User.objects.filter(role=self.role).order_by('name'), many=True).data)
+        staff = User.objects.filter(role=self.role).exclude(last_name=REMOVED_STAFF_MARK).order_by('name')
+        return Response(UserSerializer(staff, many=True).data)
 
     def post(self, request):
         serializer = RegisterSerializer(data=request.data)
@@ -116,23 +117,30 @@ class AdminCouriers(APIView):
                 dispatch_waiting_orders()
         return Response(UserSerializer(courier).data, status=201)
 
-class StaffInUse(APIException):
-    status_code = 409
-    default_detail = 'Сотрудник уже работал с заказами, поэтому удалить его нельзя — иначе история заказов потеряет, кто их подтвердил, доставил или принял оплату. Заблокируйте сотрудника: он больше не сможет войти.'
-
 class AdminCourier(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [IsAdmin]
-    queryset = User.objects.filter(role='COURIER')
+    queryset = User.objects.filter(role='COURIER').exclude(last_name=REMOVED_STAFF_MARK)
     serializer_class = CourierUpdateSerializer
     http_method_names = ['patch', 'delete', 'options']
 
-    def perform_destroy(self, instance):
-        # Orders, history rows and payments keep a protected link to the staff member who handled them.
-        try:
-            with transaction.atomic():
-                instance.delete()
-        except ProtectedError:
-            raise StaffInUse()
+    @transaction.atomic
+    def destroy(self, request, *args, **kwargs):
+        """Remove a staff member from the team while orders, history and receipts keep their name and phone.
+
+        The row stays (orders and payments point at it), but the account can no longer sign in, disappears
+        from the staff lists and frees its email for a new account. A courier's unfinished orders move to others.
+        """
+        user = User.objects.select_for_update().get(pk=self.get_object().pk)
+        moved = waiting = 0
+        if user.role == 'COURIER':
+            moved, waiting = release_courier_orders(user)
+        user.first_name = user.email  # the original login, kept for the record
+        user.email = f'removed-{user.pk}-{user.email}'
+        user.last_name = REMOVED_STAFF_MARK
+        user.is_active = False
+        user.set_unusable_password()  # also ends every open session of this account
+        user.save(update_fields=['first_name', 'email', 'last_name', 'is_active', 'password'])
+        return Response({'detail': 'Сотрудник удалён из команды.', 'moved_orders': moved, 'waiting_orders': waiting})
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
@@ -148,13 +156,13 @@ class AdminCashiers(AdminCouriers):
     role = 'CASHIER'
 
 class AdminCashier(AdminCourier):
-    queryset = User.objects.filter(role='CASHIER')
+    queryset = User.objects.filter(role='CASHIER').exclude(last_name=REMOVED_STAFF_MARK)
 
 class AdminPastryChefs(AdminCouriers):
     role = 'PASTRY'
 
 class AdminPastryChef(AdminCourier):
-    queryset = User.objects.filter(role='PASTRY')
+    queryset = User.objects.filter(role='PASTRY').exclude(last_name=REMOVED_STAFF_MARK)
 
 class AdminBusinesses(generics.ListAPIView):
     """Business ('заведение') accounts with their approval state, for the administrator to review."""

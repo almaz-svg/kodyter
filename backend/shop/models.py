@@ -15,6 +15,9 @@ class UserManager(BaseUserManager):
         extra_fields.update(is_staff=True, is_superuser=True, role='ADMIN')
         return self.create_user(email, password, **extra_fields)
 
+# Marks a staff account removed by an administrator. The row stays so orders, history and receipts keep the name.
+REMOVED_STAFF_MARK = '__removed__'
+
 class User(AbstractUser):
     class Role(models.TextChoices):
         CUSTOMER = 'CUSTOMER', 'Покупатель'
