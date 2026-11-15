@@ -170,6 +170,20 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(summary['paid_count'], 1)
         self.assertEqual(summary['unpaid_delivered_count'], 0)
 
+    def test_courier_confirming_cash_marks_order_paid(self):
+        courier = self.couriers[0]
+        paid = self.make_order(status='IN_TRANSIT', courier=courier)
+        unpaid = self.make_order(status='IN_TRANSIT', courier=courier, total='3100.00')
+        self.client.force_login(courier)
+        response = self.client.post(f'/api/orders/{paid.pk}/transition/', {'status': 'DELIVERED', 'cash_received': True}, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['payment_status'], 'PAID')
+        from .models import Payment
+        payment = Payment.objects.get(order=paid)
+        self.assertEqual((str(payment.amount), payment.paid_by, payment.method), ('2400.00', courier, 'CASH'))
+        self.assertEqual(self.client.post(f'/api/orders/{unpaid.pk}/transition/', {'status': 'DELIVERED'}, format='json').json()['payment_status'], 'UNPAID')
+        self.assertFalse(Payment.objects.filter(order=unpaid).exists())
+
     def test_payment_is_allowed_only_after_delivery_and_only_cashier_or_admin(self):
         order = self.make_order(status='READY', courier=self.couriers[0])
         data = {'method': 'CASH', 'idempotency_key': str(uuid.uuid4())}

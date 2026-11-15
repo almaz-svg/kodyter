@@ -1,6 +1,7 @@
 import hashlib
 import json
 import re
+import uuid
 from decimal import ROUND_HALF_UP, Decimal
 from django.conf import settings
 from django.db import transaction
@@ -13,7 +14,7 @@ from rest_framework.exceptions import APIException, PermissionDenied
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .security import reject_markup
-from .models import Order, OrderItem, Product, User, StatusHistory, Problem
+from .models import Order, OrderItem, Payment, Product, User, StatusHistory, Problem
 from .serializers import CheckoutSerializer, CustomerOrderSerializer, OrderSerializer
 from .security import lock_active_actor
 from .dispatch import dispatch_waiting_orders
@@ -165,6 +166,9 @@ class Transition(APIView):
         order.status = target
         order.save(update_fields=['status', 'cancellation_reason'])
         StatusHistory.objects.create(order=order, from_status=old, to_status=target, actor=actor, actor_name=actor.name)
+        # A courier confirming the delivery can confirm the cash in the same step, which marks the order paid.
+        if target == 'DELIVERED' and actor.role == 'COURIER' and request.data.get('cash_received') is True and not Payment.objects.filter(order=order).exists():
+            Payment.objects.create(order=order, amount=order.total, method='CASH', idempotency_key=uuid.uuid4(), paid_by=actor, paid_by_name=actor.name)
         if target in ('DELIVERED', 'CANCELLED'):
             # The courier of a finished order is free again, so the next waiting order goes to them straight away.
             dispatch_waiting_orders()
