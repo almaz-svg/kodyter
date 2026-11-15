@@ -7,6 +7,8 @@ from rest_framework.permissions import AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import Category, Product, User
+from django.db import transaction
+from .dispatch import dispatch_waiting_orders
 from .security import IsAdmin
 from .serializers import BusinessAccountSerializer, CategorySerializer, ProductSerializer, PublicProductSerializer, RegisterSerializer, UserSerializer, CourierUpdateSerializer
 
@@ -109,6 +111,9 @@ class AdminCouriers(APIView):
             courier = User.objects.create_user(**serializer.validated_data, role=self.role)
         except IntegrityError:
             raise serializers.ValidationError({'email': 'Этот email уже зарегистрирован.'})
+        if self.role == 'COURIER':
+            with transaction.atomic():
+                dispatch_waiting_orders()
         return Response(UserSerializer(courier).data, status=201)
 
 class AdminCourier(generics.UpdateAPIView):
@@ -122,6 +127,9 @@ class AdminCourier(generics.UpdateAPIView):
         serializer = self.get_serializer(user, data=request.data, partial=True)
         serializer.is_valid(raise_exception=True)
         serializer.save()
+        if user.role == 'COURIER' and user.is_active:
+            with transaction.atomic():
+                dispatch_waiting_orders()
         return Response(UserSerializer(user).data)
 
 class AdminCashiers(AdminCouriers):

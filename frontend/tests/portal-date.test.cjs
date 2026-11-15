@@ -12,7 +12,7 @@ function panel(initialDate = '') {
   const hooks = {
     useState(initial) {
       const index = cursor++;
-      if (!(index in state)) state[index] = index === 0 ? { ...initial, date: initialDate } : initial;
+      if (!(index in state)) state[index] = index === 0 ? { ...initial, date_from: initialDate } : initial;
       return [state[index], value => { state[index] = typeof value === 'function' ? value(state[index]) : value; }];
     },
     useRef: value => ({ current: value }),
@@ -37,18 +37,18 @@ function panel(initialDate = '') {
   vm.createContext(context);
   vm.runInContext(`${javascript}\nuseRemote = remote; exports.panel = OrdersPanel;`, context);
   const render = () => { cursor = 0; calls.length = 0; return context.exports.panel({ user: { role: 'CASHIER' } }); };
-  const findDate = node => {
-    if (!node || typeof node !== 'object') return null;
-    if (node.type === 'input' && node.props.type === 'date') return node;
-    for (const child of [node.props?.children].flat(Infinity)) { const found = findDate(child); if (found) return found; }
-    return null;
+  const findDates = (node, found = []) => {
+    if (!node || typeof node !== 'object') return found;
+    if (node.type === 'input' && node.props.type === 'date') found.push(node);
+    for (const child of [node.props?.children].flat(Infinity)) findDates(child, found);
+    return found;
   };
   return {
     render, calls,
-    date: () => findDate(render()),
-    change(value, badInput = false) {
+    dates: () => findDates(render()),
+    change(value, badInput = false, which = 0) {
       const input = { value, validity: { badInput } };
-      findDate(render()).props.onChange({ target: input, currentTarget: input });
+      findDates(render())[which].props.onChange({ target: input, currentTarget: input });
       return render();
     },
   };
@@ -59,34 +59,53 @@ test('cashier rejects extended years and invalid calendar dates without crashing
     const view = panel(value);
     assert.doesNotThrow(() => view.render(), value);
     const orderPath = view.calls.find(value => value?.startsWith('/orders/'));
-    assert.equal(new URL(orderPath, 'http://localhost').searchParams.has('date'), false, value);
-    assert.ok(!view.calls.some(requestPath => requestPath?.includes(`date=${value}`)), value);
+    assert.equal(new URL(orderPath, 'http://localhost').searchParams.has('date_from'), false, value);
+    assert.ok(!view.calls.some(requestPath => requestPath?.includes(`=${value}`)), value);
   }
 });
 
 test('an invalid or incomplete edit preserves the last valid date filter', () => {
   const view = panel();
   view.change('2024-02-29');
-  assert.ok(view.calls.includes('/cashier/summary/?date=2024-02-29'));
+  assert.ok(view.calls.includes('/cashier/summary/?date_from=2024-02-29&date_to=2024-02-29'));
   for (const [value, incomplete] of [['10000-01-01', false], ['2026-02-30', false], ['', true]]) {
     assert.doesNotThrow(() => view.change(value, incomplete));
-    assert.ok(view.calls.includes('/orders/?date=2024-02-29'));
-    assert.ok(view.calls.includes('/cashier/summary/?date=2024-02-29'));
+    assert.ok(view.calls.includes('/orders/?date_from=2024-02-29'));
+    assert.ok(view.calls.includes('/cashier/summary/?date_from=2024-02-29&date_to=2024-02-29'));
   }
   view.change('2026-10-16');
-  assert.ok(view.calls.includes('/orders/?date=2026-10-16'));
+  assert.ok(view.calls.includes('/orders/?date_from=2026-10-16'));
   view.change('');
   assert.ok(view.calls.includes('/orders/?'));
+});
+
+test('a range filters orders and the cash summary from the first day to the last', () => {
+  const view = panel();
+  view.change('2026-11-01');
+  view.change('2026-11-15', false, 1);
+  assert.ok(view.calls.includes('/orders/?date_from=2026-11-01&date_to=2026-11-15'));
+  assert.ok(view.calls.includes('/cashier/summary/?date_from=2026-11-01&date_to=2026-11-15'));
+  const [from, to] = view.dates();
+  assert.equal(from.props.max, '2026-11-15');
+  assert.equal(to.props.min, '2026-11-01');
+});
+
+test('an end date before the start date keeps the last valid range', () => {
+  const view = panel();
+  view.change('2026-11-10');
+  view.change('2026-11-05', false, 1);
+  assert.ok(view.calls.includes('/orders/?date_from=2026-11-10'));
+  assert.ok(!view.calls.some(requestPath => requestPath?.includes('date_to=2026-11-05')));
 });
 
 test('valid date boundaries remain available and constrain the native date control', () => {
   for (const value of ['0001-01-01', '2024-02-29', '9999-12-31']) {
     const view = panel(value);
     assert.doesNotThrow(() => view.render());
-    assert.ok(view.calls.includes(`/orders/?date=${value}`));
-    assert.ok(view.calls.includes(`/cashier/summary/?date=${value}`));
+    assert.ok(view.calls.includes(`/orders/?date_from=${value}`));
+    assert.ok(view.calls.includes(`/cashier/summary/?date_from=${value}&date_to=${value}`));
   }
-  const input = panel().date();
-  assert.equal(input.props.min, '0001-01-01');
-  assert.equal(input.props.max, '9999-12-31');
+  const [from, to] = panel().dates();
+  assert.equal(from.props.min, '0001-01-01');
+  assert.equal(to.props.max, '9999-12-31');
 });

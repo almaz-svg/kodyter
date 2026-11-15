@@ -16,6 +16,7 @@ from .security import reject_markup
 from .models import Order, OrderItem, Product, User, StatusHistory, Problem
 from .serializers import CheckoutSerializer, CustomerOrderSerializer, OrderSerializer
 from .security import lock_active_actor
+from .dispatch import dispatch_waiting_orders
 
 # The portals poll this list every few seconds, so every response is bounded. Older orders stay reachable through filters.
 DEFAULT_ORDER_LIST_LIMIT = 100
@@ -54,15 +55,17 @@ class Orders(APIView):
             if status not in Order.Status.values:
                 raise serializers.ValidationError({'status': 'Неизвестный статус.'})
             orders = orders.filter(status=status)
-        day = request.query_params.get('date')
-        if day:
+        for param, lookup in (('date', 'created_at__date'), ('date_from', 'created_at__date__gte'), ('date_to', 'created_at__date__lte')):
+            day = request.query_params.get(param)
+            if not day:
+                continue
             try:
                 parsed = parse_date(day)
             except ValueError:
                 parsed = None
             if parsed is None:
-                raise serializers.ValidationError({'date': 'Дата должна быть в формате ГГГГ-ММ-ДД.'})
-            orders = orders.filter(created_at__date=parsed)
+                raise serializers.ValidationError({param: 'Дата должна быть в формате ГГГГ-ММ-ДД.'})
+            orders = orders.filter(**{lookup: parsed})
         courier = request.query_params.get('courier')
         if courier:
             if not courier.isdecimal():
@@ -123,6 +126,8 @@ class Orders(APIView):
         order = Order.objects.create(customer=actor, recipient_name=data['recipient_name'], phone=data['phone'], address=data['address'], comment=data['comment'], subtotal=subtotal, delivery_fee=settings.DELIVERY_FEE, total=subtotal + settings.DELIVERY_FEE, idempotency_key=data['idempotency_key'], request_fingerprint=fingerprint)
         OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=unit_prices[item['product_id']], image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
         StatusHistory.objects.create(order=order, from_status='', to_status='NEW', actor=actor, actor_name=actor.name)
+        if dispatch_waiting_orders():
+            order.refresh_from_db(fields=['courier'])
         return order_response(order, request.user, status=201)
 
 class OrderDetail(APIView):
@@ -158,6 +163,9 @@ class Transition(APIView):
         order.status = target
         order.save(update_fields=['status', 'cancellation_reason'])
         StatusHistory.objects.create(order=order, from_status=old, to_status=target, actor=actor, actor_name=actor.name)
+        if target in ('DELIVERED', 'CANCELLED'):
+            # The courier of a finished order is free again, so the next waiting order goes to them straight away.
+            dispatch_waiting_orders()
         return order_response(order, request.user)
 
 class Assign(APIView):

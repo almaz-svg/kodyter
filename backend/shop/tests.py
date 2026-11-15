@@ -1,3 +1,4 @@
+from datetime import timedelta
 import re
 import uuid
 from concurrent.futures import ThreadPoolExecutor
@@ -330,6 +331,12 @@ class OrderContractTests(APITestCase):
             self.assertEqual([o['id'] for o in response.json()], [order['id']])
         self.assertEqual(self.client.get('/api/orders/?status=DELIVERED').json(), [])
         self.assertEqual(self.client.get('/api/orders/?date=not-a-date').status_code, 400)
+        today = timezone.localdate()
+        in_range = f"date_from={(today - timedelta(days=3)).isoformat()}&date_to={today.isoformat()}"
+        self.assertEqual([o['id'] for o in self.client.get('/api/orders/?' + in_range).json()], [order['id']])
+        self.assertEqual(self.client.get(f"/api/orders/?date_to={(today - timedelta(days=1)).isoformat()}").json(), [])
+        self.assertEqual(self.client.get(f"/api/orders/?date_from={(today + timedelta(days=1)).isoformat()}").json(), [])
+        self.assertEqual(self.client.get('/api/orders/?date_from=bad').status_code, 400)
 
     def test_catalog_admin_permission_and_public_hiding(self):
         self.assertEqual(self.client.get('/api/admin/products/').status_code, 403)

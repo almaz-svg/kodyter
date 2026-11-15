@@ -86,7 +86,12 @@ function EmptyState({ icon, title, children }: { icon: ReactNode; title: string;
   return <div className="portal-empty"><span className="portal-empty-icon">{icon}</span><h3>{title}</h3><p>{children}</p></div>;
 }
 
-function Status({ status }: { status: Order['status'] }) {
+function Status({ status, customer = false }: { status: Order['status']; customer?: boolean }) {
+  // Customers only need to know whether the order has arrived; staff see the full workflow status.
+  if (customer && status !== 'CANCELLED') {
+    const delivered = status === 'DELIVERED';
+    return <span className={`portal-status ${delivered ? 'status-delivered' : 'status-pending'}`}><i />{delivered ? 'Доставлен' : 'Не доставлен'}</span>;
+  }
   return <span className={`portal-status status-${status.toLowerCase()}`}><i />{statusLabel[status] || status}</span>;
 }
 
@@ -158,13 +163,14 @@ function PaymentStatusLabel({ order }: { order: Order }) {
 }
 
 function OrdersPanel({ user }: { user: User }) {
-  const [filters, setFilters] = useState({ status: '', date: '', courier: '', search: '' });
-  const [dateInput, setDateInput] = useState(filters.date);
+  const [filters, setFilters] = useState({ status: '', date_from: '', date_to: '', courier: '', search: '' });
+  const [dateInput, setDateInput] = useState({ date_from: '', date_to: '' });
   const [dateInvalid, setDateInvalid] = useState(false);
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<number | null>(null);
   const [view, setView] = useState<'available' | 'active' | 'history'>('available');
   const [claiming, setClaiming] = useState<number | null>(null);
+  const [picked, setPicked] = useState<number[]>([]);
   const claimLock = useRef(false);
   const [claimError, setClaimError] = useState('');
   const [notice, setNotice] = useState('');
@@ -172,29 +178,34 @@ function OrdersPanel({ user }: { user: User }) {
   const isCourier = user.role === 'COURIER';
   const isCashier = user.role === 'CASHIER';
   const isStaff = isAdmin || isCourier || isCashier;
-  const requestDate = isPortalDate(filters.date) ? filters.date : '';
+  const fromDate = isPortalDate(filters.date_from) ? filters.date_from : '';
+  const toDate = isPortalDate(filters.date_to) ? filters.date_to : '';
   const [orderLimit, setOrderLimit] = useState(ORDER_PAGE_SIZE);
-  const params = new URLSearchParams(Object.entries({ ...filters, date: requestDate }).filter(([, value]) => value));
+  const params = new URLSearchParams(Object.entries({ ...filters, date_from: fromDate, date_to: toDate }).filter(([, value]) => value));
   if (orderLimit > ORDER_PAGE_SIZE) params.set('limit', String(orderLimit));
   const remote = useRemote<Order[]>(`/orders/?${params.toString()}`, true);
   const available = useRemote<AvailableOrder[]>(isCourier ? '/courier/available-orders/' : null, true);
   const couriers = useRemote<User[]>(isAdmin ? '/admin/couriers/' : null, true);
-  const summaryDate = requestDate || localToday();
-  const summary = useRemote<CashierSummary>(isCashier ? `/cashier/summary/?date=${summaryDate}` : null, true);
+  const summaryFrom = fromDate || toDate || localToday();
+  const summaryTo = toDate && toDate >= summaryFrom ? toDate : summaryFrom;
+  const summary = useRemote<CashierSummary>(isCashier ? `/cashier/summary/?date_from=${summaryFrom}&date_to=${summaryTo}` : null, true);
+  const dayLabel = (value: string) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${value}T12:00:00Z`));
+  const summaryTitle = summaryFrom === summaryTo ? `за ${dayLabel(summaryFrom)}` : `с ${dayLabel(summaryFrom)} по ${dayLabel(summaryTo)}`;
   const overview = useRemote<AdminOverview>(isAdmin ? '/admin/overview/' : null, true);
   useEffect(() => { const timer = window.setTimeout(() => setFilters(value => ({ ...value, search })), 350); return () => window.clearTimeout(timer); }, [search]);
   const allOrders = remote.data || [];
   const orders = isCourier ? allOrders.filter(order => terminal(order) === (view === 'history')) : allOrders;
   const active = allOrders.filter(order => !terminal(order)).length;
   const showAvailable = isCourier && view === 'available';
-  useEffect(() => { setSelected(null); setOrderLimit(ORDER_PAGE_SIZE); }, [filters.status, filters.date, filters.courier, filters.search]);
+  useEffect(() => { setSelected(null); setOrderLimit(ORDER_PAGE_SIZE); }, [filters.status, filters.date_from, filters.date_to, filters.courier, filters.search]);
   useEffect(() => { if (remote.data && selected !== null && !remote.data.some(order => order.id === selected)) setSelected(null); }, [remote.data, selected]);
   const updateFilter = (key: keyof typeof filters, value: string) => setFilters(current => ({ ...current, [key]: value }));
-  const changeDate = (event: ChangeEvent<HTMLInputElement>) => {
+  const changeDate = (key: 'date_from' | 'date_to') => (event: ChangeEvent<HTMLInputElement>) => {
     const { value, validity } = event.currentTarget;
-    const valid = !validity.badInput && (!value || isPortalDate(value));
-    setDateInput(value); setDateInvalid(!valid);
-    if (valid) updateFilter('date', value);
+    const next = { ...dateInput, [key]: value };
+    const valid = !validity.badInput && (!value || isPortalDate(value)) && !(next.date_from && next.date_to && next.date_to < next.date_from);
+    setDateInput(next); setDateInvalid(!valid);
+    if (valid) setFilters(current => ({ ...current, date_from: next.date_from, date_to: next.date_to }));
   };
   const refresh = () => { remote.retry(); available.retry(); summary.retry(); if (isAdmin) { couriers.retry(); overview.retry(); } };
   const claim = async (order: AvailableOrder) => {
@@ -212,7 +223,29 @@ function OrdersPanel({ user }: { user: User }) {
       refresh();
     } finally { claimLock.current = false; setClaiming(null); }
   };
-  const chooseView = (next: typeof view) => { setView(next); setSelected(null); setClaimError(''); setNotice(''); };
+  const togglePick = (id: number) => setPicked(current => current.includes(id) ? current.filter(item => item !== id) : [...current, id]);
+  const claimPicked = async () => {
+    if (claimLock.current) return;
+    const queue = (available.data || []).filter(order => picked.includes(order.id));
+    if (!queue.length) return;
+    claimLock.current = true; setClaiming(-1); setClaimError(''); setNotice('');
+    const taken: Order[] = []; const missed: string[] = [];
+    // One request per order: each claim is atomic on the server, so a race lost on one order does not undo the others.
+    for (const order of queue) {
+      try { taken.push(await api<Order>(`/orders/${order.id}/claim/`, json({}))); }
+      catch { missed.push(`№${order.number}`); }
+    }
+    const takenIds = taken.map(order => order.id);
+    remote.replace([...taken, ...(remote.data || []).filter(item => !takenIds.includes(item.id))]);
+    available.replace((available.data || []).filter(item => !queue.some(order => order.id === item.id)));
+    setPicked([]);
+    if (taken.length) { setView('active'); setSelected(null); setNotice(`Принято заказов: ${taken.length}. Они появились в ваших доставках.`); }
+    if (missed.length) setClaimError(`Не удалось принять ${missed.join(', ')}: их уже забрал другой курьер или они больше недоступны.`);
+    claimLock.current = false; setClaiming(null);
+    refresh();
+  };
+  useEffect(() => { setPicked(current => current.filter(id => (available.data || []).some(order => order.id === id))); }, [available.data]);
+  const chooseView = (next: typeof view) => { setView(next); setSelected(null); setClaimError(''); setNotice(''); setPicked([]); };
   return <section aria-label={isCourier ? 'Ваши доставки' : isCashier ? 'Касса и заказы' : 'Ваши заказы'}>
     {isAdmin && <section className="portal-cash-summary portal-attention" aria-label="Что требует внимания">
       <div className="portal-section-title"><div><p className="portal-eyebrow">СЕГОДНЯ НА ПЕКАРНЕ</p><h2>Что требует внимания</h2></div><ShoppingBag size={26} aria-hidden="true" /></div>
@@ -225,7 +258,7 @@ function OrdersPanel({ user }: { user: User }) {
       </div>}
     </section>}
     {isCashier && <section className="portal-cash-summary" aria-label="Сводка кассы">
-      <div className="portal-section-title"><div><p className="portal-eyebrow">НАЛИЧНЫЕ ПОД КОНТРОЛЕМ</p><h2>Касса за {new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', timeZone: 'UTC' }).format(new Date(`${summaryDate}T12:00:00Z`))}</h2></div><Banknote size={26} aria-hidden="true" /></div>
+      <div className="portal-section-title"><div><p className="portal-eyebrow">НАЛИЧНЫЕ ПОД КОНТРОЛЕМ</p><h2>Касса {summaryTitle}</h2></div><Banknote size={26} aria-hidden="true" /></div>
       <ErrorNotice message={summary.error} retry={summary.retry} />
       {summary.loading ? <p role="status" className="portal-help">Загружаем сводку кассы…</p> : summary.data && <div className="portal-summary-grid">
         <article><span>Получено наличными за день</span><strong>{money(summary.data.cash_received)}</strong><small>Оплаченных заказов: {summary.data.paid_count}</small></article>
@@ -242,18 +275,19 @@ function OrdersPanel({ user }: { user: User }) {
     {(isAdmin || isCashier) && <div className={`portal-filters ${isCashier ? 'portal-cashier-filters' : ''}`}>
       <label className="portal-search"><Search size={18} aria-hidden="true" /><input name="order-search" autoComplete="off" aria-label="Поиск по номеру заказа или телефону" placeholder="Номер заказа или телефон" value={search} onChange={e => setSearch(e.target.value)} /></label>
       <label><span>Статус</span><select value={filters.status} onChange={e => updateFilter('status', e.target.value)}><option value="">Все статусы</option>{[...statusSteps, 'CANCELLED'].map(status => <option key={status} value={status}>{statusLabel[status]}</option>)}</select></label>
-      <label><span>Дата</span><input type="date" min="0001-01-01" max="9999-12-31" aria-label="Дата заказа и сводки кассы" aria-invalid={dateInvalid || undefined} aria-describedby={dateInvalid ? 'portal-date-error' : undefined} value={dateInput} onChange={changeDate} />{dateInvalid && <small id="portal-date-error" className="portal-danger-text">Укажите существующую дату с годом от 0001 до 9999. Последний выбранный фильтр сохранён.</small>}</label>
+      <div className="portal-date-range" role="group" aria-label="Период заказов и сводки кассы"><span>Период</span><div><input type="date" min="0001-01-01" max={dateInput.date_to || "9999-12-31"} aria-label="С даты" aria-invalid={dateInvalid || undefined} aria-describedby={dateInvalid ? 'portal-date-error' : undefined} value={dateInput.date_from} onChange={changeDate('date_from')} /><span aria-hidden="true">—</span><input type="date" min={dateInput.date_from || "0001-01-01"} max="9999-12-31" aria-label="По дату" aria-invalid={dateInvalid || undefined} aria-describedby={dateInvalid ? 'portal-date-error' : undefined} value={dateInput.date_to} onChange={changeDate('date_to')} /></div>{dateInvalid && <small id="portal-date-error" className="portal-danger-text">Укажите существующие даты; дата «по» не может быть раньше даты «с». Последний выбранный фильтр сохранён.</small>}</div>
       {isAdmin && <label><span>Курьер</span><select value={filters.courier} onChange={e => updateFilter('courier', e.target.value)}><option value="">Все курьеры</option>{couriers.data?.map(courier => <option key={courier.id} value={courier.id}>{courier.name}{!courier.is_active ? ' (заблокирован)' : ''}</option>)}</select></label>}
-      {(Object.values(filters).some(Boolean) || dateInvalid) && <button type="button" className="portal-text-button" onClick={() => { setFilters({ status: '', date: '', courier: '', search: '' }); setDateInput(''); setDateInvalid(false); setSearch(''); }}>Сбросить</button>}
+      {(Object.values(filters).some(Boolean) || dateInvalid) && <button type="button" className="portal-text-button" onClick={() => { setFilters({ status: '', date_from: '', date_to: '', courier: '', search: '' }); setDateInput({ date_from: '', date_to: '' }); setDateInvalid(false); setSearch(''); }}>Сбросить</button>}
     </div>}
     <ErrorNotice message={claimError} />
     {notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
     {showAvailable ? <>
-      <p className="portal-queue-note">Эти заказы видят все активные курьеры. Заказ закрепляется за тем, кто первым нажмёт «Принять заказ».</p>
+      <p className="portal-queue-note">Эти заказы видят все активные курьеры. Заказ закрепляется за тем, кто первым его примет. Можно взять сразу несколько: отметьте нужные заказы и нажмите «Принять выбранные».</p>
+      {picked.length > 0 && <div className="portal-pick-bar" role="status"><span>Выбрано заказов: <b>{picked.length}</b></span><div><button type="button" className="portal-text-button" disabled={claiming !== null} onClick={() => setPicked([])}>Снять выбор</button><button type="button" className="portal-button portal-button-small" disabled={claiming !== null} onClick={() => void claimPicked()}>{claiming === -1 ? 'Принимаем…' : `Принять выбранные (${picked.length})`}<ArrowRight size={17} aria-hidden="true" /></button></div></div>}
       <ErrorNotice message={available.error} retry={available.retry} />
       {available.loading ? <div className="portal-loading" role="status"><RefreshCw size={22} aria-hidden="true" /> Загружаем доступные заказы…</div> : available.data && <div className="portal-available-grid">
-        {available.data.length ? available.data.map(order => <article className="portal-available-card" key={order.id}>
-          <div className="portal-order-card-top"><strong>Заказ №{order.number}</strong><Truck size={19} aria-hidden="true" /></div>
+        {available.data.length ? available.data.map(order => <article className={`portal-available-card${picked.includes(order.id) ? ' is-picked' : ''}`} key={order.id}>
+          <div className="portal-order-card-top"><strong>Заказ №{order.number}</strong><label className="portal-pick"><input type="checkbox" checked={picked.includes(order.id)} disabled={claiming !== null} onChange={() => togglePick(order.id)} aria-label={`Выбрать заказ №${order.number}`} /><span>Выбрать</span></label></div>
           <p className="portal-order-date">{dateTime(order.created_at)}</p><Status status={order.status} />
           <p className="portal-queue-address"><MapPin size={17} aria-hidden="true" /><span>{order.address}</span></p>
           <ul className="portal-queue-items">{order.items.map((item, index) => <li key={`${item.name}-${index}`}><span>{item.name}</span><b>{item.quantity} шт.</b></li>)}</ul>
@@ -267,8 +301,9 @@ function OrdersPanel({ user }: { user: User }) {
       {remote.loading ? <div className="portal-loading" role="status"><RefreshCw size={22} aria-hidden="true" /> Загружаем заказы…</div> : remote.data && <div className={`portal-orders-layout ${selected ? 'has-selection' : ''} ${!orders.length && !selected ? 'portal-empty-layout' : ''}`}>
         <div className="portal-order-list">{orders.length ? orders.map(order => <button type="button" key={order.id} className={`portal-order-card ${selected === order.id ? 'selected' : ''}`} aria-pressed={selected === order.id} onClick={() => setSelected(order.id)}>
           <div className="portal-order-card-top"><strong>Заказ №{order.number}</strong><ChevronRight size={19} aria-hidden="true" /></div><div className="portal-order-date">{dateTime(order.created_at)}</div>
-          <div className="portal-order-badges"><Status status={order.status} /><PaymentStatusLabel order={order} /></div>
+          <div className="portal-order-badges"><Status status={order.status} customer={!isStaff} /><PaymentStatusLabel order={order} /></div>
           {isStaff && <p className="portal-order-recipient">{order.recipient_name}<span>{order.address}</span></p>}
+          {!isCourier && isStaff && (order.courier_name ? <p className="portal-order-courier"><Truck size={14} aria-hidden="true" /><span>Курьер:</span> <strong>{order.courier_name}</strong></p> : !terminal(order) && <p className="portal-order-courier is-waiting"><Clock3 size={14} aria-hidden="true" /><span>Ищем свободного курьера</span></p>)}
           <div className="portal-order-card-bottom"><span>{order.items.reduce((sum, item) => sum + item.quantity, 0)} шт.</span><strong>{money(order.total)}</strong></div>
         </button>) : <EmptyState icon={isCourier ? <Truck size={32} aria-hidden="true" /> : <ShoppingBag size={32} aria-hidden="true" />} title={isCourier ? view === 'history' ? 'Доставки ещё впереди' : 'Пока нет активных доставок' : isAdmin || isCashier ? 'Заказы не найдены' : 'Здесь будет ваша история'}>{isCourier ? view === 'history' ? 'Завершённые доставки появятся здесь.' : 'Откройте доступные заказы и примите подходящую доставку.' : isAdmin || isCashier ? 'Измените фильтры или дождитесь нового заказа.' : <>Выберите что-нибудь к чаю — и первый заказ появится здесь. <a href="/catalog">Перейти в каталог <ArrowRight size={15} aria-hidden="true" /></a></>}</EmptyState>}{allOrders.length >= orderLimit && orderLimit < MAX_ORDER_LIMIT && <button type="button" className="portal-text-button" onClick={() => setOrderLimit(limit => Math.min(limit + ORDER_PAGE_SIZE, MAX_ORDER_LIMIT))}>Показать ещё</button>}{allOrders.length >= MAX_ORDER_LIMIT && <p className="portal-help">Показаны последние {MAX_ORDER_LIMIT} заказов. Более ранние можно найти через фильтры.</p>}</div>
         {selected ? <OrderDetail key={selected} id={selected} user={user} couriers={couriers.data || []} onChange={refresh} onClose={() => setSelected(null)} /> : orders.length > 0 && <div className="portal-detail-placeholder"><ShoppingBag size={34} strokeWidth={1.3} aria-hidden="true" /><h3>Всё о вашем заказе</h3><p>Выберите заказ, чтобы увидеть состав, адрес и историю статусов.</p></div>}
@@ -324,9 +359,9 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   const nextStatuses: Record<string, string> = isAdmin ? { NEW: 'CONFIRMED', CONFIRMED: 'PREPARING', PREPARING: 'READY' } : isCourier ? { READY: 'HANDED_OVER', HANDED_OVER: 'IN_TRANSIT', IN_TRANSIT: 'DELIVERED' } : {};
   const next = nextStatuses[order.status];
   const nextLabels: Record<string, string> = { CONFIRMED: 'Подтвердить заказ', PREPARING: 'Начать приготовление', READY: 'Заказ готов', HANDED_OVER: 'Забрать заказ из пекарни', IN_TRANSIT: 'Начать доставку', DELIVERED: 'Подтвердить доставку' };
-  return <article ref={detailRef} className="portal-card portal-order-detail"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2></div><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div><Status status={order.status} /><ErrorNotice message={remote.error} retry={remote.retry} />
+  return <article ref={detailRef} className="portal-card portal-order-detail"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2></div><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div><Status status={order.status} customer={user.role === 'CUSTOMER'} /><ErrorNotice message={remote.error} retry={remote.retry} />
     <section className="portal-detail-section"><h3><ShoppingBag size={17} aria-hidden="true" /> Что в заказе</h3><ul className="portal-order-items">{order.items.map(item => <li key={item.id}>{item.image && <LazyImage src={item.image} alt="" />}<div><strong>{item.name}</strong><span>{item.quantity} × {money(item.price)}</span></div><b>{money(Number(item.price) * item.quantity)}</b></li>)}</ul><dl className="portal-totals"><div><dt>Выпечка</dt><dd>{money(order.subtotal)}</dd></div><div><dt>Доставка</dt><dd>{Number(order.delivery_fee) ? money(order.delivery_fee) : 'Бесплатно'}</dd></div><div className="portal-total"><dt>Итого</dt><dd>{money(order.total)}</dd></div></dl></section>
-    <section className="portal-detail-section"><h3><MapPin size={17} aria-hidden="true" /> Куда доставить</h3><p><strong>{order.recipient_name}</strong></p><a className="portal-phone" href={`tel:${order.phone}`}><Phone size={14} aria-hidden="true" />{order.phone}</a><p className="portal-address">{order.address}</p>{order.comment && <div className="portal-comment"><span>Комментарий к заказу</span><p>{order.comment}</p></div>}{order.courier_name && <p className="portal-courier-name"><Truck size={16} aria-hidden="true" /> Курьер: {order.courier_name}</p>}</section>
+    <section className="portal-detail-section"><h3><MapPin size={17} aria-hidden="true" /> Куда доставить</h3><dl className="portal-delivery"><div><dt>Адрес</dt><dd className="portal-delivery-address">{order.address}</dd></div><div><dt>Получатель</dt><dd className="portal-delivery-name">{order.recipient_name}</dd></div><div><dt>Телефон</dt><dd><a className="portal-phone" href={`tel:${order.phone}`}><Phone size={14} aria-hidden="true" />{order.phone}</a></dd></div>{user.role !== 'CUSTOMER' && (order.courier_name || !['DELIVERED', 'CANCELLED'].includes(order.status)) && <div><dt>Курьер</dt><dd className={`portal-delivery-courier${order.courier_name ? '' : ' is-waiting'}`}><Truck size={16} aria-hidden="true" />{order.courier_name || 'Ещё не назначен — заказ уйдёт первому свободному курьеру'}</dd></div>}</dl>{order.comment && <div className="portal-comment"><span>Комментарий к заказу</span><p>{order.comment}</p></div>}</section>
     {order.cancellation_reason && <div className="portal-notice portal-error"><div><strong>Причина отмены</strong><p>{order.cancellation_reason}</p></div></div>}
     <section className="portal-detail-section portal-payment"><h3><Banknote size={17} aria-hidden="true" /> Оплата заказа</h3><PaymentStatusLabel order={order} />{order.payment_status === 'PAID' ? <p className="portal-payment-receipt">Получено наличными: <strong>{money(order.total)}</strong>{order.paid_at && <span>{dateTime(order.paid_at)}{order.paid_by_name ? ` · ${order.paid_by_name}` : ''}</span>}</p> : <p className="portal-help">{order.status === 'CANCELLED' ? 'Заказ отменён, оплата не требуется.' : `К оплате наличными: ${money(order.total)}. Получение наличных подтверждает кассир или администратор после доставки.`}</p>}</section>
     <section className="portal-detail-section"><h3><Clock3 size={17} aria-hidden="true" /> История заказа</h3><ol className="portal-timeline">{order.status_history.length ? order.status_history.map((entry, index) => <li key={entry.id} className={index === order.status_history.length - 1 ? 'current' : ''}><span className="portal-timeline-dot"><Check size={10} aria-hidden="true" /></span><div><strong>{statusLabel[entry.to_status] || entry.to_status}</strong><span>{dateTime(entry.created_at)}{(isAdmin || isCourier || isCashier) && entry.actor_name ? ` · ${entry.actor_name}` : ''}</span></div></li>) : <li className="current"><span className="portal-timeline-dot" /><div><strong>{statusLabel[order.status]}</strong><span>{dateTime(order.created_at)}</span></div></li>}</ol></section>
@@ -334,7 +369,7 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
       {(isAdmin || isCashier) && order.status === 'DELIVERED' && order.payment_status !== 'PAID' && (paymentConfirm ? <form className="portal-payment-confirm" onSubmit={event => { event.preventDefault(); paymentKey.current ||= crypto.randomUUID(); void mutate('payment', { method: 'CASH', idempotency_key: paymentKey.current }, 'Оплата наличными подтверждена. Сумма учтена в кассе.'); }}><h3>Подтвердите получение наличных</h3><p>За заказ №{order.number} получена полная сумма <strong>{money(order.total)}</strong>?</p><p className="portal-help">Сумма заказа фиксирована. Подтвердите только после получения денег.</p><div className="portal-form-actions"><button className="portal-button" disabled={busy}>{busy ? 'Сохраняем…' : 'Подтвердить получение'}<Banknote size={17} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setPaymentConfirm(false)}>Отмена</button></div></form> : <button type="button" className="portal-button portal-next" disabled={busy} onClick={() => { setPaymentConfirm(true); setError(''); setNotice(''); }}>Отметить оплату наличными<Banknote size={17} aria-hidden="true" /></button>)}
       {isCourier && ['NEW', 'CONFIRMED', 'PREPARING'].includes(order.status) && <p className="portal-waiting"><Clock3 size={19} aria-hidden="true" /><span>Заказ закреплён за вами. Ожидайте, пока пекарня подготовит его к выдаче.</span></p>}
       {isAdmin && courierBlocked && <p className="portal-help">Курьер заблокирован. Назначьте другого курьера, чтобы завершить доставку.</p>}
-      {isAdmin && (courierBlocked || ['NEW', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status)) && <form className="portal-assign" onSubmit={event => { event.preventDefault(); void mutate('assign', { courier_id: Number(courier) }, 'Курьер назначен.'); }}><label>Курьер<select disabled={busy} value={courier} onChange={event => { assignmentChanged.current = true; setCourier(event.target.value); }} required><option value="">Выберите курьера</option>{couriers.filter(person => person.is_active || person.id === order.courier).map(person => <option value={person.id} key={person.id} disabled={!person.is_active}>{person.name}{!person.is_active ? ' (заблокирован)' : ''}</option>)}</select></label><button className="portal-button portal-button-small" disabled={busy || !courier || Number(courier) === order.courier}>Назначить</button></form>}
+      {isAdmin && !order.courier && ['NEW', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status) && <p className="portal-waiting"><Clock3 size={19} aria-hidden="true" /><span>Все курьеры заняты. Заказ автоматически уйдёт первому, кто освободится.</span></p>}{isAdmin && courierBlocked && <form className="portal-assign" onSubmit={event => { event.preventDefault(); void mutate('assign', { courier_id: Number(courier) }, 'Курьер назначен.'); }}><label>Курьер<select disabled={busy} value={courier} onChange={event => { assignmentChanged.current = true; setCourier(event.target.value); }} required><option value="">Выберите курьера</option>{couriers.filter(person => person.is_active || person.id === order.courier).map(person => <option value={person.id} key={person.id} disabled={!person.is_active}>{person.name}{!person.is_active ? ' (заблокирован)' : ''}</option>)}</select></label><button className="portal-button portal-button-small" disabled={busy || !courier || Number(courier) === order.courier}>Назначить</button></form>}
       {next && <button className="portal-button portal-next" disabled={busy || (next === 'HANDED_OVER' && !order.courier)} onClick={() => void mutate('transition', { status: next }, 'Статус заказа обновлён.')}>{busy ? 'Сохраняем…' : nextLabels[next]}<ArrowRight size={17} aria-hidden="true" /></button>}
       {next === 'HANDED_OVER' && !order.courier && <p className="portal-help">Для передачи заказа сначала назначьте курьера.</p>}
       {isAdmin && !terminal(order) && (cancel ? <form className="portal-form portal-cancel" onSubmit={event => { event.preventDefault(); if (reason.trim()) void mutate('transition', { status: 'CANCELLED', reason: reason.trim() }, 'Заказ отменён.'); }}><label>Причина отмены<textarea disabled={busy} value={reason} onChange={e => setReason(e.target.value)} required maxLength={2000} placeholder="Укажите причину — её увидит покупатель" /></label><div className="portal-form-actions"><button className="portal-button portal-button-danger" disabled={busy || !reason.trim()}>Подтвердить отмену</button><button className="portal-text-button" type="button" disabled={busy} onClick={() => setCancel(false)}>Не отменять</button></div></form> : <button className="portal-text-button portal-danger-text" disabled={busy} onClick={() => setCancel(true)}>Отменить заказ</button>)}

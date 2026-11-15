@@ -29,6 +29,8 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         cache.clear()
         self.make_users()
 
+    # With automatic dispatch off (or every courier busy) a new order waits in the shared pool for any courier to claim.
+    @override_settings(AUTO_DISPATCH_COURIERS=False)
     def test_new_checkout_is_visible_to_admin_cashier_and_all_courier_pools(self):
         category = Category.objects.create(name='Bakery', slug='bakery')
         product = Product.objects.create(category=category, name='Croissant', price='900')
@@ -199,11 +201,15 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         from .models import Payment
         Payment.objects.filter(order=paid).update(paid_at=datetime(2026, 10, 14, 20, 30, tzinfo=dt_timezone.utc))
         summary = self.client.get('/api/cashier/summary/?date=2026-10-15').json()
-        self.assertEqual(summary, {'date': '2026-10-15', 'currency': 'KZT', 'cash_received': '2400.00', 'paid_count': 1, 'unpaid_delivered_total': '3500.00', 'unpaid_delivered_count': 1})
+        self.assertEqual(summary, {'date': '2026-10-15', 'date_from': '2026-10-15', 'date_to': '2026-10-15', 'currency': 'KZT', 'cash_received': '2400.00', 'paid_count': 1, 'unpaid_delivered_total': '3500.00', 'unpaid_delivered_count': 1})
         previous = self.client.get('/api/cashier/summary/?date=2026-10-14').json()
         self.assertEqual(previous['cash_received'], '0.00')
         self.assertEqual(previous['unpaid_delivered_total'], '3500.00')
         self.assertEqual(self.client.get('/api/cashier/summary/?date=bad').status_code, 400)
+        period = self.client.get('/api/cashier/summary/?date_from=2026-10-01&date_to=2026-10-31').json()
+        self.assertEqual((period['date_from'], period['date_to'], period['cash_received'], period['paid_count']), ('2026-10-01', '2026-10-31', '2400.00', 1))
+        self.assertEqual(self.client.get('/api/cashier/summary/?date_from=2026-10-16&date_to=2026-10-31').json()['cash_received'], '0.00')
+        self.assertEqual(self.client.get('/api/cashier/summary/?date_from=2026-10-31&date_to=2026-10-01').status_code, 400)
 
 
 @skipUnless(connection.vendor == 'postgresql', 'Actual PostgreSQL locks are required.')

@@ -86,7 +86,12 @@ class CashierSummary(APIView):
     permission_classes = [IsCashierOrAdmin]
 
     def get(self, request):
-        day = serializers.DateField().run_validation(request.query_params.get('date', timezone.localdate().isoformat()))
-        cash = Payment.objects.filter(method='CASH', paid_at__date=day).aggregate(total=Sum('amount'), count=Count('id'))
+        params = request.query_params
+        day = serializers.DateField().run_validation(params.get('date', timezone.localdate().isoformat()))
+        start = serializers.DateField().run_validation(params['date_from']) if params.get('date_from') else day
+        end = serializers.DateField().run_validation(params['date_to']) if params.get('date_to') else start
+        if end < start:
+            raise serializers.ValidationError({'date_to': 'Конец периода раньше начала.'})
+        cash = Payment.objects.filter(method='CASH', paid_at__date__gte=start, paid_at__date__lte=end).aggregate(total=Sum('amount'), count=Count('id'))
         unpaid = Order.objects.filter(status='DELIVERED', payment__isnull=True).aggregate(total=Sum('total'), count=Count('id'))
-        return Response({'date': day.isoformat(), 'currency': 'KZT', 'cash_received': format(cash['total'] or Decimal('0'), '.2f'), 'paid_count': cash['count'], 'unpaid_delivered_total': format(unpaid['total'] or Decimal('0'), '.2f'), 'unpaid_delivered_count': unpaid['count']})
+        return Response({'date': start.isoformat(), 'date_from': start.isoformat(), 'date_to': end.isoformat(), 'currency': 'KZT', 'cash_received': format(cash['total'] or Decimal('0'), '.2f'), 'paid_count': cash['count'], 'unpaid_delivered_total': format(unpaid['total'] or Decimal('0'), '.2f'), 'unpaid_delivered_count': unpaid['count']})

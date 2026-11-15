@@ -119,12 +119,12 @@ class CheckoutInputTests(TestCase):
         self.assertEqual(self.post(self.payload(quantity=1)).status_code, 201)
         self.assertEqual(self.post(self.payload(quantity=settings.MAX_ORDER_ITEM_QUANTITY)).status_code, 201)
 
-    def test_comment_is_required_for_checkout(self):
+    def test_comment_is_optional_for_checkout(self):
         without_comment = self.payload()
         del without_comment['comment']
-        self.assertEqual(self.post(without_comment).status_code, 400)
-        self.assertEqual(self.post(self.payload(comment='')).status_code, 400)
-        self.assertEqual(self.post(self.payload(comment='   ')).status_code, 400)
+        self.assertEqual(self.post(without_comment).status_code, 201)
+        self.assertEqual(self.post(self.payload(comment='')).status_code, 201)
+        self.assertEqual(self.post(self.payload(comment='   ')).status_code, 201)
         self.assertEqual(self.post(self.payload(comment='Подъезд 2, этаж 3')).status_code, 201)
 
     def test_default_maximum_is_200_units_per_line(self):
