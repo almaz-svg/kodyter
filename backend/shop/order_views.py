@@ -174,6 +174,25 @@ class Transition(APIView):
             dispatch_waiting_orders()
         return order_response(order, request.user)
 
+class CustomerCancel(APIView):
+    """A customer cancels their own order while it still waits for confirmation."""
+    @transaction.atomic
+    def post(self, request, pk):
+        if request.user.role != 'CUSTOMER':
+            raise PermissionDenied('Эта отмена доступна только покупателю.')
+        order = locked_order(request.user, pk)
+        actor = lock_active_actor(request.user, ('CUSTOMER',))
+        if order.status != 'NEW':
+            raise Conflict('Заказ уже подтверждён, отменить его самостоятельно нельзя. Свяжитесь с пекарней.')
+        reason = serializers.CharField(max_length=2000, required=False, allow_blank=True, validators=[reject_markup]).run_validation(request.data.get('reason', '')).strip()
+        order.status = 'CANCELLED'
+        order.cancellation_reason = f'Отменён покупателем: {reason}' if reason else 'Отменён покупателем.'
+        order.save(update_fields=['status', 'cancellation_reason'])
+        StatusHistory.objects.create(order=order, from_status='NEW', to_status='CANCELLED', actor=actor, actor_name=actor.name)
+        # The courier dispatched to this order is free again.
+        dispatch_waiting_orders()
+        return order_response(order, request.user)
+
 class Assign(APIView):
     @transaction.atomic
     def post(self, request, pk):

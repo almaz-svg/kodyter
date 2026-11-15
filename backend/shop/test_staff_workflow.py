@@ -170,6 +170,23 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(summary['paid_count'], 1)
         self.assertEqual(summary['unpaid_delivered_count'], 0)
 
+    def test_customer_cancels_own_order_only_before_confirmation(self):
+        new = self.make_order(courier=self.couriers[0])
+        confirmed = self.make_order(status='CONFIRMED')
+        self.client.force_login(self.customer)
+        response = self.client.post(f'/api/orders/{new.pk}/cancel/', {'reason': 'Передумал'}, format='json')
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.json()['status'], 'CANCELLED')
+        new.refresh_from_db()
+        self.assertEqual(new.cancellation_reason, 'Отменён покупателем: Передумал')
+        self.assertEqual(new.status_history.last().to_status, 'CANCELLED')
+        self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/cancel/', {}, format='json').status_code, 409)
+        other = User.objects.create_user(email='other@staff.test', password='Staff-password-123!', name='Other')
+        self.client.force_login(other)
+        self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/cancel/', {}, format='json').status_code, 404)
+        self.client.force_login(self.couriers[0])
+        self.assertEqual(self.client.post(f'/api/orders/{confirmed.pk}/cancel/', {}, format='json').status_code, 403)
+
     def test_courier_confirming_cash_marks_order_paid(self):
         courier = self.couriers[0]
         paid = self.make_order(status='IN_TRANSIT', courier=courier)

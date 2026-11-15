@@ -422,3 +422,5 @@
   .portal-progress-dot { width: 34px; height: 34px; }
   .portal-progress li + li::before { top: 17px; right: calc(50% + 22px); width: calc(100% - 44px); }
 }
+.portal-customer-actions .portal-danger-text { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
+.portal-customer-actions .portal-cancel h3 { font-family: Georgia, serif; font-size: 18px; font-weight: 500; margin-bottom: 6px; }
