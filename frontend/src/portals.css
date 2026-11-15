@@ -492,3 +492,4 @@
   .kitchen-item-photo { width: 52px; height: 52px; }
   .kitchen-all { grid-column: 1 / -1; width: 100%; }
 }
+.kitchen-detail { margin-top: 4px; }

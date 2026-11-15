@@ -6,7 +6,7 @@ import { uploadProductPhoto } from './imageUpload';
 import './portals.css';
 
 type Props = { user: User; onUserChange: (user: User) => void };
-type Tab = 'orders' | 'products' | 'categories' | 'couriers' | 'cashiers' | 'pastry' | 'businesses' | 'cash' | 'profile';
+type Tab = 'orders' | 'kitchen' | 'products' | 'categories' | 'couriers' | 'cashiers' | 'pastry' | 'businesses' | 'cash' | 'profile';
 const terminal = (order: Order) => ['DELIVERED', 'CANCELLED'].includes(order.status);
 const dateTime = (value: string) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
 const failure = (error: unknown) => error instanceof Error ? error.message : 'Не удалось выполнить запрос. Проверьте подключение и попробуйте ещё раз.';
@@ -122,14 +122,14 @@ function useEditorReveal(key: string | number | null) {
 }
 
 export default function Portals({ user, onUserChange }: Props) {
-  const [tab, setTab] = useState<Tab>('orders');
+  const [tab, setTab] = useState<Tab>(user.role === 'PASTRY' ? 'kitchen' : 'orders');
   const isAdmin = user.role === 'ADMIN';
   const isCourier = user.role === 'COURIER';
   const isCashier = user.role === 'CASHIER';
   const isPastry = user.role === 'PASTRY';
   const tabs: { value: Tab; name: string; icon: ReactNode }[] = isAdmin
-    ? [{ value: 'orders', name: 'Заказы', icon: <ShoppingBag size={18} aria-hidden="true" /> }, { value: 'products', name: 'Товары', icon: <Package size={18} aria-hidden="true" /> }, { value: 'categories', name: 'Категории', icon: <LayoutGrid size={18} aria-hidden="true" /> }, { value: 'pastry', name: 'Кондитеры', icon: <ChefHat size={18} aria-hidden="true" /> }, { value: 'couriers', name: 'Курьеры', icon: <Truck size={18} aria-hidden="true" /> }, { value: 'cashiers', name: 'Кассиры', icon: <Banknote size={18} aria-hidden="true" /> }, { value: 'cash', name: 'Касса', icon: <Wallet size={18} aria-hidden="true" /> }, { value: 'businesses', name: 'Заведения', icon: <Store size={18} aria-hidden="true" /> }]
-    : [{ value: 'orders', name: isCourier ? 'Доставки' : isCashier ? 'Заказы и касса' : isPastry ? 'Заказы на кухне' : 'Мои заказы', icon: isPastry ? <ChefHat size={18} aria-hidden="true" /> : isCourier ? <Truck size={18} aria-hidden="true" /> : isCashier ? <Banknote size={18} aria-hidden="true" /> : <ShoppingBag size={18} aria-hidden="true" /> }, { value: 'profile', name: 'Личные данные', icon: <UserRound size={18} aria-hidden="true" /> }];
+    ? [{ value: 'orders', name: 'Заказы', icon: <ShoppingBag size={18} aria-hidden="true" /> }, { value: 'kitchen', name: 'Кухня', icon: <ChefHat size={18} aria-hidden="true" /> }, { value: 'products', name: 'Товары', icon: <Package size={18} aria-hidden="true" /> }, { value: 'categories', name: 'Категории', icon: <LayoutGrid size={18} aria-hidden="true" /> }, { value: 'pastry', name: 'Кондитеры', icon: <ChefHat size={18} aria-hidden="true" /> }, { value: 'couriers', name: 'Курьеры', icon: <Truck size={18} aria-hidden="true" /> }, { value: 'cashiers', name: 'Кассиры', icon: <Banknote size={18} aria-hidden="true" /> }, { value: 'cash', name: 'Касса', icon: <Wallet size={18} aria-hidden="true" /> }, { value: 'businesses', name: 'Заведения', icon: <Store size={18} aria-hidden="true" /> }]
+    : [...(isPastry ? [{ value: 'kitchen' as Tab, name: 'Кухня', icon: <ChefHat size={18} aria-hidden="true" /> }] : []), { value: 'orders', name: isCourier ? 'Доставки' : isCashier ? 'Заказы и касса' : isPastry ? 'Все заказы' : 'Мои заказы', icon: isPastry ? <ChefHat size={18} aria-hidden="true" /> : isCourier ? <Truck size={18} aria-hidden="true" /> : isCashier ? <Banknote size={18} aria-hidden="true" /> : <ShoppingBag size={18} aria-hidden="true" /> }, { value: 'profile', name: 'Личные данные', icon: <UserRound size={18} aria-hidden="true" /> }];
   return <main className="portal">
     <div className="portal-heading"><div>
       <p className="portal-eyebrow">ANASYM / {isAdmin ? 'УПРАВЛЕНИЕ ПЕКАРНЕЙ' : isCourier ? 'КАБИНЕТ КУРЬЕРА' : isCashier ? 'КАБИНЕТ КАССИРА' : isPastry ? 'КАБИНЕТ КОНДИТЕРА' : 'ЛИЧНЫЙ КАБИНЕТ'}</p>
@@ -138,6 +138,7 @@ export default function Portals({ user, onUserChange }: Props) {
     </div></div>
     <nav className={`portal-tabs ${isAdmin ? 'portal-admin-tabs' : ''}`} aria-label="Разделы личного кабинета">{tabs.map(item => <button type="button" key={item.value} className={tab === item.value ? 'active' : ''} aria-current={tab === item.value ? 'page' : undefined} onClick={() => setTab(item.value)}>{item.icon}{item.name}</button>)}</nav>
     {tab === 'orders' && <OrdersPanel user={user} />}
+    {tab === 'kitchen' && (isAdmin || isPastry) && <KitchenPanel user={user} />}
     {tab === 'profile' && <Profile user={user} onUserChange={onUserChange} />}
     {isAdmin && tab === 'products' && <ProductsPanel />}
     {isAdmin && tab === 'categories' && <CategoriesPanel />}
@@ -188,6 +189,19 @@ function OrderProgress({ order, role }: { order: Order; role: User['role'] }) {
       <span className="portal-progress-dot">{step.icon}</span><strong>{index === current && exact ? statusLabel[order.status] : step.label}</strong>{at && <small>{dateTime(at)}</small>}
     </li>; })}
   </ol>;
+}
+
+// "Кухня" tab for the pastry chef and the administrator: the kitchen board, with the chosen order opened below it.
+function KitchenPanel({ user }: { user: User }) {
+  const remote = useRemote<Order[]>('/orders/', true);
+  const couriers = useRemote<User[]>(user.role === 'ADMIN' ? '/admin/couriers/' : null, true);
+  const [selected, setSelected] = useState<number | null>(null);
+  const refresh = () => { remote.retry(); couriers.retry(); };
+  return <section aria-label="Кухня">
+    <ErrorNotice message={remote.error} retry={remote.retry} />
+    {remote.loading && !remote.data ? <div className="portal-loading" role="status"><RefreshCw size={22} aria-hidden="true" /> Загружаем заказы кухни…</div> : <KitchenBoard orders={remote.data || []} onOpen={setSelected} onChanged={refresh} />}
+    {selected && <div className="kitchen-detail"><OrderDetail key={selected} id={selected} user={user} couriers={couriers.data || []} onChange={refresh} onClose={() => setSelected(null)} /></div>}
+  </section>;
 }
 
 // Pastry kitchen dashboard: every product to cook across confirmed and preparing orders, summed up,
@@ -359,7 +373,6 @@ function OrdersPanel({ user }: { user: User }) {
       <button type="button" className={view === 'history' ? 'active' : ''} aria-pressed={view === 'history'} onClick={() => chooseView('history')}>История <span>{allOrders.length - active}</span></button>
       <button type="button" className={view === 'team' ? 'active' : ''} aria-pressed={view === 'team'} onClick={() => chooseView('team')}>Заказы <span>{team.data?.orders.length || 0}</span></button>
     </div>}
-    {isPastry && <KitchenBoard orders={allOrders} onOpen={id => setSelected(id)} onChanged={refresh} />}
     {(isCustomer || isPastry) && allOrders.length > 0 && <div className="portal-chip-filters" role="group" aria-label="Какие заказы показать">{([['all', 'Все заказы', <ShoppingBag size={15} aria-hidden="true" />], ['active', 'Активные', <Truck size={15} aria-hidden="true" />], ['done', 'Завершённые', <Check size={15} aria-hidden="true" />]] as const).map(([value, label, icon]) => <button type="button" key={value} className={customerView === value ? 'active' : ''} aria-pressed={customerView === value} onClick={() => { setCustomerView(value); setSelected(null); }}>{icon}{label}</button>)}</div>}
     {(isAdmin || isCashier) && <div className={`portal-filters ${isCashier ? 'portal-cashier-filters' : ''}`}>
       <label className="portal-search"><Search size={18} aria-hidden="true" /><input name="order-search" autoComplete="off" aria-label="Поиск по номеру заказа или телефону" placeholder="Номер заказа или телефон" value={search} onChange={e => setSearch(e.target.value)} /></label>
