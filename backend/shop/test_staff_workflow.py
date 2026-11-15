@@ -170,6 +170,20 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.assertEqual(summary['paid_count'], 1)
         self.assertEqual(summary['unpaid_delivered_count'], 0)
 
+    def test_admin_deletes_staff_without_history_and_keeps_staff_with_history(self):
+        fresh, worked = self.couriers
+        self.make_order(status='IN_TRANSIT', courier=worked)
+        self.client.force_login(self.admin)
+        self.assertEqual(self.client.delete(f'/api/admin/couriers/{fresh.pk}/').status_code, 204)
+        self.assertFalse(User.objects.filter(pk=fresh.pk).exists())
+        response = self.client.delete(f'/api/admin/couriers/{worked.pk}/')
+        self.assertEqual(response.status_code, 409)
+        self.assertTrue(User.objects.filter(pk=worked.pk).exists())
+        self.assertEqual(self.client.delete(f'/api/admin/cashiers/{self.cashier.pk}/').status_code, 204)
+        self.assertEqual(self.client.delete(f'/api/admin/couriers/{self.customer.pk}/').status_code, 404)
+        self.client.force_login(worked)
+        self.assertEqual(self.client.delete(f'/api/admin/couriers/{worked.pk}/').status_code, 403)
+
     def test_pastry_chef_sees_kitchen_orders_and_moves_them_to_ready(self):
         self.client.force_login(self.admin)
         created = self.client.post('/api/admin/pastry-chefs/', {'name': 'Baker', 'email': 'baker@staff.test', 'phone': '+77010000001', 'password': 'Pastry-password-55'})

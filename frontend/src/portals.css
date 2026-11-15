@@ -424,3 +424,9 @@
 }
 .portal-customer-actions .portal-danger-text { display: inline-flex; align-items: center; gap: 6px; font-size: 14px; font-weight: 600; }
 .portal-customer-actions .portal-cancel h3 { font-family: Georgia, serif; font-size: 18px; font-weight: 500; margin-bottom: 6px; }
+
+/* Staff delete with two confirmations */
+.portal-manage-row { flex-wrap: wrap; }
+.portal-courier-controls .portal-danger-text { font-size: 13px; }
+.portal-staff-delete { flex: 1 1 100%; margin-top: 4px; padding: 14px 16px; border: 1px solid #e8c7bb; border-radius: 8px; background: #fbefe9; color: #6e3424; }
+.portal-staff-delete p { margin: 0 0 10px; font-size: 14px; line-height: 1.5; }

@@ -116,11 +116,23 @@ class AdminCouriers(APIView):
                 dispatch_waiting_orders()
         return Response(UserSerializer(courier).data, status=201)
 
-class AdminCourier(generics.UpdateAPIView):
+class StaffInUse(APIException):
+    status_code = 409
+    default_detail = 'Сотрудник уже работал с заказами, поэтому удалить его нельзя — иначе история заказов потеряет, кто их подтвердил, доставил или принял оплату. Заблокируйте сотрудника: он больше не сможет войти.'
+
+class AdminCourier(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [IsAdmin]
     queryset = User.objects.filter(role='COURIER')
     serializer_class = CourierUpdateSerializer
-    http_method_names = ['patch', 'options']
+    http_method_names = ['patch', 'delete', 'options']
+
+    def perform_destroy(self, instance):
+        # Orders, history rows and payments keep a protected link to the staff member who handled them.
+        try:
+            with transaction.atomic():
+                instance.delete()
+        except ProtectedError:
+            raise StaffInUse()
 
     def update(self, request, *args, **kwargs):
         user = self.get_object()
