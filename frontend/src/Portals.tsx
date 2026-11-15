@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
+import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview } from './lib';
 import { LazyImage } from './ui';
 import { uploadProductPhoto } from './imageUpload';
+import { PhotoCropper } from './photoCropper';
 import './portals.css';
 
 type Props = { user: User; onUserChange: (user: User) => void };
@@ -503,6 +504,8 @@ function ProductsPanel() {
   const editor = useEditorReveal(editing === 'new' ? 'new' : editing?.id ?? null);
   const [draft, setDraft] = useState<ProductDraft>(newProduct);
   const [photoBusy, setPhotoBusy] = useState(false);
+  // A chosen file (or the current photo) opens in the cropper first; only the framed result is uploaded.
+  const [cropSource, setCropSource] = useState<File | string | null>(null);
   const [search, setSearch] = useState('');
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -510,11 +513,16 @@ function ProductsPanel() {
   const [confirming, setConfirming] = useState<number | null>(null);
   const start = (product: Product | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(product); setError(''); setNotice(''); setDraft(product === 'new' ? { ...newProduct, category: String(categories.data?.[0]?.id || '') } : { ...product, category: String(product.category), price: String(product.price), wholesale_price: product.wholesale_price == null ? '' : String(product.wholesale_price) }); };
   const field = (key: keyof ProductDraft, value: string | boolean) => setDraft(current => ({ ...current, [key]: value }));
-  const choosePhoto = async (file?: File) => {
+  const choosePhoto = (file?: File) => {
     if (!file) return;
+    setError('');
+    setCropSource(file);
+  };
+  const uploadFramed = async (photo: Blob) => {
+    setCropSource(null);
     setPhotoBusy(true);
     setError('');
-    try { field('image', await uploadProductPhoto(file)); }
+    try { field('image', await uploadProductPhoto(new File([photo], 'photo.jpg', { type: 'image/jpeg' }))); }
     catch (err) { setError((err as Error).message); }
     finally { setPhotoBusy(false); }
   };
@@ -557,13 +565,14 @@ function ProductsPanel() {
         <div className="product-editor-side">
           <section className="product-card"><h4><ImageIcon size={20} aria-hidden="true" />Фотография товара</h4>
             <div className="product-photo-preview">{draft.image ? <img src={draft.image} alt="" /> : <span><ImageIcon size={34} strokeWidth={1.3} aria-hidden="true" />Фото ещё не выбрано</span>}</div>
-            <label className={`product-dropzone${photoBusy ? ' is-busy' : ''}`} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); void choosePhoto(event.dataTransfer.files?.[0]); }}>
+            <label className={`product-dropzone${photoBusy ? ' is-busy' : ''}`} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); choosePhoto(event.dataTransfer.files?.[0]); }}>
               <Upload size={22} aria-hidden="true" />
               <span className="product-dropzone-button">{photoBusy ? 'Загружаем фото…' : draft.image ? 'Заменить фото' : 'Выбрать файл'}</span>
               <small>или перетащите фото сюда</small>
-              <input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy} onChange={e => { void choosePhoto(e.target.files?.[0]); e.target.value = ''; }} />
+              <input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy} onChange={e => { choosePhoto(e.target.files?.[0]); e.target.value = ''; }} />
             </label>
-            <p className="product-hint">JPEG, PNG или WebP. Фото автоматически уменьшится.</p>
+            {draft.image && <button type="button" className="product-secondary product-reframe" disabled={photoBusy} onClick={() => setCropSource(draft.image)}><Crop size={16} aria-hidden="true" />Изменить кадр текущего фото</button>}
+            <p className="product-hint">JPEG, PNG или WebP. После выбора можно подвинуть, приблизить и повернуть фото.</p>
           </section>
           <section className="product-card"><h4><Settings size={20} aria-hidden="true" />Настройки</h4><div className="product-switches">
             <label><input type="checkbox" checked={draft.is_visible} onChange={e => field('is_visible', e.target.checked)} />Показывать в каталоге</label>
@@ -572,6 +581,7 @@ function ProductsPanel() {
         </div>
       </div>
       <ErrorNotice message={error} />
+      {cropSource && <PhotoCropper source={cropSource} onCancel={() => setCropSource(null)} onDone={photo => void uploadFramed(photo)} />}
       <div className="product-actions"><button className="portal-button product-save" disabled={busy || !draft.name.trim()}><Check size={18} aria-hidden="true" />{busy ? 'Сохраняем…' : 'Сохранить товар'}</button><button type="button" className="product-secondary" disabled={busy} onClick={() => setEditing(null)}>Отмена</button><button type="button" className="product-secondary product-close" disabled={busy} onClick={() => setEditing(null)} aria-label="Закрыть редактирование товара"><X size={17} aria-hidden="true" />Закрыть</button></div>
     </fieldset></form></section>}
     <label className="portal-search portal-product-search"><Search size={18} aria-hidden="true" /><input name="product-search" autoComplete="off" aria-label="Найти товар по названию" placeholder="Найти любимую выпечку" value={search} onChange={e => setSearch(e.target.value)} /></label>

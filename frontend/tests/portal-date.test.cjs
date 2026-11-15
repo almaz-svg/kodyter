@@ -30,6 +30,7 @@ function panel(initialDate = '') {
       if (name === 'lucide-react' || name === './portals.css') return {};
       if (name === './ui') return { LazyImage: 'img' };
       if (name === './imageUpload') return { uploadProductPhoto: async () => '' };
+      if (name === './photoCropper') return { PhotoCropper: () => null };
       return require(name);
     },
     remote(requestPath) { calls.push(requestPath); return { data: null, loading: false, error: '', retry() {}, replace() {} }; },
