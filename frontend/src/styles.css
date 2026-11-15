@@ -671,3 +671,23 @@
   .checkout-page .order-summary{padding:22px;border-radius:14px}
   .checkout-page .summary-total strong{font-size:28px}
 }
+/* Order success page */
+.order-success-page .order-success{max-width:560px;gap:16px}
+.order-success-page .success-icon{width:84px;height:84px;background:var(--green);border:0;color:var(--gold);box-shadow:0 0 0 10px #07382c14,0 14px 30px #052d2433;margin-bottom:14px}
+.order-success-page .order-success .eyebrow{font-size:13px;color:#7b6230}
+.order-success-page .order-success h1{font-size:clamp(44px,5vw,62px)}
+.order-success-page .success-number{display:inline-flex;align-items:center;gap:4px;background:#fffdf8;border:1px solid #e6dcc6;border-radius:999px;padding:8px 18px;font-size:15px;color:#62665b}
+.order-success-page .success-number strong{color:var(--green);font-weight:800;letter-spacing:.3px}
+.order-success-page .order-success>p:not(.success-number){font-size:15px;line-height:1.6;max-width:440px}
+.order-success-page .success-receipt{max-width:440px;background:var(--green);color:var(--cream);border-radius:16px;padding:26px 28px;gap:8px;box-shadow:0 18px 40px #052d2433;margin-top:6px}
+.order-success-page .success-receipt>span{font-size:14px;color:#d8dfcf}
+.order-success-page .success-receipt>strong{font-family:'Manrope',Arial,sans-serif;font-size:40px;font-weight:800;letter-spacing:-.5px;font-variant-numeric:lining-nums tabular-nums;color:var(--gold);line-height:1.2}
+.order-success-page .success-receipt>small{display:inline-flex;align-items:center;justify-content:center;gap:8px;justify-self:center;font-size:13px;color:#e9d7a9;background:#ffffff12;border-radius:999px;padding:8px 14px;margin-top:6px}
+.success-items{list-style:none;margin:0 0 14px;padding:0 0 14px;border-bottom:1px solid #ffffff22;display:grid;gap:10px;text-align:left}
+.success-items li{display:grid;grid-template-columns:minmax(0,1fr) auto auto;align-items:baseline;gap:12px;font-size:15px}
+.success-items span{color:#fff;font-weight:600;overflow-wrap:anywhere}
+.success-items b{color:var(--gold);font-weight:800;font-size:14px;white-space:nowrap}
+.success-items strong{color:#fff;font-weight:700;white-space:nowrap}
+.order-success-page .order-success .button{min-height:54px;font-size:15px;padding:14px 32px;border-radius:999px;margin-top:8px;box-shadow:0 8px 20px #052d2426}
+.order-success-page .order-success .text-link{font-size:14px;font-weight:600}
+@media(max-width:600px){.order-success-page .success-receipt{padding:22px 18px}.order-success-page .success-receipt>strong{font-size:34px}.success-items li{font-size:14px;gap:8px}}

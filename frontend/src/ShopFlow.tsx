@@ -300,17 +300,19 @@ export function Checkout() {
   }
 
   if (success) return (
-    <main className="container page">
+    <main className="container page order-success-page">
       {storageWarning && <p className="error-box" role="status">{storageWarning}</p>}
       <div className="order-success">
-        <div className="success-icon"><Check size={34} aria-hidden="true" /></div>
+        <div className="success-icon"><Check size={38} strokeWidth={2.5} aria-hidden="true" /></div>
         <span className="eyebrow">{t.successEyebrow}</span>
         <h1>{t.successTitle}</h1>
-        <p>Номер <strong>№ {success.number}</strong>. {t.successP}</p>
+        <p className="success-number">№ <strong>{success.number}</strong></p>
+        <p>{t.successP}</p>
         <div className="success-receipt">
+          {success.items?.length > 0 && <ul className="success-items">{success.items.map(item => <li key={item.id}><span>{item.name}</span><b>{item.quantity} {t.cartPieces}</b><strong>{money(Number(item.price) * item.quantity)}</strong></li>)}</ul>}
           <span>{t.successTotalLabel}</span>
           <strong>{money(success.total)}</strong>
-          <small>{t.successPayNote}</small>
+          <small><Truck size={16} aria-hidden="true" />{t.successPayNote}</small>
         </div>
         <Link to="/account" className="button button-green">{t.successTrack} <ArrowRight size={17} aria-hidden="true" /></Link>
         <Link to="/catalog" className="text-link">{t.successBack}</Link>
