@@ -51,7 +51,7 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
             preview = available.json()[0]
             self.assertEqual(preview['items'], [{'name': 'Croissant', 'quantity': 2}])
             self.assertEqual(preview['items_count'], 2)
-            self.assertEqual(set(preview), {'id', 'number', 'status', 'created_at', 'total', 'address', 'items', 'items_count'})
+            self.assertEqual(set(preview), {'id', 'number', 'status', 'created_at', 'total', 'address', 'items', 'items_count', 'customer_company'})
             self.assertEqual(self.client.get('/api/orders/').json(), [])
             self.assertEqual(self.client.get(f'/api/orders/{order_id}/').status_code, 404)
 

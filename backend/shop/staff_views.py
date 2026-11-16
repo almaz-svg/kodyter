@@ -21,7 +21,7 @@ class AvailableOrders(APIView):
     permission_classes = [IsCourier]
 
     def get(self, request):
-        orders = Order.objects.filter(courier__isnull=True, status__in=AVAILABLE_STATUSES).prefetch_related('items')
+        orders = Order.objects.filter(courier__isnull=True, status__in=AVAILABLE_STATUSES).select_related('customer').prefetch_related('items')
         return Response(AvailableOrderSerializer(orders, many=True).data)
 
 
@@ -47,7 +47,7 @@ class TeamOrders(APIView):
     permission_classes = [IsCourier]
 
     def get(self, request):
-        orders = Order.objects.filter(courier__isnull=False).exclude(status__in=('DELIVERED', 'CANCELLED')).select_related('courier').prefetch_related('items').order_by('created_at', 'pk')
+        orders = Order.objects.filter(courier__isnull=False).exclude(status__in=('DELIVERED', 'CANCELLED')).select_related('courier', 'customer').prefetch_related('items').order_by('created_at', 'pk')
         couriers = User.objects.filter(role='COURIER', is_active=True).exclude(pk=request.user.pk).order_by('name', 'pk')
         return Response({'orders': TeamOrderSerializer(orders, many=True).data, 'couriers': [{'id': courier.pk, 'name': courier.name} for courier in couriers]})
 

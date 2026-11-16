@@ -198,7 +198,7 @@ class OrderSerializer(serializers.ModelSerializer):
     customer_company = serializers.SerializerMethodField()
 
     def get_customer_company(self, order):
-        return order.customer.company_name if order.customer.account_type == 'BUSINESS' else ''
+        return business_name(order)
 
     def get_payment_status(self, order):
         return payment_status(order)
@@ -245,29 +245,41 @@ class AvailableItemSerializer(serializers.ModelSerializer):
         fields = ['name', 'quantity']
         read_only_fields = fields
 
+def business_name(order):
+    """The ordering business ('заведение'), so staff see at once who the order is for; empty for individuals."""
+    return order.customer.company_name if order.customer.account_type == 'BUSINESS' else ''
+
 class AvailableOrderSerializer(serializers.ModelSerializer):
     items = AvailableItemSerializer(many=True, read_only=True)
     items_count = serializers.SerializerMethodField()
+    customer_company = serializers.SerializerMethodField()
+
+    def get_customer_company(self, order):
+        return business_name(order)
 
     def get_items_count(self, order):
         return sum(item.quantity for item in order.items.all())
 
     class Meta:
         model = Order
-        fields = ['id', 'number', 'status', 'created_at', 'total', 'address', 'items_count', 'items']
+        fields = ['id', 'number', 'status', 'created_at', 'total', 'address', 'items_count', 'items', 'customer_company']
         read_only_fields = fields
 
 class TeamOrderSerializer(serializers.ModelSerializer):
     """What one courier sees about the whole team's deliveries: who carries which order, without customer contacts."""
     items_count = serializers.SerializerMethodField()
     courier_name = serializers.CharField(source='courier.name', read_only=True)
+    customer_company = serializers.SerializerMethodField()
 
     def get_items_count(self, order):
         return sum(item.quantity for item in order.items.all())
 
+    def get_customer_company(self, order):
+        return business_name(order)
+
     class Meta:
         model = Order
-        fields = ['id', 'number', 'status', 'created_at', 'total', 'address', 'items_count', 'courier', 'courier_name']
+        fields = ['id', 'number', 'status', 'created_at', 'total', 'address', 'items_count', 'courier', 'courier_name', 'customer_company']
         read_only_fields = fields
 
 class PaymentRequestSerializer(serializers.Serializer):

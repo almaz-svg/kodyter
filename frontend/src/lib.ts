@@ -23,9 +23,9 @@ export interface DebtCustomer {id:number;name:string;email:string;phone:string;a
 export interface Debts {state:'open'|'paid'|'all';customers:DebtCustomer[];open_total:string;open_count:number;paid_total:string;paid_count:number}
 export interface MyDebt {total:string;count:number;orders:{id:number;number:string;total:string;credit_at:string|null}[]}
 export interface CashierSummary {date:string;currency:'KZT';cash_received:number|string;paid_count:number;unpaid_delivered_total:number|string;unpaid_delivered_count:number;debt_total?:number|string;debt_count?:number;in_delivery_total?:number|string;in_delivery_count?:number;in_delivery_orders?:{id:number;number:string;status:string;total:string;address:string;courier_name:string}[];orders_total:number|string;orders_count:number;items_count:number;cancelled_count:number;pending_total?:number|string;pending_count?:number;debt_paid_total?:number|string;debt_paid_count?:number}
-export interface TeamOrder {id:number;number:string;status:Order['status'];created_at:string;total:number|string;address:string;items_count:number;courier:number;courier_name:string}
+export interface TeamOrder {customer_company?:string;id:number;number:string;status:Order['status'];created_at:string;total:number|string;address:string;items_count:number;courier:number;courier_name:string}
 export interface TeamOrders {orders:TeamOrder[];couriers:{id:number;name:string}[]}
-export interface AvailableOrder {id:number;number:string;status:Order['status'];created_at:string;total:number|string;address:string;items_count:number;items:{name:string;quantity:number}[]}
+export interface AvailableOrder {customer_company?:string;id:number;number:string;status:Order['status'];created_at:string;total:number|string;address:string;items_count:number;items:{name:string;quantity:number}[]}
 export const statusSteps = ['NEW','CONFIRMED','PREPARING','READY','HANDED_OVER','IN_TRANSIT','DELIVERED'];
 export const statusLabel:Record<string,string> = {NEW:'Новый',CONFIRMED:'Подтверждён',PREPARING:'Готовится',READY:'Готов к выдаче',HANDED_OVER:'Передан курьеру',IN_TRANSIT:'В пути',DELIVERED:'Доставлен',CANCELLED:'Отменён'};
 // Weight as typed in the admin panel; a bare number such as "120" gets the gram unit.
