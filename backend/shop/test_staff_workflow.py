@@ -349,7 +349,7 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.client.force_authenticate(self.cashier)
         self.assertEqual(self.client.get('/api/admin/overview/').status_code, 403)
 
-    def test_summary_counts_purchases_placed_in_the_period(self):
+    def test_summary_counts_delivered_purchases_and_orders_still_in_work(self):
         from .models import OrderItem
         bun = Product.objects.create(category=Category.objects.create(name='Bakery', slug='bakery'), name='Bun', price='500')
         inside = [self.make_order(total='2400.00'), self.make_order(status='DELIVERED', total='3500.00')]
@@ -362,7 +362,8 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.client.force_login(self.admin)
         today = timezone.localdate().isoformat()
         summary = self.client.get(f'/api/cashier/summary/?date_from={today}&date_to={today}').json()
-        self.assertEqual((summary['orders_total'], summary['orders_count'], summary['items_count'], summary['cancelled_count']), ('5900.00', 2, 6, 1))
+        self.assertEqual((summary['orders_total'], summary['orders_count'], summary['items_count'], summary['cancelled_count']), ('3500.00', 1, 4, 1))
+        self.assertEqual((summary['pending_total'], summary['pending_count']), ('2400.00', 1))
 
     def test_summary_uses_local_payment_day_and_all_outstanding_delivered_orders(self):
         paid = self.make_order(status='DELIVERED')
@@ -374,7 +375,7 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         from .models import Payment
         Payment.objects.filter(order=paid).update(paid_at=datetime(2026, 10, 14, 20, 30, tzinfo=dt_timezone.utc))
         summary = self.client.get('/api/cashier/summary/?date=2026-10-15').json()
-        self.assertEqual(summary, {'date': '2026-10-15', 'date_from': '2026-10-15', 'date_to': '2026-10-15', 'currency': 'KZT', 'cash_received': '2400.00', 'paid_count': 1, 'unpaid_delivered_total': '3500.00', 'unpaid_delivered_count': 1, 'debt_total': '0.00', 'debt_count': 0, 'in_delivery_total': '0.00', 'in_delivery_count': 0, 'in_delivery_orders': [], 'orders_total': '0.00', 'orders_count': 0, 'items_count': 0, 'cancelled_count': 0})
+        self.assertEqual(summary, {'date': '2026-10-15', 'date_from': '2026-10-15', 'date_to': '2026-10-15', 'currency': 'KZT', 'cash_received': '2400.00', 'paid_count': 1, 'unpaid_delivered_total': '3500.00', 'unpaid_delivered_count': 1, 'debt_total': '0.00', 'debt_count': 0, 'in_delivery_total': '0.00', 'in_delivery_count': 0, 'in_delivery_orders': [], 'orders_total': '0.00', 'orders_count': 0, 'items_count': 0, 'cancelled_count': 0, 'pending_total': '0.00', 'pending_count': 0})
         previous = self.client.get('/api/cashier/summary/?date=2026-10-14').json()
         self.assertEqual(previous['cash_received'], '0.00')
         self.assertEqual(previous['unpaid_delivered_total'], '3500.00')

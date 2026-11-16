@@ -634,3 +634,6 @@
   .portal-courier-tabs button.active { background: var(--portal-green); color: #fffaf0; }
   .portal-courier-tabs button.active span { background: #ffffff26; color: #fffaf0; }
 }
+/* Cash summary: orders placed in the period that are not delivered yet (not counted as sales). */
+.portal-cash-grid .portal-cash-pending { grid-column: 1 / -1; background: #fbf5e8; border-color: #e6d3a8; }
+.portal-cash-grid .portal-cash-pending strong { color: #7a5a1c; }
