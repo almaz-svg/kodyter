@@ -178,13 +178,13 @@ export function Auth() {
               <label>{t.authNewPassword}
                 <span className="auth-password">
                   <input ref={passwordRef} {...passwordEvents} type={showPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={10} placeholder={t.authNewPasswordPlaceholder}/>
-                  <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>{showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}</button>
+                  <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>{showPassword ? <Eye size={22} strokeWidth={1.5} aria-hidden="true"/> : <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/>}</button>
                 </span>
               </label>
               <label>{t.authPasswordRepeat}
                 <span className="auth-password">
                   <input ref={repeatRef} {...passwordEvents} type={showPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={10} aria-invalid={passwordMismatch || undefined} placeholder={t.authPasswordRepeatPlaceholder}/>
-                  <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>{showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}</button>
+                  <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>{showPassword ? <Eye size={22} strokeWidth={1.5} aria-hidden="true"/> : <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/>}</button>
                 </span>
                 {passwordMismatch ? <small className="auth-password-hint is-bad">{t.authPasswordMismatch}</small> : repeatPassword && <small className="auth-password-hint is-ok"><Check size={14} aria-hidden="true"/>{t.authPasswordMatch}</small>}
               </label>
@@ -231,7 +231,7 @@ export function Auth() {
                   <span className="auth-password">
                     <input ref={passwordRef} {...passwordEvents} name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?10:1} placeholder={mode==='register'?t.authNewPasswordPlaceholder:t.authPasswordPlaceholder}/>
                     <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={e => {e.preventDefault(); setShowPassword(v => !v);}}>
-                      {showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}
+                      {showPassword ? <Eye size={22} strokeWidth={1.5} aria-hidden="true"/> : <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/>}
                     </button>
                   </span>
                 </label>
@@ -241,7 +241,7 @@ export function Auth() {
                   <span className="auth-password">
                     <input ref={repeatRef} {...passwordEvents} type={showPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={10} aria-invalid={passwordMismatch || undefined} placeholder={t.authPasswordRepeatPlaceholder}/>
                     <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={e => {e.preventDefault(); setShowPassword(v => !v);}}>
-                      {showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}
+                      {showPassword ? <Eye size={22} strokeWidth={1.5} aria-hidden="true"/> : <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/>}
                     </button>
                   </span>
                   {passwordMismatch ? <small className="auth-password-hint is-bad">{t.authPasswordMismatch}</small> : repeatPassword && <small className="auth-password-hint is-ok"><Check size={14} aria-hidden="true"/>{t.authPasswordMatch}</small>}
