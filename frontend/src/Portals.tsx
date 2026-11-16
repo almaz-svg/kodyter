@@ -213,6 +213,7 @@ function KitchenPanel({ user }: { user: User }) {
 function KitchenBoard({ orders, onOpen, onChanged }: { orders: Order[]; onOpen: (id: number) => void; onChanged: () => void }) {
   const [busy, setBusy] = useState<string | null>(null);
   const [error, setError] = useState('');
+  const [notice, setNotice] = useState('');
   const kitchen = orders.filter(order => order.status === 'CONFIRMED' || order.status === 'PREPARING');
   const fresh = orders.filter(order => order.status === 'NEW');
   const ready = orders.filter(order => order.status === 'READY');
@@ -225,13 +226,14 @@ function KitchenBoard({ orders, onOpen, onChanged }: { orders: Order[]; onOpen: 
     group.lines.push({ orderId: order.id, number: order.number, itemId: item.id, quantity: item.quantity, prepared: !!item.is_prepared, started: order.status === 'PREPARING' });
     groups.set(key, group);
   }
-  const rows = [...groups.values()].sort((a, b) => (b.left > 0 ? 1 : 0) - (a.left > 0 ? 1 : 0) || b.left - a.left || a.name.localeCompare(b.name));
+  // A fixed alphabetical order: a card must not jump to another place when it is marked done, or the next tap lands on a different product.
+  const rows = [...groups.values()].sort((a, b) => a.name.localeCompare(b.name, 'ru') || a.key.localeCompare(b.key));
   const left = rows.reduce((sum, row) => sum + row.left, 0);
   const cooked = kitchen.filter(order => order.items.length > 0 && order.items.every(item => item.is_prepared));
-  const mark = async (ids: number[], prepared: boolean, key: string) => {
+  const mark = async (ids: number[], prepared: boolean, key: string, label: string) => {
     if (busy) return;
-    setBusy(key); setError('');
-    try { await api('/kitchen/prepared/', json({ item_ids: ids, prepared })); onChanged(); }
+    setBusy(key); setError(''); setNotice('');
+    try { await api('/kitchen/prepared/', json({ item_ids: ids, prepared })); setNotice(prepared ? `Отмечено готовым: ${label}` : `Возвращено в работу: ${label}`); onChanged(); }
     catch (err) { setError(failure(err)); onChanged(); }
     finally { setBusy(null); }
   };
@@ -246,14 +248,15 @@ function KitchenBoard({ orders, onOpen, onChanged }: { orders: Order[]; onOpen: 
     {fresh.length > 0 && <div className="kitchen-strip"><span>Новые заказы — откройте и подтвердите:</span>{fresh.map(order => <button type="button" key={order.id} onClick={() => onOpen(order.id)}>№{order.number}<ChevronRight size={15} aria-hidden="true" /></button>)}</div>}
     {cooked.length > 0 && <div className="kitchen-strip is-done"><span><Check size={16} aria-hidden="true" /> Всё приготовлено — отметьте заказ готовым к выдаче:</span>{cooked.map(order => <button type="button" key={order.id} onClick={() => onOpen(order.id)}>№{order.number}<ChevronRight size={15} aria-hidden="true" /></button>)}</div>}
     <ErrorNotice message={error} />
+    {notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
     {rows.length ? <div className="kitchen-list">{rows.map(row => { const done = row.left === 0; const percent = Math.round(((row.total - row.left) / row.total) * 100); return <article key={row.key} className={`kitchen-item${done ? ' is-done' : ''}`}>
       <div className="kitchen-item-photo">{row.image ? <LazyImage src={row.image} alt="" /> : <ChefHat size={22} aria-hidden="true" />}</div>
       <div className="kitchen-item-main">
         <div className="kitchen-item-head"><h3>{row.name}</h3><span className="kitchen-item-count">{done ? 'Готово' : <>Осталось <b>{row.left}</b> из {row.total} шт.</>}</span></div>
         <div className="kitchen-progress" aria-hidden="true"><i style={{ width: `${percent}%` }} /></div>
-        <div className="kitchen-lines">{row.lines.map(line => <button type="button" key={line.itemId} className={`kitchen-line${line.prepared ? ' is-done' : ''}`} disabled={busy !== null} aria-pressed={line.prepared} title={line.prepared ? 'Снять отметку' : 'Отметить приготовленным'} onClick={() => void mark([line.itemId], !line.prepared, `line-${line.itemId}`)}>{line.prepared ? <Check size={14} aria-hidden="true" /> : <i aria-hidden="true" />}<span>№{line.number}</span><b>{line.quantity} шт.</b>{!line.started && !line.prepared && <em>не начат</em>}</button>)}</div>
+        <div className="kitchen-lines">{row.lines.map(line => <button type="button" key={line.itemId} className={`kitchen-line${line.prepared ? ' is-done' : ''}`} disabled={busy !== null} aria-pressed={line.prepared} title={line.prepared ? 'Снять отметку' : 'Отметить приготовленным'} onClick={() => void mark([line.itemId], !line.prepared, `line-${line.itemId}`, `«${row.name}» в заказе №${line.number}`)}>{line.prepared ? <Check size={14} aria-hidden="true" /> : <i aria-hidden="true" />}<span>№{line.number}</span><b>{line.quantity} шт.</b>{!line.started && !line.prepared && <em>не начат</em>}</button>)}</div>
       </div>
-      <button type="button" className={`portal-button portal-button-small kitchen-all${done ? ' is-undo' : ''}`} disabled={busy !== null} onClick={() => void mark(row.lines.filter(line => line.prepared === done).map(line => line.itemId), !done, row.key)}>{busy === row.key ? 'Сохраняем…' : done ? 'Вернуть в работу' : 'Всё готово'}</button>
+      <button type="button" className={`portal-button portal-button-small kitchen-all${done ? ' is-undo' : ''}`} disabled={busy !== null} onClick={() => void mark(row.lines.filter(line => line.prepared === done).map(line => line.itemId), !done, row.key, `«${row.name}»`)}>{busy === row.key ? 'Сохраняем…' : done ? 'Вернуть в работу' : 'Всё готово'}</button>
     </article>; })}</div> : <EmptyState icon={<ChefHat size={30} aria-hidden="true" />} title="Сейчас готовить нечего">Подтверждённые заказы появятся здесь, сложенные по товарам.</EmptyState>}
   </section>;
 }
