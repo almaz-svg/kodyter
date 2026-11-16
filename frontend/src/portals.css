@@ -637,3 +637,9 @@
 /* Cash summary: orders placed in the period that are not delivered yet (not counted as sales). */
 .portal-cash-grid .portal-cash-pending { grid-column: 1 / -1; background: #fbf5e8; border-color: #e6d3a8; }
 .portal-cash-grid .portal-cash-pending strong { color: #7a5a1c; }
+/* Courier: second confirmation before an order goes on credit. */
+.portal-credit-confirm { background: #fff4ea !important; border-color: #efc7a4 !important; }
+.portal-credit-confirm h3 { display: flex; align-items: center; gap: 8px; color: #8a3b12; }
+.portal-credit-confirm .portal-step-agree { margin: 12px 0 4px; }
+.portal-debt-confirm-button { background: #a6461a; border-color: #a6461a; }
+.portal-debt-confirm-button:hover:not(:disabled) { background: #8a3b12; border-color: #8a3b12; }
