@@ -569,7 +569,7 @@ function ProductsPanel() {
         </div>
         <div className="product-editor-side">
           <section className="product-card"><h4><ImageIcon size={20} aria-hidden="true" />Фотография товара</h4>
-            <div className="product-photo-preview">{draft.image ? <img src={draft.image} alt="" /> : <span><ImageIcon size={34} strokeWidth={1.3} aria-hidden="true" />Фото ещё не выбрано</span>}</div>
+            <div className="product-photo-preview">{draft.image ? <img src={draft.image} alt="" /> : <span><ImageIcon size={34} strokeWidth={1.3} aria-hidden="true" />Фото ещё не выбрано</span>}</div>{draft.image && <p className="product-photo-note">Так фото выглядит в каталоге.</p>}
             <label className={`product-dropzone${photoBusy ? ' is-busy' : ''}`} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); choosePhoto(event.dataTransfer.files?.[0]); }}>
               <Upload size={22} aria-hidden="true" />
               <span className="product-dropzone-button">{photoBusy ? 'Загружаем фото…' : draft.image ? 'Заменить фото' : 'Выбрать файл'}</span>

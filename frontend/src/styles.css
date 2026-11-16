@@ -732,3 +732,6 @@
 }
 .price-soon{font-size:13px!important;font-weight:600;color:#8a6d32}
 .detail-weight{display:flex;align-items:center;gap:9px;margin:4px 0 6px;font-size:15px;color:#4c5a4f}.detail-weight svg{color:#8a6d32}.detail-weight strong{font-size:17px;font-weight:700;color:var(--green)}
+
+/* One product photo frame everywhere (matches PRODUCT_PHOTO_ASPECT in photoCropper.tsx). */
+.detail-image img,.product-image{aspect-ratio:1.05}
