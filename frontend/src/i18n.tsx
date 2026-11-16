@@ -150,6 +150,10 @@ export interface Translations {
   wholesaleApplied: string;
   authEmail: string;
   authPassword: string;
+  authPasswordRepeat: string;
+  authPasswordRepeatPlaceholder: string;
+  authPasswordMismatch: string;
+  authPasswordMatch: string;
   authPasswordPlaceholder: string;
   authNewPasswordPlaceholder: string;
   authRegisterNote: string;
@@ -385,6 +389,10 @@ const kz: Translations = {
   authAccountType:'Аккаунт түрі', authAccountIndividual:'Жеке тұлға', authAccountBusiness:'Мекеме (кафе, мейрамхана, дүкен)', authCompanyName:'Мекеменің атауы', authCompanyNamePlaceholder:'Мысалы, «Анасым» кафесі', authBusinessNote:'Көтерме баға әкімші өтінімді тексергеннен кейін ашылады.', wholesaleFrom:(n,p)=>`${n} данадан бастап көтерме баға: ${p}`, wholesaleAddMore:(n,p)=>`Тағы ${n} дана қосыңыз — баға ${p} болады`, wholesaleApplied:'Көтерме баға қолданылды',
   authEmail:'Электрондық пошта',
   authPassword:'Құпия сөз',
+  authPasswordRepeat:'Құпия сөзді қайталаңыз',
+  authPasswordRepeatPlaceholder:'Сол құпия сөзді қайта енгізіңіз',
+  authPasswordMismatch:'Құпия сөздер сәйкес келмейді.',
+  authPasswordMatch:'Құпия сөздер сәйкес келеді',
   authPasswordPlaceholder:'Құпия сөзді енгізіңіз',
   authNewPasswordPlaceholder:'10 таңбадан кем емес',
   authRegisterNote:'Тіркелу сатып алушы кабинетін жасайды.', authShowPassword:'Құпия сөзді көрсету', authHidePassword:'Құпия сөзді жасыру',
@@ -574,6 +582,10 @@ const ru: Translations = {
   authAccountType:'Тип аккаунта', authAccountIndividual:'Физическое лицо', authAccountBusiness:'Заведение (кафе, ресторан, магазин)', authCompanyName:'Название заведения', authCompanyNamePlaceholder:'Например, кафе «Anasym»', authBusinessNote:'Оптовые цены откроются после проверки заявки администратором.', wholesaleFrom:(n,p)=>`От ${n} шт. — оптовая цена ${p}`, wholesaleAddMore:(n,p)=>`Добавьте ещё ${n} шт. — и цена станет ${p}`, wholesaleApplied:'Оптовая цена применена',
   authEmail:'Электронная почта',
   authPassword:'Пароль',
+  authPasswordRepeat:'Повторите пароль',
+  authPasswordRepeatPlaceholder:'Введите тот же пароль ещё раз',
+  authPasswordMismatch:'Пароли не совпадают.',
+  authPasswordMatch:'Пароли совпадают',
   authPasswordPlaceholder:'Введите пароль',
   authNewPasswordPlaceholder:'Не менее 10 символов',
   authRegisterNote:'Регистрация создаёт кабинет покупателя.', authShowPassword:'Показать пароль', authHidePassword:'Скрыть пароль',
@@ -763,6 +775,10 @@ const en: Translations = {
   authAccountType:'Account type', authAccountIndividual:'Individual', authAccountBusiness:'Business (café, restaurant, shop)', authCompanyName:'Business name', authCompanyNamePlaceholder:'For example, Café Anasym', authBusinessNote:'Wholesale prices open after the administrator reviews the application.', wholesaleFrom:(n,p)=>`From ${n} units — wholesale price ${p}`, wholesaleAddMore:(n,p)=>`Add ${n} more — the price becomes ${p}`, wholesaleApplied:'Wholesale price applied',
   authEmail:'Email address',
   authPassword:'Password',
+  authPasswordRepeat:'Repeat password',
+  authPasswordRepeatPlaceholder:'Enter the same password again',
+  authPasswordMismatch:'Passwords do not match.',
+  authPasswordMatch:'Passwords match',
   authPasswordPlaceholder:'Enter password',
   authNewPasswordPlaceholder:'At least 10 characters',
   authRegisterNote:'Registration creates a customer account.', authShowPassword:'Show password', authHidePassword:'Hide password',

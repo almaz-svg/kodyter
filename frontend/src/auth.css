@@ -148,3 +148,9 @@ main.auth-page .auth-content{overflow:hidden}
 .auth-lang .lang-btn.lang-active:hover{background:#11513e;color:#f6efd9}
 @media (max-width:1100px){.auth-lang{right:40px;top:24px}}
 @media (max-width:600px){.auth-lang{right:16px;top:16px}.auth-lang .lang-btn{font-size:12px;padding:5px 10px;min-height:30px}}
+
+/* Registration: repeat-password check under the field. */
+.auth-password-hint{display:flex;align-items:center;gap:5px;margin-top:7px;font-size:12px;font-weight:500}
+.auth-password-hint.is-bad{color:#a4452c}
+.auth-password-hint.is-ok{color:#3b6a41}
+.auth-password input[aria-invalid="true"]{border-color:#b4553b}

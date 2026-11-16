@@ -83,6 +83,9 @@ export function Auth() {
   const [error,setError] = useState('');
   const [sent,setSent] = useState(false);
   const [showPassword,setShowPassword] = useState(false);
+  const [newPassword,setNewPassword] = useState('');
+  const [repeatPassword,setRepeatPassword] = useState('');
+  const passwordMismatch = mode==='register' && repeatPassword.length>0 && repeatPassword!==newPassword;
   const returnTo = params.get('returnTo')==='/checkout' ? '/checkout' : '/account';
 
   useEffect(() => {
@@ -90,8 +93,10 @@ export function Auth() {
   }, [user,authLoading,navigate,returnTo]);
 
   async function submit(e: FormEvent<HTMLFormElement>) {
-    e.preventDefault(); setError(''); setBusy(true);
+    e.preventDefault(); setError('');
     const data = Object.fromEntries(new FormData(e.currentTarget));
+    if (mode==='register' && data.password!==repeatPassword) { setError(t.authPasswordMismatch); return; }
+    setBusy(true);
     try {
       if (mode === 'reset') {
         await api('/auth/password-reset/', {method:'POST', body:JSON.stringify({email:data.email})});
@@ -170,11 +175,22 @@ export function Auth() {
               {mode !== 'reset' && (
                 <label>{t.authPassword}
                   <span className="auth-password">
-                    <input name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?10:1} placeholder={mode==='register'?t.authNewPasswordPlaceholder:t.authPasswordPlaceholder}/>
+                    <input name="password" type={showPassword ? 'text' : 'password'} value={newPassword} onChange={e=>setNewPassword(e.target.value)} autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?10:1} placeholder={mode==='register'?t.authNewPasswordPlaceholder:t.authPasswordPlaceholder}/>
                     <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={e => {e.preventDefault(); setShowPassword(v => !v);}}>
                       {showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}
                     </button>
                   </span>
+                </label>
+              )}
+              {mode==='register' && (
+                <label>{t.authPasswordRepeat}
+                  <span className="auth-password">
+                    <input type={showPassword ? 'text' : 'password'} value={repeatPassword} onChange={e=>setRepeatPassword(e.target.value)} autoComplete="new-password" required minLength={10} aria-invalid={passwordMismatch || undefined} placeholder={t.authPasswordRepeatPlaceholder}/>
+                    <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={e => {e.preventDefault(); setShowPassword(v => !v);}}>
+                      {showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}
+                    </button>
+                  </span>
+                  {passwordMismatch ? <small className="auth-password-hint is-bad">{t.authPasswordMismatch}</small> : repeatPassword && <small className="auth-password-hint is-ok"><Check size={14} aria-hidden="true"/>{t.authPasswordMatch}</small>}
                 </label>
               )}
               {mode==='register' && (
