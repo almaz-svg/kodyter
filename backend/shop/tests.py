@@ -84,10 +84,10 @@ class AuthContractTests(APITestCase):
         absent = self.client.post('/api/auth/password-reset/', {'email': 'absent@example.test'})
         self.assertEqual(found.json(), absent.json())
         self.assertEqual(len(mail.outbox), 1)
-        match = re.search(r'uid=([^&\s]+)&token=([^\s]+)', mail.outbox[0].body)
-        data = {'uid': match[1], 'token': match[2], 'password': '  New-password-987!  '}
-        self.assertEqual(self.client.post('/api/auth/password-reset-confirm/', data).status_code, 200)
-        self.assertEqual(self.client.post('/api/auth/password-reset-confirm/', data).status_code, 400)
+        code = re.search(r'(?<!\d)(\d{6})(?!\d)', mail.outbox[0].body)[1]
+        data = {'email': user.email, 'code': code, 'password': '  New-password-987!  '}
+        self.assertEqual(self.client.post('/api/auth/password-reset-code/', data).status_code, 200)
+        self.assertEqual(self.client.post('/api/auth/password-reset-code/', data).status_code, 400)
         user.refresh_from_db()
         self.assertTrue(user.check_password(data['password']))
 

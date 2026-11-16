@@ -154,6 +154,15 @@ export interface Translations {
   authPasswordRepeatPlaceholder: string;
   authPasswordMismatch: string;
   authPasswordMatch: string;
+  authCodeSent: (email: string) => string;
+  authCodeLabel: string;
+  authCodeHelp: string;
+  authNewPassword: string;
+  authCodeSubmit: string;
+  authResend: string;
+  authResendIn: (seconds: number) => string;
+  authChangeEmail: string;
+  authResetDone: string;
   authPasswordPlaceholder: string;
   authNewPasswordPlaceholder: string;
   authRegisterNote: string;
@@ -382,7 +391,7 @@ const kz: Translations = {
   authResetTitle:'Қолжетімділікті қалпына келтіру',
   authLoginSub:'Тапсырыстарыңыз, сүйікті дәмдеріңіз және біраз қамқорлық.',
   authRegisterSub:'Тапсырыстарыңыз, сүйікті дәмдеріңіз және біраз қамқорлық.',
-  authResetSub:'Тіркелу кезінде пайдаланған поштаны көрсетіңіз.',
+  authResetSub:'Тіркелу кезінде пайдаланған поштаны көрсетіңіз — оған код жібереміз.',
   authCheckoutSub:'Тапсырыс рәсімдеу үшін кіріңіз. Таңдалғанның бәрі себетте сақталды.',
   authTabLogin:'Кіру', authTabRegister:'Тіркелу',
   authName:'Атыңыз', authNamePlaceholder:'Қалай хабарласуға болады',
@@ -393,11 +402,20 @@ const kz: Translations = {
   authPasswordRepeatPlaceholder:'Сол құпия сөзді қайта енгізіңіз',
   authPasswordMismatch:'Құпия сөздер сәйкес келмейді.',
   authPasswordMatch:'Құпия сөздер сәйкес келеді',
+  authCodeSent:(e)=>`Біз ${e} поштасына 6 таңбалы код жібердік. Хат келмесе, «Спам» бумасын тексеріңіз.`,
+  authCodeLabel:'Хаттағы код',
+  authCodeHelp:'Код 15 минут жарамды.',
+  authNewPassword:'Жаңа құпия сөз',
+  authCodeSubmit:'Жаңа құпия сөзді сақтау',
+  authResend:'Кодты қайта жіберу',
+  authResendIn:(n)=>`${n} секундтан кейін қайта жіберуге болады`,
+  authChangeEmail:'Поштаны өзгерту',
+  authResetDone:'Құпия сөз өзгертілді. Жаңа құпия сөзбен кіріңіз.',
   authPasswordPlaceholder:'Құпия сөзді енгізіңіз',
   authNewPasswordPlaceholder:'10 таңбадан кем емес',
   authRegisterNote:'Тіркелу сатып алушы кабинетін жасайды.', authShowPassword:'Құпия сөзді көрсету', authHidePassword:'Құпия сөзді жасыру',
   authButtonLogin:'Кіру', authButtonRegister:'Аккаунт жасау',
-  authButtonReset:'Сілтеме жіберу', authButtonBusy:'Күте тұрыңыз…',
+  authButtonReset:'Код алу', authButtonBusy:'Күте тұрыңыз…',
   authForgot:'Құпия сөзді ұмыттыңыз ба?', authBackToLogin:'Кіруге оралу',
   authSafe:'Деректеріңіз тек сізге және тапсырыс тобына қолжетімді.',
   authBack:'Бұйымдарға оралу',
@@ -575,7 +593,7 @@ const ru: Translations = {
   authResetTitle:'Восстановить доступ',
   authLoginSub:'Ваши заказы, любимые вкусы и немного заботы.',
   authRegisterSub:'Ваши заказы, любимые вкусы и немного заботы.',
-  authResetSub:'Укажите почту, которую использовали при регистрации.',
+  authResetSub:'Укажите почту, которую использовали при регистрации, — мы пришлём на неё код.',
   authCheckoutSub:'Войдите, чтобы оформить заказ. Всё выбранное сохранено в корзине.',
   authTabLogin:'Войти', authTabRegister:'Регистрация',
   authName:'Ваше имя', authNamePlaceholder:'Как к вам обращаться',
@@ -586,11 +604,20 @@ const ru: Translations = {
   authPasswordRepeatPlaceholder:'Введите тот же пароль ещё раз',
   authPasswordMismatch:'Пароли не совпадают.',
   authPasswordMatch:'Пароли совпадают',
+  authCodeSent:(e)=>`Мы отправили код из 6 цифр на ${e}. Если письма нет, проверьте папку «Спам».`,
+  authCodeLabel:'Код из письма',
+  authCodeHelp:'Код действует 15 минут.',
+  authNewPassword:'Новый пароль',
+  authCodeSubmit:'Сохранить новый пароль',
+  authResend:'Отправить код ещё раз',
+  authResendIn:(n)=>`Отправить ещё раз через ${n} с`,
+  authChangeEmail:'Изменить почту',
+  authResetDone:'Пароль изменён. Войдите с новым паролем.',
   authPasswordPlaceholder:'Введите пароль',
   authNewPasswordPlaceholder:'Не менее 10 символов',
   authRegisterNote:'Регистрация создаёт кабинет покупателя.', authShowPassword:'Показать пароль', authHidePassword:'Скрыть пароль',
   authButtonLogin:'Войти', authButtonRegister:'Создать аккаунт',
-  authButtonReset:'Отправить ссылку', authButtonBusy:'Подождите…',
+  authButtonReset:'Получить код', authButtonBusy:'Подождите…',
   authForgot:'Не помните пароль?', authBackToLogin:'Вернуться ко входу',
   authSafe:'Ваши данные доступны только вам и команде заказа.',
   authBack:'Вернуться к изделиям',
@@ -768,7 +795,7 @@ const en: Translations = {
   authResetTitle:'Recover access',
   authLoginSub:'Your orders, favourite flavours and a little care.',
   authRegisterSub:'Your orders, favourite flavours and a little care.',
-  authResetSub:'Enter the email you used when registering.',
+  authResetSub:'Enter the email you used when registering — we will send a code to it.',
   authCheckoutSub:'Sign in to complete your order. Everything in your cart is saved.',
   authTabLogin:'Sign in', authTabRegister:'Register',
   authName:'Your name', authNamePlaceholder:'What should we call you?',
@@ -779,11 +806,20 @@ const en: Translations = {
   authPasswordRepeatPlaceholder:'Enter the same password again',
   authPasswordMismatch:'Passwords do not match.',
   authPasswordMatch:'Passwords match',
+  authCodeSent:(e)=>`We sent a 6-digit code to ${e}. If you don't see it, check your Spam folder.`,
+  authCodeLabel:'Code from the email',
+  authCodeHelp:'The code is valid for 15 minutes.',
+  authNewPassword:'New password',
+  authCodeSubmit:'Save new password',
+  authResend:'Send the code again',
+  authResendIn:(n)=>`Send again in ${n} s`,
+  authChangeEmail:'Change email',
+  authResetDone:'Your password has been changed. Sign in with the new password.',
   authPasswordPlaceholder:'Enter password',
   authNewPasswordPlaceholder:'At least 10 characters',
   authRegisterNote:'Registration creates a customer account.', authShowPassword:'Show password', authHidePassword:'Hide password',
   authButtonLogin:'Sign in', authButtonRegister:'Create account',
-  authButtonReset:'Send link', authButtonBusy:'Please wait…',
+  authButtonReset:'Get a code', authButtonBusy:'Please wait…',
   authForgot:"Forgot your password?", authBackToLogin:'Back to sign in',
   authSafe:'Your data is only accessible to you and the order team.',
   authBack:'Back to products',

@@ -1,7 +1,7 @@
 import {useEffect,useState} from 'react';
 import type {FormEvent} from 'react';
 import {Link,useNavigate,useSearchParams} from 'react-router-dom';
-import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,Croissant,LockKeyhole,UserRound,Store,Eye,EyeOff,Info} from 'lucide-react';
+import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,Croissant,LockKeyhole,UserRound,Store,Eye,EyeOff,Info,Mail} from 'lucide-react';
 import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey,unitPrice,productSize} from './lib';
 import type {Product,Order,User,AccountType} from './lib';
 import {useShop} from './store';
@@ -82,10 +82,36 @@ export function Auth() {
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const [sent,setSent] = useState(false);
+  // Password recovery: the address the code went to, the typed code and the resend countdown.
+  const [resetEmail,setResetEmail] = useState('');
+  const [code,setCode] = useState('');
+  const [resendIn,setResendIn] = useState(0);
+  const [doneNote,setDoneNote] = useState('');
   const [showPassword,setShowPassword] = useState(false);
   const [newPassword,setNewPassword] = useState('');
   const [repeatPassword,setRepeatPassword] = useState('');
-  const passwordMismatch = mode==='register' && repeatPassword.length>0 && repeatPassword!==newPassword;
+  const choosingPassword = mode==='register' || (mode==='reset' && sent);
+  const passwordMismatch = choosingPassword && repeatPassword.length>0 && repeatPassword!==newPassword;
+  useEffect(() => { if (resendIn <= 0) return; const timer = window.setTimeout(() => setResendIn(value => value - 1), 1000); return () => window.clearTimeout(timer); }, [resendIn]);
+  const switchMode = (next: 'login'|'register'|'reset') => { setMode(next); setError(''); setSent(false); setCode(''); setNewPassword(''); setRepeatPassword(''); if (next !== 'login') setDoneNote(''); };
+  async function sendCode(email: string) {
+    const answer = await api<{resend_after?: number}>('/auth/password-reset/', {method:'POST', body:JSON.stringify({email})});
+    setResetEmail(email); setSent(true); setResendIn(answer?.resend_after ?? 60);
+  }
+  async function confirmCode(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault(); setError('');
+    if (newPassword !== repeatPassword) { setError(t.authPasswordMismatch); return; }
+    setBusy(true);
+    try {
+      await api('/auth/password-reset-code/', {method:'POST', body:JSON.stringify({email:resetEmail, code, password:newPassword})});
+      switchMode('login'); setDoneNote(t.authResetDone);
+    } catch(err) { setError((err as Error).message); }
+    finally { setBusy(false); }
+  }
+  async function resend() {
+    setError(''); setBusy(true);
+    try { await sendCode(resetEmail); setCode(''); } catch(err) { setError((err as Error).message); } finally { setBusy(false); }
+  }
   const returnTo = params.get('returnTo')==='/checkout' ? '/checkout' : '/account';
 
   useEffect(() => {
@@ -99,8 +125,7 @@ export function Auth() {
     setBusy(true);
     try {
       if (mode === 'reset') {
-        await api('/auth/password-reset/', {method:'POST', body:JSON.stringify({email:data.email})});
-        setSent(true);
+        await sendCode(String(data.email).trim());
       } else {
         const u = await api<User>(mode==='login' ? '/auth/login/' : '/auth/register/', {method:'POST', body:JSON.stringify(data)});
         setUser(u);
@@ -132,15 +157,37 @@ export function Auth() {
           <p>{returnTo==='/checkout' ? t.authCheckoutSub : mode==='reset' ? t.authResetSub : t.authLoginSub}</p>
           {mode !== 'reset' && (
             <div className="auth-tabs">
-              <button className={mode==='login'?'active':''} onClick={() => {setMode('login');setError('')}}>{t.authTabLogin}</button>
-              <button className={mode==='register'?'active':''} onClick={() => {setMode('register');setError('')}}>{t.authTabRegister}</button>
+              <button className={mode==='login'?'active':''} onClick={() => switchMode('login')}>{t.authTabLogin}</button>
+              <button className={mode==='register'?'active':''} onClick={() => switchMode('register')}>{t.authTabRegister}</button>
             </div>
           )}
           {error && <ErrorBox message={error}/>}
-          {sent ? (
-            <div className="success-note"><Check size={22} aria-hidden="true" /><p>{t.authSentNote}</p></div>
+          {doneNote && mode==='login' && <div className="success-note" role="status"><Check size={22} aria-hidden="true" /><p>{doneNote}</p></div>}
+          {mode==='reset' && sent ? (
+            <form onSubmit={confirmCode} className="auth-code-form">
+              <p className="auth-code-sent"><Mail size={20} aria-hidden="true"/><span>{t.authCodeSent(resetEmail)}</span></p>
+              <label>{t.authCodeLabel}<input className="auth-code-input" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} inputMode="numeric" autoComplete="one-time-code" required pattern="\d{6}" placeholder="000000" aria-describedby="auth-code-help"/><small id="auth-code-help" className="muted">{t.authCodeHelp}</small></label>
+              <label>{t.authNewPassword}
+                <span className="auth-password">
+                  <input type={showPassword ? 'text' : 'password'} value={newPassword} onChange={e=>setNewPassword(e.target.value)} autoComplete="new-password" required minLength={10} placeholder={t.authNewPasswordPlaceholder}/>
+                  <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>{showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}</button>
+                </span>
+              </label>
+              <label>{t.authPasswordRepeat}
+                <span className="auth-password">
+                  <input type={showPassword ? 'text' : 'password'} value={repeatPassword} onChange={e=>setRepeatPassword(e.target.value)} autoComplete="new-password" required minLength={10} aria-invalid={passwordMismatch || undefined} placeholder={t.authPasswordRepeatPlaceholder}/>
+                  <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={() => setShowPassword(v => !v)}>{showPassword ? <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/> : <Eye size={22} strokeWidth={1.5} aria-hidden="true"/>}</button>
+                </span>
+                {passwordMismatch ? <small className="auth-password-hint is-bad">{t.authPasswordMismatch}</small> : repeatPassword && <small className="auth-password-hint is-ok"><Check size={14} aria-hidden="true"/>{t.authPasswordMatch}</small>}
+              </label>
+              <button className="button button-green full-width" disabled={busy || code.length !== 6}>{busy ? t.authButtonBusy : t.authCodeSubmit}<ArrowRight size={22} aria-hidden="true" /></button>
+              <div className="auth-code-links">
+                <button type="button" className="text-button" disabled={busy || resendIn > 0} onClick={() => void resend()}>{resendIn > 0 ? t.authResendIn(resendIn) : t.authResend}</button>
+                <button type="button" className="text-button" disabled={busy} onClick={() => { setSent(false); setCode(''); setError(''); }}>{t.authChangeEmail}</button>
+              </div>
+            </form>
           ) : (
-            <form onSubmit={submit}>
+            <form onSubmit={submit} key={mode}>
               {mode==='register' && (
                 <label>{t.authName}<input name="name" required maxLength={120} autoComplete="name" placeholder={t.authNamePlaceholder}/></label>
               )}
@@ -169,7 +216,7 @@ export function Auth() {
                   )}
                 </fieldset>
               )}
-              <label>{t.authEmail}<input name="email" type="email" autoComplete="email" required placeholder="you@example.com"/></label>
+              <label>{t.authEmail}<input name="email" type="email" autoComplete="email" required placeholder="you@example.com" defaultValue={mode!=='register' ? resetEmail : undefined}/></label>
               {mode==='register' && <label>{t.checkoutPhone}<PhoneInput name="phone" digits={registerPhone} onChange={setRegisterPhone} required/></label>}
               {mode !== 'reset' && (
                 <label>{t.authPassword}
@@ -209,7 +256,7 @@ export function Auth() {
               </button>
             </form>
           )}
-          {mode !== 'register' && <button className="text-button auth-switch" onClick={() => {setMode(mode==='reset'?'login':'reset');setError('');setSent(false)}}>
+          {mode !== 'register' && <button className="text-button auth-switch" onClick={() => switchMode(mode==='reset'?'login':'reset')}>
             {mode==='reset' ? t.authBackToLogin : t.authForgot}
           </button>}
           <div className="auth-safe"><LockKeyhole size={19} aria-hidden="true" />{t.authSafe}</div>

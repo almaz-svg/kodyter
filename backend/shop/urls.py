@@ -16,6 +16,7 @@ urlpatterns = [
     path('auth/profile/', auth.ProfileView.as_view()),
     path('auth/password-reset/', auth.PasswordResetView.as_view()),
     path('auth/password-reset-confirm/', auth.PasswordResetConfirmView.as_view()),
+    path('auth/password-reset-code/', auth.PasswordResetCodeView.as_view()),
     path('categories/', catalog.Categories.as_view()),
     path('products/', catalog.Products.as_view()),
     path('products/<int:pk>/', catalog.ProductDetail.as_view()),

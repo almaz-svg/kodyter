@@ -154,3 +154,13 @@ main.auth-page .auth-content{overflow:hidden}
 .auth-password-hint.is-bad{color:#a4452c}
 .auth-password-hint.is-ok{color:#3b6a41}
 .auth-password input[aria-invalid="true"]{border-color:#b4553b}
+
+/* Password recovery by an emailed code. */
+.auth-code-sent{display:flex;gap:10px;align-items:flex-start;margin:0 0 20px;padding:14px 16px;border-radius:12px;background:#eef3e8;border:1px solid #cfdcc4;color:#2f5d3a;font-size:13px;line-height:1.55}
+.auth-code-sent svg{flex-shrink:0;margin-top:1px}
+.auth-code-input{font-size:26px!important;font-weight:700;letter-spacing:12px;text-align:center;font-variant-numeric:tabular-nums}
+.auth-code-input::placeholder{letter-spacing:12px;color:#d2cbb9!important;font-size:26px!important}
+.auth-code-form .muted{display:block;margin-top:6px}
+.auth-code-links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
+.auth-code-links .text-button{font-size:13px}
+.auth-code-links .text-button:disabled{opacity:.55;text-decoration:none}

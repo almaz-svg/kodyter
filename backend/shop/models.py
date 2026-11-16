@@ -175,3 +175,16 @@ class Payment(models.Model):
     class Meta:
         ordering = ['-paid_at', '-id']
         constraints = [models.CheckConstraint(condition=models.Q(amount__gte=0), name='payment_amount_nonnegative')]
+
+
+class PasswordResetCode(models.Model):
+    """A six-digit code sent by email to reset a password. Only a keyed hash of the code is stored."""
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='password_reset_codes')
+    code_hash = models.CharField(max_length=64)
+    created_at = models.DateTimeField(auto_now_add=True, db_index=True)
+    expires_at = models.DateTimeField()
+    attempts = models.PositiveSmallIntegerField(default=0)
+    used_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        ordering = ['-created_at', '-id']
