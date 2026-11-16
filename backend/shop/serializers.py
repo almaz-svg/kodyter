@@ -28,9 +28,15 @@ class PartialUpdateMixin:
         return instance
 
 class UserSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
+    # The wholesale quantity is told only to an approved business: other accounts do not learn that wholesale exists.
+    wholesale_min_qty = serializers.SerializerMethodField()
+
+    def get_wholesale_min_qty(self, user):
+        return settings.WHOLESALE_MIN_QTY if user.account_type == User.AccountType.BUSINESS and user.business_approved else None
+
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'phone', 'role', 'is_active', 'account_type', 'company_name', 'business_approved']
+        fields = ['id', 'name', 'email', 'phone', 'role', 'is_active', 'account_type', 'company_name', 'business_approved', 'wholesale_min_qty']
         # The account type is chosen at registration only, and approval is set only by an administrator.
         read_only_fields = ['id', 'email', 'role', 'is_active', 'account_type', 'company_name', 'business_approved']
 

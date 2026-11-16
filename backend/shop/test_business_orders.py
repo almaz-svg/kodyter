@@ -41,3 +41,12 @@ class BusinessOrderTests(StaffFixtures, APITestCase):
         self.assertTrue(row['last_order_at'] and row['date_joined'])
         updated = self.client.patch(f'/api/admin/businesses/{self.customer.pk}/', {'business_approved': True}, format='json')
         self.assertEqual((updated.status_code, updated.json()['business_approved']), (200, True))
+
+    @override_settings(WHOLESALE_MIN_QTY=12)
+    def test_only_an_approved_business_learns_the_wholesale_quantity(self):
+        self.client.force_login(self.customer)
+        self.assertIsNone(self.client.get('/api/auth/me/').json()['wholesale_min_qty'])
+        User.objects.filter(pk=self.customer.pk).update(account_type='BUSINESS', company_name='Cafe')
+        self.assertIsNone(self.client.get('/api/auth/me/').json()['wholesale_min_qty'])
+        User.objects.filter(pk=self.customer.pk).update(business_approved=True)
+        self.assertEqual(self.client.get('/api/auth/me/').json()['wholesale_min_qty'], 12)

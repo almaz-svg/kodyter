@@ -773,3 +773,15 @@
   .business-stats div:last-child { grid-column: 1 / -1; }
   .business-actions .portal-button, .business-actions .product-secondary { width: 100%; justify-content: center; }
 }
+
+.portal-wholesale-info { display: grid; gap: 8px; }
+.portal-wholesale-info p { margin: 0; }
+.portal-wholesale-rule { display: flex; align-items: flex-start; gap: 8px; padding: 8px 12px; border-radius: 9px; background: #fff; border: 1px solid #e2d8ef; color: #4b2f7a !important; }
+.portal-wholesale-rule svg { flex-shrink: 0; margin-top: 2px; }
+@media (max-width: 560px) {
+  .portal-business-profile { display: grid; grid-template-columns: 46px minmax(0, 1fr); grid-template-areas: "icon status" "text text"; gap: 12px; padding: 14px; }
+  .portal-business-profile .portal-business-icon { grid-area: icon; }
+  .portal-business-profile > div { grid-area: text; }
+  .portal-business-profile .portal-status { grid-area: status; justify-self: end; align-self: center; margin: 0; order: 0; }
+  .portal-business-profile strong { font-size: 18px; }
+}

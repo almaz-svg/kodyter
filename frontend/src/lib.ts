@@ -5,7 +5,7 @@ const roleRoutes:Record<Role,string> = {CUSTOMER:'/account',ADMIN:'/admin',COURI
 export const roleHome=(role?:Role|null)=>role?roleRoutes[role]:'/account';
 export type PaymentStatus = 'UNPAID'|'PAID'|'DEBT';
 export type AccountType = 'INDIVIDUAL'|'BUSINESS';
-export interface User {id:number;name:string;email:string;phone:string;role:Role;is_active:boolean;account_type?:AccountType;company_name?:string;business_approved?:boolean}
+export interface User {wholesale_min_qty?:number|null;id:number;name:string;email:string;phone:string;role:Role;is_active:boolean;account_type?:AccountType;company_name?:string;business_approved?:boolean}
 /** Unit price for `quantity` units of this product in one order. The server sends wholesale fields only to approved businesses. */
 export function unitPrice(product: Product, quantity: number): number {
   const offer = product.wholesale_price;
