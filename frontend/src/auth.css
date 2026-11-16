@@ -164,3 +164,5 @@ main.auth-page .auth-content{overflow:hidden}
 .auth-code-links{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-top:14px}
 .auth-code-links .text-button{font-size:13px}
 .auth-code-links .text-button:disabled{opacity:.55;text-decoration:none}
+/* Safari: show its generated password when the eye switches the field to text. */
+.auth-password input[type="text"]:-webkit-autofill-and-obscured{-webkit-text-security:none}
