@@ -139,3 +139,12 @@ main.auth-page-register .auth-form-wrap .auth-safe{margin-top:22px;font-size:14p
 main.auth-page .auth-content{overflow:hidden}
 @media(max-width:480px){main.auth-page .account-type-icon{display:none}main.auth-page .auth-form-wrap form label.account-type-option{min-height:64px}}
 @media(prefers-reduced-motion:reduce){main.auth-page .auth-art>img,main.auth-page .auth-password-toggle{transition:none}}
+
+/* Language choice on the sign-in / registration page (it has no site header). */
+.auth-lang{position:absolute;top:28px;right:68px;z-index:2;background:#fffaf0;border:1px solid #dccfb3;border-radius:22px;padding:3px;gap:2px;grid-template-columns:repeat(3,auto)}
+.auth-lang .lang-btn{color:#5b5a4c;font-size:13px;padding:6px 14px;min-height:32px}
+.auth-lang .lang-btn:not(.lang-active):hover{background:#efe5d0;color:var(--green)}
+.auth-lang .lang-btn.lang-active{background:var(--green);color:#f6efd9}
+.auth-lang .lang-btn.lang-active:hover{background:#11513e;color:#f6efd9}
+@media (max-width:1100px){.auth-lang{right:40px;top:24px}}
+@media (max-width:600px){.auth-lang{right:16px;top:16px}.auth-lang .lang-btn{font-size:12px;padding:5px 10px;min-height:30px}}

@@ -6,6 +6,7 @@ import { money, unitPrice, formatWeight, productSize, MAX_ORDER_ITEM_QUANTITY } 
 import type { Product } from './lib';
 import { useShop } from './store';
 import { useI18n } from './i18n';
+import type { Lang } from './i18n';
 import { productName } from './productNames';
 
 export function Logo({ small = false }: { small?: boolean }) {
@@ -243,5 +244,37 @@ export function CatalogCartSummary() {
         <ShoppingBag size={18} aria-hidden="true" />{t.toCartBtn} <ArrowRight size={16} aria-hidden="true" />
       </Link>
     </aside>
+  );
+}
+
+/* ── Language Switcher ────────────────────────────────────────────────── */
+export function LangSwitcher({full = false, className = ''}: {full?: boolean; className?: string}) {
+  const {lang, setLang, t} = useI18n();
+  const langs: Lang[] = ['kz','ru','en'];
+  const labels: Record<Lang,string> = {kz: t.langKz, ru: t.langRu, en: t.langEn};
+  // Mobile drawer: all three languages side by side, the current one highlighted.
+  if (full) {
+    const order: Lang[] = ['ru','kz','en'];
+    return (
+      <div className={`lang-switcher lang-switcher-full ${className}`.trim()} role="group" aria-label="Language / Тіл / Язык">
+        {order.map(l => (
+          <button key={l} type="button" className={`lang-btn${l === lang ? ' lang-active' : ''}`} aria-pressed={l === lang} lang={l === 'kz' ? 'kk' : l} onClick={() => setLang(l)}>
+            {labels[l]}
+          </button>
+        ))}
+      </div>
+    );
+  }
+  const next = langs[(langs.indexOf(lang) + 1) % langs.length];
+  return (
+    <div className="lang-switcher" aria-label="Language / Тіл / Язык">
+      <button
+        className="lang-btn lang-active"
+        onClick={() => setLang(next)}
+        title={labels[next]}
+      >
+        <span key={lang} className="lang-label">{labels[lang]}</span>
+      </button>
+    </div>
   );
 }

@@ -5,7 +5,7 @@ import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,Croissan
 import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey,unitPrice,productSize} from './lib';
 import type {Product,Order,User,AccountType} from './lib';
 import {useShop} from './store';
-import {Qty,ErrorBox,Loading,LazyImage,PriceTag,Branch} from './ui';
+import {Qty,ErrorBox,Loading,LazyImage,PriceTag,Branch,LangSwitcher} from './ui';
 import {useI18n} from './i18n';
 import {productName} from './productNames';
 import './auth.css';
@@ -119,6 +119,7 @@ export function Auth() {
       <div className="auth-content">
         <Branch className="auth-sprig" />
         <Link to="/catalog" className="back-link"><ArrowLeft size={20} aria-hidden="true" />{t.authBack}</Link>
+        <LangSwitcher full className="auth-lang" />
         <div className="auth-form-wrap">
           <span className="eyebrow auth-eyebrow"><i aria-hidden="true" />{t.authEyebrow}<i aria-hidden="true" /></span>
           <h1>{mode==='login' ? t.authLoginTitle : mode==='register' ? t.authRegisterTitle : t.authResetTitle}</h1>
