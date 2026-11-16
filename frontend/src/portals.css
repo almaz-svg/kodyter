@@ -643,3 +643,40 @@
 .portal-credit-confirm .portal-step-agree { margin: 12px 0 4px; }
 .portal-debt-confirm-button { background: #a6461a; border-color: #a6461a; }
 .portal-debt-confirm-button:hover:not(:disabled) { background: #8a3b12; border-color: #8a3b12; }
+
+/* Phone field inside portal forms: the label already spaces it like any other input. */
+.portal-form .phone-field { margin-top: 0; }
+.portal-form .phone-field input { min-height: 0; }
+.portal-form .phone-prefix { font-size: 13px; }
+
+/* "Новый курьер / кассир / кондитер" form. */
+.staff-editor { padding: 26px 28px; background: #fbf8f0; border-color: #e3dccb; }
+.staff-editor-head { display: flex; align-items: center; gap: 14px; margin-bottom: 20px; }
+.staff-editor-head > div { flex: 1; min-width: 0; }
+.staff-editor-head h3 { margin: 0; font-size: 24px; }
+.staff-editor-head p { margin: 2px 0 0; font-size: 13px; color: var(--portal-muted); }
+.staff-editor-icon { width: 48px; height: 48px; flex-shrink: 0; border-radius: 14px; display: grid; place-items: center; background: var(--portal-green); color: #f3e6c4; }
+.staff-editor .portal-form-fields { gap: 16px; }
+.staff-block { background: #fffefb; border: 1px solid #e6e0d0; border-radius: 12px; padding: 18px 20px 20px; }
+.staff-block h4 { display: flex; align-items: center; gap: 8px; margin: 0 0 14px; font-family: inherit; font-size: 14px; font-weight: 600; color: var(--portal-green); }
+.staff-block h4 svg { color: #9a7b3c; }
+.staff-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 18px; }
+.staff-fields .staff-wide { grid-column: 1 / -1; }
+.staff-fields label > span:first-child { font-size: 13px; font-weight: 600; color: var(--portal-green); }
+.staff-fields label > span:first-child i { font-style: normal; color: #b4553b; }
+.staff-fields input { min-height: 46px; border-radius: 8px !important; border-color: #d9d2bf !important; font-size: 14px !important; }
+.staff-fields input:focus { border-color: #9a7b3c !important; outline: 3px solid #e9dcb9; outline-offset: 0; }
+.staff-fields .phone-field input { padding-left: 58px !important; }
+.staff-note { display: flex; align-items: flex-start; gap: 8px; margin: 14px 0 0; padding: 10px 12px; border-radius: 8px; background: #f4efe3; font-size: 12.5px; color: #6b6450; }
+.staff-note svg { flex-shrink: 0; margin-top: 2px; color: #9a7b3c; }
+.staff-actions { display: flex; justify-content: flex-end; align-items: center; gap: 12px; padding-top: 4px; }
+.staff-actions .portal-button { min-height: 46px; padding: 0 24px; border-radius: 8px; font-size: 13px !important; }
+.staff-actions .product-secondary { min-height: 46px; padding: 0 20px; }
+@media (max-width: 640px) {
+  .staff-editor { padding: 18px 14px; }
+  .staff-editor-head h3 { font-size: 20px; }
+  .staff-block { padding: 14px; }
+  .staff-fields { grid-template-columns: minmax(0, 1fr); }
+  .staff-actions { flex-direction: column-reverse; align-items: stretch; }
+  .staff-actions .portal-button, .staff-actions .product-secondary { width: 100%; justify-content: center; }
+}
