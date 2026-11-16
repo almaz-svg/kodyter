@@ -374,7 +374,7 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         from .models import Payment
         Payment.objects.filter(order=paid).update(paid_at=datetime(2026, 10, 14, 20, 30, tzinfo=dt_timezone.utc))
         summary = self.client.get('/api/cashier/summary/?date=2026-10-15').json()
-        self.assertEqual(summary, {'date': '2026-10-15', 'date_from': '2026-10-15', 'date_to': '2026-10-15', 'currency': 'KZT', 'cash_received': '2400.00', 'paid_count': 1, 'unpaid_delivered_total': '3500.00', 'unpaid_delivered_count': 1, 'debt_total': '0.00', 'debt_count': 0, 'orders_total': '0.00', 'orders_count': 0, 'items_count': 0, 'cancelled_count': 0})
+        self.assertEqual(summary, {'date': '2026-10-15', 'date_from': '2026-10-15', 'date_to': '2026-10-15', 'currency': 'KZT', 'cash_received': '2400.00', 'paid_count': 1, 'unpaid_delivered_total': '3500.00', 'unpaid_delivered_count': 1, 'debt_total': '0.00', 'debt_count': 0, 'in_delivery_total': '0.00', 'in_delivery_count': 0, 'in_delivery_orders': [], 'orders_total': '0.00', 'orders_count': 0, 'items_count': 0, 'cancelled_count': 0})
         previous = self.client.get('/api/cashier/summary/?date=2026-10-14').json()
         self.assertEqual(previous['cash_received'], '0.00')
         self.assertEqual(previous['unpaid_delivered_total'], '3500.00')

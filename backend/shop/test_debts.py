@@ -83,3 +83,13 @@ class DebtTests(StaffFixtures, APITestCase):
         self.client.post(f'/api/orders/{order.pk}/transition/', {'status': 'DELIVERED', 'on_credit': True}, format='json')
         order.refresh_from_db()
         self.assertFalse(order.on_credit)
+
+    def test_cash_summary_lists_orders_on_the_way(self):
+        carried = self.make_order(status='IN_TRANSIT', courier=self.couriers[0], total='3316.00')
+        self.make_order(status='HANDED_OVER', courier=self.couriers[1])
+        self.make_order(status='READY')
+        self.client.force_login(self.cashier)
+        summary = self.client.get('/api/cashier/summary/').json()
+        self.assertEqual((summary['in_delivery_count'], summary['in_delivery_total']), (2, '5716.00'))
+        self.assertEqual(summary['in_delivery_orders'][0]['id'], carried.pk)
+        self.assertEqual(summary['in_delivery_orders'][0]['courier_name'], 'Courier 0')

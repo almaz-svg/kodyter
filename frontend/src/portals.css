@@ -609,3 +609,14 @@
   .portal-debt-total { text-align: left; width: 100%; padding-left: 58px; }
   .portal-debt-pay { width: 100%; }
 }
+
+/* Cash summary: orders a courier is carrying right now. */
+.portal-cash-grid .portal-cash-live { grid-column: 1 / -1; background: #f3f7ee; border-color: #b9cfa9; }
+.portal-cash-live > span { display: inline-flex; align-items: center; gap: 7px; font-weight: 600; color: var(--portal-green) !important; }
+.portal-cash-live > span::after { content: ''; width: 8px; height: 8px; border-radius: 50%; background: #3d9a52; box-shadow: 0 0 0 4px #d6ebd5; margin-left: 4px; }
+.portal-cash-live-empty > span::after { background: #b5b9ae; box-shadow: none; }
+.portal-cash-live ul { list-style: none; margin: 12px 0 0; padding: 0; width: 100%; display: grid; gap: 8px; }
+.portal-cash-live li { display: grid; grid-template-columns: auto 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; border-radius: 6px; background: #fff; border: 1px solid #dce6d2; font-size: 14px; }
+.portal-cash-live li span { color: var(--portal-muted); font-size: 13px; }
+.portal-cash-live li em { font-style: normal; font-weight: 600; white-space: nowrap; }
+@media (max-width: 560px) { .portal-cash-live li { grid-template-columns: 1fr auto; } .portal-cash-live li span { grid-column: 1 / -1; grid-row: 2; } }
