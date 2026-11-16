@@ -6,7 +6,7 @@ import Home from './Home';
 import {Catalog,ProductPage} from './Catalog';
 import {Auth,Cart,Checkout,ResetPassword} from './ShopFlow';
 import Portals from './Portals';
-import {MAP_URL} from './MapSection';
+import {MAP_URL, CONTACT_PHONE, CONTACT_PHONE_LINK} from './MapSection';
 import AboutPage from './AboutPage';
 import DeliveryPage from './DeliveryPage';
 import ContactsPage from './ContactsPage';
@@ -267,7 +267,7 @@ function Footer() {
             <ul>
               <li><span><MapPin size={24} strokeWidth={1.3} aria-hidden="true" />{t.mapAddress}</span></li>
               <li><span><Clock size={24} strokeWidth={1.3} aria-hidden="true" />{t.mapHoursValue}</span></li>
-              <li><span><Phone size={24} strokeWidth={1.3} aria-hidden="true" />+7 778 232 1708</span></li>
+              <li><a href={CONTACT_PHONE_LINK}><Phone size={24} strokeWidth={1.3} aria-hidden="true" />{CONTACT_PHONE}</a></li>
             </ul>
             <a href={MAP_URL} target="_blank" rel="noopener noreferrer" className="footer-map-btn">
               <MapPin size={17} aria-hidden="true" />{t.footerFindOnMap}<ArrowRight size={17} aria-hidden="true" />
