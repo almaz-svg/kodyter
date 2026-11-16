@@ -10,7 +10,7 @@ from django.utils import timezone
 from django.test import TransactionTestCase, override_settings
 from rest_framework.test import APITestCase, APIClient
 
-from .models import Category, Order, Product, User
+from .models import Category, Order, Payment, Product, User
 
 
 class StaffFixtures:
@@ -349,7 +349,7 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.client.force_authenticate(self.cashier)
         self.assertEqual(self.client.get('/api/admin/overview/').status_code, 403)
 
-    def test_summary_counts_delivered_purchases_and_orders_still_in_work(self):
+    def test_summary_revenue_counts_paid_deliveries_and_reports_orders_in_work(self):
         from .models import OrderItem
         bun = Product.objects.create(category=Category.objects.create(name='Bakery', slug='bakery'), name='Bun', price='500')
         inside = [self.make_order(total='2400.00'), self.make_order(status='DELIVERED', total='3500.00')]
@@ -362,7 +362,11 @@ class StaffWorkflowTests(StaffFixtures, APITestCase):
         self.client.force_login(self.admin)
         today = timezone.localdate().isoformat()
         summary = self.client.get(f'/api/cashier/summary/?date_from={today}&date_to={today}').json()
-        self.assertEqual((summary['orders_total'], summary['orders_count'], summary['items_count'], summary['cancelled_count']), ('3500.00', 1, 4, 1))
+        # Delivered but not paid yet (or on credit): not revenue.
+        self.assertEqual((summary['orders_total'], summary['orders_count'], summary['items_count'], summary['cancelled_count']), ('0.00', 0, 0, 1))
+        Payment.objects.create(order=inside[1], amount=inside[1].total, method='CASH', idempotency_key=uuid.uuid4(), paid_by=self.cashier, paid_by_name='Cashier')
+        summary = self.client.get(f'/api/cashier/summary/?date_from={today}&date_to={today}').json()
+        self.assertEqual((summary['orders_total'], summary['orders_count'], summary['items_count']), ('3500.00', 1, 4))
         self.assertEqual((summary['pending_total'], summary['pending_count']), ('2400.00', 1))
 
     def test_summary_uses_local_payment_day_and_all_outstanding_delivered_orders(self):
