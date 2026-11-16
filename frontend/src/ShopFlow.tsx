@@ -96,17 +96,15 @@ export function Auth() {
   const repeatRef = useRef<HTMLInputElement>(null);
   const syncPasswords = () => { setNewPassword(passwordRef.current?.value ?? ''); setRepeatPassword(repeatRef.current?.value ?? ''); };
   const passwordEvents = {onChange: syncPasswords, onInput: syncPasswords, onBlur: syncPasswords, onFocus: syncPasswords};
-  // Safari keeps a password it generated ("Strong Password") hidden even in a text field. Writing the same value back
-  // from the page ends that protected state, so the eye can show it.
+  // Safari keeps a password it generated ("Strong Password") hidden even in a text field. So the eye does not just switch
+  // the type: it puts a brand-new field in place (new `key`), filled with the same value, which Safari treats as plain text.
   const togglePassword = () => {
-    if (!showPassword) for (const field of [passwordRef.current, repeatRef.current]) {
-      if (!field || !field.value) continue;
-      const value = field.value;
-      field.value = '';
-      field.value = value;
-    }
+    setNewPassword(passwordRef.current?.value ?? newPassword);
+    setRepeatPassword(repeatRef.current?.value ?? repeatPassword);
     setShowPassword(v => !v);
   };
+  const passwordKey = showPassword ? 'shown' : 'hidden';
+  const passwordField = (value: string) => ({defaultValue: value, type: showPassword ? 'text' : 'password'});
   const choosingPassword = mode==='register' || (mode==='reset' && sent);
   const passwordMismatch = choosingPassword && repeatPassword.length>0 && repeatPassword!==newPassword;
   useEffect(() => { if (resendIn <= 0) return; const timer = window.setTimeout(() => setResendIn(value => value - 1), 1000); return () => window.clearTimeout(timer); }, [resendIn]);
@@ -188,13 +186,13 @@ export function Auth() {
               <label>{t.authCodeLabel}<input className="auth-code-input" value={code} onChange={e=>setCode(e.target.value.replace(/\D/g,'').slice(0,6))} inputMode="numeric" autoComplete="one-time-code" required pattern="\d{6}" placeholder="000000" aria-describedby="auth-code-help"/><small id="auth-code-help" className="muted">{t.authCodeHelp}</small></label>
               <label>{t.authNewPassword}
                 <span className="auth-password">
-                  <input ref={passwordRef} {...passwordEvents} type={showPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={10} placeholder={t.authNewPasswordPlaceholder}/>
+                  <input key={passwordKey} ref={passwordRef} {...passwordEvents} {...passwordField(newPassword)} autoComplete="new-password" required minLength={10} placeholder={t.authNewPasswordPlaceholder}/>
                   <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={togglePassword}>{showPassword ? <Eye size={22} strokeWidth={1.5} aria-hidden="true"/> : <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/>}</button>
                 </span>
               </label>
               <label>{t.authPasswordRepeat}
                 <span className="auth-password">
-                  <input ref={repeatRef} {...passwordEvents} type={showPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={10} aria-invalid={passwordMismatch || undefined} placeholder={t.authPasswordRepeatPlaceholder}/>
+                  <input key={passwordKey} ref={repeatRef} {...passwordEvents} {...passwordField(repeatPassword)} autoComplete="new-password" required minLength={10} aria-invalid={passwordMismatch || undefined} placeholder={t.authPasswordRepeatPlaceholder}/>
                   <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={togglePassword}>{showPassword ? <Eye size={22} strokeWidth={1.5} aria-hidden="true"/> : <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/>}</button>
                 </span>
                 {passwordMismatch ? <small className="auth-password-hint is-bad">{t.authPasswordMismatch}</small> : repeatPassword && <small className="auth-password-hint is-ok"><Check size={14} aria-hidden="true"/>{t.authPasswordMatch}</small>}
@@ -240,7 +238,7 @@ export function Auth() {
               {mode !== 'reset' && (
                 <label>{t.authPassword}
                   <span className="auth-password">
-                    <input ref={passwordRef} {...passwordEvents} name="password" type={showPassword ? 'text' : 'password'} autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?10:1} placeholder={mode==='register'?t.authNewPasswordPlaceholder:t.authPasswordPlaceholder}/>
+                    <input key={passwordKey} ref={passwordRef} {...passwordEvents} name="password" {...passwordField(newPassword)} autoComplete={mode==='login'?'current-password':'new-password'} required minLength={mode==='register'?10:1} placeholder={mode==='register'?t.authNewPasswordPlaceholder:t.authPasswordPlaceholder}/>
                     <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={e => {e.preventDefault(); togglePassword();}}>
                       {showPassword ? <Eye size={22} strokeWidth={1.5} aria-hidden="true"/> : <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/>}
                     </button>
@@ -250,7 +248,7 @@ export function Auth() {
               {mode==='register' && (
                 <label>{t.authPasswordRepeat}
                   <span className="auth-password">
-                    <input ref={repeatRef} {...passwordEvents} type={showPassword ? 'text' : 'password'} autoComplete="new-password" required minLength={10} aria-invalid={passwordMismatch || undefined} placeholder={t.authPasswordRepeatPlaceholder}/>
+                    <input key={passwordKey} ref={repeatRef} {...passwordEvents} {...passwordField(repeatPassword)} autoComplete="new-password" required minLength={10} aria-invalid={passwordMismatch || undefined} placeholder={t.authPasswordRepeatPlaceholder}/>
                     <button type="button" className="auth-password-toggle" aria-label={showPassword ? t.authHidePassword : t.authShowPassword} aria-pressed={showPassword} onClick={e => {e.preventDefault(); togglePassword();}}>
                       {showPassword ? <Eye size={22} strokeWidth={1.5} aria-hidden="true"/> : <EyeOff size={22} strokeWidth={1.5} aria-hidden="true"/>}
                     </button>
