@@ -621,3 +621,16 @@
 .portal-cash-live li em { font-style: normal; font-weight: 600; white-space: nowrap; }
 @media (max-width: 560px) { .portal-cash-live li { grid-template-columns: 1fr auto; } .portal-cash-live li span { grid-column: 1 / -1; grid-row: 2; } }
 .product-photo-note { margin: -6px 0 12px; font-size: 12px; color: var(--portal-muted); text-align: center; }
+
+/* Phone: order filters (customer, pastry, debts) and courier tabs as even blocks instead of wrapping chips. */
+@media (max-width: 600px) {
+  .portal-chip-filters { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); gap: 6px; padding: 4px; border: 1px solid #e3dccb; border-radius: 12px; background: #fffdf7; margin-bottom: 16px; }
+  .portal-chip-filters button { flex-direction: column; justify-content: center; gap: 4px; min-height: 58px; padding: 6px 4px; border: 0; border-radius: 9px; background: transparent; font-size: 12.5px; line-height: 1.2; text-align: center; }
+  .portal-chip-filters button svg { width: 18px; height: 18px; }
+  .portal-chip-filters button.active { background: var(--portal-green); color: #fffaf0; }
+  .portal-segment.portal-courier-tabs { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 6px; width: 100%; padding: 5px; border-radius: 12px; background: #fffdf7; }
+  .portal-courier-tabs button { display: flex; align-items: center; justify-content: space-between; gap: 8px; min-height: 50px; padding: 8px 12px; border-radius: 9px; font-size: 14px; font-weight: 500; color: var(--portal-green); background: #f4efe3; text-align: left; line-height: 1.2; }
+  .portal-courier-tabs button span { margin: 0; min-width: 26px; height: 26px; padding: 0 7px; border-radius: 13px; display: inline-flex; align-items: center; justify-content: center; background: #fffdf7; color: var(--portal-green); font-size: 13px; font-weight: 600; opacity: 1; }
+  .portal-courier-tabs button.active { background: var(--portal-green); color: #fffaf0; }
+  .portal-courier-tabs button.active span { background: #ffffff26; color: #fffaf0; }
+}
