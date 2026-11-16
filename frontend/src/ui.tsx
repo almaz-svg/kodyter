@@ -300,7 +300,7 @@ export function PhoneInput({ digits, onChange, name, required = false, id, label
   return <span className="phone-field">
     <span className="phone-prefix" aria-hidden="true">+7</span>
     <input id={id} type="tel" inputMode="numeric" autoComplete="tel-national" aria-label={label} value={groupDigits(digits)} onChange={event => change(event.target.value)}
-      required={required} pattern="\d{3} \d{3} \d{2} \d{2}" title="10 цифр после +7, например 708 567 64 56" placeholder="708 567 64 56" maxLength={13} />
+      required={required} pattern="\d{3} \d{3} \d{2} \d{2}" title="10 цифр после +7, например 700 000 00 00" placeholder="700 000 00 00" maxLength={13} />
     {name && <input type="hidden" name={name} value={formatPhone(digits)} />}
   </span>;
 }
