@@ -5,7 +5,7 @@ import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,Croissan
 import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey,unitPrice,productSize} from './lib';
 import type {Product,Order,User,AccountType} from './lib';
 import {useShop} from './store';
-import {Qty,ErrorBox,Loading,LazyImage,PriceTag,Branch,LangSwitcher} from './ui';
+import {Qty,ErrorBox,Loading,LazyImage,PriceTag,Branch,LangSwitcher,PhoneInput,phoneDigits,formatPhone} from './ui';
 import {useI18n} from './i18n';
 import {productName} from './productNames';
 import './auth.css';
@@ -78,6 +78,7 @@ export function Auth() {
   const navigate = useNavigate();
   const [mode,setMode] = useState<'login'|'register'|'reset'>(params.get('mode')==='register'?'register':'login');
   const [accountType,setAccountType] = useState<AccountType>('INDIVIDUAL');
+  const [registerPhone,setRegisterPhone] = useState('');
   const [busy,setBusy] = useState(false);
   const [error,setError] = useState('');
   const [sent,setSent] = useState(false);
@@ -165,7 +166,7 @@ export function Auth() {
                 </fieldset>
               )}
               <label>{t.authEmail}<input name="email" type="email" autoComplete="email" required placeholder="you@example.com"/></label>
-              {mode==='register' && <label>{t.checkoutPhone}<input name="phone" type="tel" autoComplete="tel" inputMode="tel" required maxLength={30} pattern="[+0-9 \(\)\-]{10,30}" title={t.authPhoneHint} placeholder={t.checkoutPhonePlaceholder}/></label>}
+              {mode==='register' && <label>{t.checkoutPhone}<PhoneInput name="phone" digits={registerPhone} onChange={setRegisterPhone} required/></label>}
               {mode !== 'reset' && (
                 <label>{t.authPassword}
                   <span className="auth-password">
@@ -259,7 +260,7 @@ export function Checkout() {
   const [cashAccepted,setCashAccepted] = useState(false);
   const [refreshNotice,setRefreshNotice] = useState('');
   const [recipient,setRecipient] = useState(user?.name||'');
-  const [phone,setPhone] = useState(user?.phone||'');
+  const [phone,setPhone] = useState(phoneDigits(user?.phone));
   const [address,setAddress] = useState('');
   const [comment,setComment] = useState('');
   const [attempt,setAttempt] = useState(() => getCheckoutKey());
@@ -289,7 +290,7 @@ export function Checkout() {
     if (busy||refreshing||!catalogReady||recovery||!settings||!cashAccepted||(changed&&!reviewAccepted)||cart.some(item=>!item.product.is_available)) return;
     setBusy(true); setError('');
     try {
-      const order = await api<Order>('/orders/', {method:'POST', body:JSON.stringify({recipient_name:recipient,phone,address,comment,items:cart.map(x=>({product_id:x.product.id,quantity:x.quantity,expected_price:unitPrice(x.product,x.quantity).toFixed(2)})),expected_delivery_fee:settings.delivery_fee,idempotency_key:key})});
+      const order = await api<Order>('/orders/', {method:'POST', body:JSON.stringify({recipient_name:recipient,phone:formatPhone(phone),address,comment,items:cart.map(x=>({product_id:x.product.id,quantity:x.quantity,expected_price:unitPrice(x.product,x.quantity).toFixed(2)})),expected_delivery_fee:settings.delivery_fee,idempotency_key:key})});
       setSuccess(order); clear();
       if (!clearCheckoutKey()) reportStorageFailure();
     } catch(e) {
@@ -345,7 +346,7 @@ export function Checkout() {
             <div className="checkout-step"><span>{t.checkoutStep1}</span><h2>{t.checkoutStep1Title}</h2></div>
             <div className="form-grid">
               <label>{t.checkoutName}<input required name="name" autoComplete="name" maxLength={120} value={recipient} onChange={e=>setRecipient(e.target.value)} placeholder={t.checkoutNamePlaceholder}/></label>
-              <label>{t.checkoutPhone}<input type="tel" required name="phone" autoComplete="tel" pattern="[+0-9 \(\)\-]{10,30}" value={phone} onChange={e=>setPhone(e.target.value)} placeholder={t.checkoutPhonePlaceholder}/></label>
+              <label>{t.checkoutPhone}<PhoneInput digits={phone} onChange={setPhone} required/></label>
             </div>
             </div>
             <div className="checkout-card">

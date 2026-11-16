@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Eye, EyeOff, LayoutGrid, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview, type Debts, type DebtOrder, type MyDebt } from './lib';
-import { LazyImage } from './ui';
+import { LazyImage, PhoneInput, phoneDigits, formatPhone } from './ui';
 import { uploadProductPhoto } from './imageUpload';
 import { PhotoCropper } from './photoCropper';
 import './portals.css';
@@ -155,17 +155,17 @@ export default function Portals({ user, onUserChange }: Props) {
 }
 function Profile({ user, onUserChange }: Props) {
   const [name, setName] = useState(user.name);
-  const [phone, setPhone] = useState(user.phone || '');
+  const [phone, setPhone] = useState(phoneDigits(user.phone));
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
   const [saved, setSaved] = useState(false);
   const save = async (event: FormEvent) => {
     event.preventDefault(); setBusy(true); setError(''); setSaved(false);
-    try { const updated = await api<User>('/auth/profile/', json({ name: name.trim(), phone: phone.trim() }, 'PATCH')); onUserChange(updated); setName(updated.name); setPhone(updated.phone || ''); setSaved(true); }
+    try { const updated = await api<User>('/auth/profile/', json({ name: name.trim(), phone: formatPhone(phone) }, 'PATCH')); onUserChange(updated); setName(updated.name); setPhone(phoneDigits(updated.phone)); setSaved(true); }
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
-  return <section className="portal-profile portal-card"><div className="portal-section-title"><div><p className="portal-eyebrow">ВАШ ПРОФИЛЬ</p><h2>Давайте познакомимся</h2></div><UserRound size={27} aria-hidden="true" /></div><form onSubmit={save} className="portal-form"><fieldset className="portal-form-fields" disabled={busy}><label>Имя<input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} required maxLength={120} autoComplete="name" /></label><label>Телефон<input type="tel" value={phone} onChange={e => { setPhone(e.target.value); setSaved(false); }} maxLength={30} autoComplete="tel" /></label><label>Электронная почта<input type="email" value={user.email} readOnly /><small>Почта используется для входа в аккаунт.</small></label>{user.account_type === 'BUSINESS' && <p className="portal-queue-note">{user.business_approved ? `Заведение «${user.company_name || ''}»: оптовые цены открыты.` : 'Заявка заведения на проверке. Пока действуют розничные цены, оптовые откроются после одобрения администратором.'}</p>}<ErrorNotice message={error} />{saved && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" /> Личные данные сохранены.</p>}<button className="portal-button" disabled={busy || !name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить изменения'}<ArrowRight size={17} aria-hidden="true" /></button></fieldset></form></section>;
+  return <section className="portal-profile portal-card"><div className="portal-section-title"><div><p className="portal-eyebrow">ВАШ ПРОФИЛЬ</p><h2>Давайте познакомимся</h2></div><UserRound size={27} aria-hidden="true" /></div><form onSubmit={save} className="portal-form"><fieldset className="portal-form-fields" disabled={busy}><label>Имя<input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} required maxLength={120} autoComplete="name" /></label><label>Телефон<PhoneInput digits={phone} onChange={value => { setPhone(value); setSaved(false); }} required={user.role === 'CUSTOMER'} /></label><label>Электронная почта<input type="email" value={user.email} readOnly /><small>Почта используется для входа в аккаунт.</small></label>{user.account_type === 'BUSINESS' && <p className="portal-queue-note">{user.business_approved ? `Заведение «${user.company_name || ''}»: оптовые цены открыты.` : 'Заявка заведения на проверке. Пока действуют розничные цены, оптовые откроются после одобрения администратором.'}</p>}<ErrorNotice message={error} />{saved && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" /> Личные данные сохранены.</p>}<button className="portal-button" disabled={busy || !name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить изменения'}<ArrowRight size={17} aria-hidden="true" /></button></fieldset></form></section>;
 }
 
 const positions = (count: number) => `${count} ${count % 10 === 1 && count % 100 !== 11 ? 'позиция' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'позиции' : 'позиций'}`;

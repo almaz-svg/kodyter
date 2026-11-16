@@ -34,6 +34,13 @@ class UserSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSeria
         # The account type is chosen at registration only, and approval is set only by an administrator.
         read_only_fields = ['id', 'email', 'role', 'is_active', 'account_type', 'company_name', 'business_approved']
 
+    def validate_phone(self, value):
+        if not value.strip():
+            if self.instance is not None and self.instance.role == User.Role.CUSTOMER:
+                raise serializers.ValidationError('Укажите номер телефона.')
+            return ''
+        return normalize_kz_phone(value)
+
 class BusinessAccountSerializer(serializers.ModelSerializer):
     """Admin view of business accounts. Only `business_approved` can be written."""
     class Meta:
@@ -48,6 +55,19 @@ def validate_phone_number(value):
         raise serializers.ValidationError(PHONE_FORMAT_ERROR)
     return value
 
+KZ_PHONE_ERROR = 'Введите 10 цифр номера после +7, например 708 567 64 56.'
+
+def normalize_kz_phone(value):
+    """A customer's own number: +7 and ten digits, stored as "+7 708 567 64 56". "8 708…" and "+7708…" are accepted."""
+    if not re.fullmatch(r'[+\d()\s-]+', value.strip()):
+        raise serializers.ValidationError(KZ_PHONE_ERROR)
+    digits = re.sub(r'\D', '', value)
+    if len(digits) == 11 and digits[0] in '78':
+        digits = digits[1:]
+    if len(digits) != 10:
+        raise serializers.ValidationError(KZ_PHONE_ERROR)
+    return f'+7 {digits[:3]} {digits[3:6]} {digits[6:8]} {digits[8:]}'
+
 class RegisterSerializer(MarkupFreeMixin, serializers.Serializer):
     name = serializers.CharField(max_length=120)
     email = serializers.EmailField(max_length=254)
@@ -58,7 +78,7 @@ class RegisterSerializer(MarkupFreeMixin, serializers.Serializer):
     company_name = serializers.CharField(max_length=160, required=False, allow_blank=True, default='')
 
     def validate_phone(self, value):
-        return validate_phone_number(value.strip())
+        return normalize_kz_phone(value)
 
     def validate_email(self, value):
         value = value.lower()

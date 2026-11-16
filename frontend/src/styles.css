@@ -735,3 +735,8 @@
 
 /* One product photo frame everywhere (matches PRODUCT_PHOTO_ASPECT in photoCropper.tsx). */
 .detail-image img,.product-image{aspect-ratio:1.05}
+
+/* Phone field with a fixed +7 (registration, profile, checkout). */
+.phone-field{position:relative;display:block;margin-top:7px}
+.phone-field input{margin:0!important;padding-left:58px!important;letter-spacing:.3px}
+.phone-prefix{position:absolute;left:1px;top:1px;bottom:1px;width:46px;display:flex;align-items:center;justify-content:center;border-right:1px solid #ddd3bd;font-weight:600;color:var(--green);pointer-events:none;font-size:inherit}

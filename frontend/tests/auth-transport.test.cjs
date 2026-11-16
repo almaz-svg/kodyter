@@ -38,7 +38,7 @@ function harness(fetcher, { storageThrows = false } = {}) {
     react: React, 'react/jsx-runtime': { jsx, jsxs: jsx },
     'react-router-dom': { Link: 'a', useNavigate: () => value => navigation.push(value), useSearchParams: () => [new URLSearchParams('uid=fixture&token=fixture')] },
     'lucide-react': new Proxy({}, { get: () => 'icon' }),
-    './ui': { Qty: 'qty', ErrorBox: 'error', Loading: 'loading' },
+    './ui': { Qty: 'qty', ErrorBox: 'error', Loading: 'loading', PhoneInput: 'phone', phoneDigits: value => (value || '').replace(/\D/g, '').slice(-10), formatPhone: digits => digits ? `+7 ${digits}` : '' },
     // Russian names pass through unchanged, so assertions keep matching the database text.
     './productNames': { productName: product => product.name },
     // Stylesheet side effect only; nothing to evaluate.

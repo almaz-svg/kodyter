@@ -278,3 +278,29 @@ export function LangSwitcher({full = false, className = ''}: {full?: boolean; cl
     </div>
   );
 }
+
+/* ── Phone field: a fixed "+7" and ten digits shown as "708 567 64 56" ── */
+// The ten digits after +7 from anything stored or pasted: "+7 708 567 64 56", "87085676456", "7085676456".
+export const phoneDigits = (value: string | null | undefined) => {
+  let digits = (value || '').replace(/\D/g, '');
+  if (digits.length === 11 && (digits[0] === '7' || digits[0] === '8')) digits = digits.slice(1);
+  return digits.slice(0, 10);
+};
+const groupDigits = (digits: string) => [digits.slice(0, 3), digits.slice(3, 6), digits.slice(6, 8), digits.slice(8, 10)].filter(Boolean).join(' ');
+// The full number as it is stored: "+7 708 567 64 56" (empty while nothing is typed).
+export const formatPhone = (digits: string) => digits ? `+7 ${groupDigits(digits)}` : '';
+
+export function PhoneInput({ digits, onChange, name, required = false, id, label }: { digits: string; onChange: (digits: string) => void; name?: string; required?: boolean; id?: string; label?: string }) {
+  const change = (text: string) => {
+    let next = text.replace(/\D/g, '');
+    // A pasted full number ("+7 708…", "8 708…") loses its country digit; extra typed digits are ignored.
+    if (next.length > 10) next = digits.length === 10 && next.length === 11 && text.length - groupDigits(digits).length === 1 ? digits : phoneDigits(next.length === 11 ? next : next.slice(-10));
+    onChange(next.slice(0, 10));
+  };
+  return <span className="phone-field">
+    <span className="phone-prefix" aria-hidden="true">+7</span>
+    <input id={id} type="tel" inputMode="numeric" autoComplete="tel-national" aria-label={label} value={groupDigits(digits)} onChange={event => change(event.target.value)}
+      required={required} pattern="\d{3} \d{3} \d{2} \d{2}" title="10 цифр после +7, например 708 567 64 56" placeholder="708 567 64 56" maxLength={13} />
+    {name && <input type="hidden" name={name} value={formatPhone(digits)} />}
+  </span>;
+}
