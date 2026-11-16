@@ -177,11 +177,17 @@ export function PriceTag({ product, quantity }: { product: Product; quantity?: n
   if (Number(product.price) <= 0) return <strong className="price-soon">{t.priceSoon}</strong>;
   if (offer == null || min == null) return <strong>{money(product.price)}</strong>;
   const units = quantity ?? 0;
-  const hint = units >= min ? t.wholesaleApplied : units > 0 ? t.wholesaleAddMore(min - units, money(offer)) : t.wholesaleFrom(min, money(offer));
+  // From the threshold on: the retail price is crossed out and the wholesale price takes its place.
+  if (units >= min) return (
+    <span className="price-tag-wrap is-wholesale">
+      <span className="price-line"><s className="price-old">{money(product.price)}</s><strong>{money(unitPrice(product, units))}</strong></span>
+      <small className="price-offer is-applied">{t.wholesaleApplied}</small>
+    </span>
+  );
   return (
     <span className="price-tag-wrap">
-      <strong>{money(unitPrice(product, units))}</strong>
-      <small className="price-offer">{hint}</small>
+      <strong>{money(product.price)}</strong>
+      <small className="price-offer price-offer-badge">{units > 0 ? t.wholesaleAddMore(min - units, money(offer)) : t.wholesaleFrom(min, money(offer))}</small>
     </span>
   );
 }

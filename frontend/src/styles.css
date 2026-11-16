@@ -740,3 +740,10 @@
 .phone-field{position:relative;display:block;margin-top:7px}
 .phone-field input{margin:0!important;padding-left:58px!important;letter-spacing:.3px}
 .phone-prefix{position:absolute;left:1px;top:1px;bottom:1px;width:46px;display:flex;align-items:center;justify-content:center;border-right:1px solid #ddd3bd;font-weight:600;color:var(--green);pointer-events:none;font-size:inherit}
+
+/* Wholesale price for an approved business: a visible offer, then the crossed-out retail price. */
+.price-offer-badge{display:inline-block!important;padding:4px 9px;border-radius:7px;background:#f3e7c9;color:#6b5320!important;font-size:12px!important;font-weight:600}
+.price-line{display:inline-flex;align-items:baseline;gap:8px;flex-wrap:wrap}
+.price-old{color:#9a9488;font-weight:500;font-size:.8em;text-decoration-thickness:1.5px}
+.price-tag-wrap.is-wholesale strong{color:#2f6b3f}
+.price-offer.is-applied{display:inline-flex!important;align-items:center;gap:4px;padding:3px 8px;border-radius:7px;background:#e3efdd;color:#2f6b3f!important;font-size:12px!important}
