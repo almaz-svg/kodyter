@@ -8,6 +8,9 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .models import REMOVED_STAFF_MARK, Category, Product, User
 from django.db import transaction
+from django.contrib.auth.password_validation import validate_password
+from django.core.exceptions import ValidationError as DjangoValidationError
+from django.shortcuts import get_object_or_404
 from .dispatch import dispatch_waiting_orders, release_courier_orders
 from .security import IsAdmin
 from .serializers import BusinessAccountSerializer, CategorySerializer, ProductSerializer, PublicProductSerializer, StaffCreateSerializer, UserSerializer, CourierUpdateSerializer
@@ -117,11 +120,31 @@ class AdminCouriers(APIView):
                 dispatch_waiting_orders()
         return Response(UserSerializer(courier).data, status=201)
 
+def staff_profile(user):
+    """What the administrator sees when opening a staff member: personal data and a summary of their work."""
+    from decimal import Decimal
+    from django.db.models import Count, Sum
+    from .models import Order, Payment, StatusHistory
+    received = Payment.objects.filter(paid_by=user).aggregate(total=Sum('amount'), count=Count('id'))
+    stats = {'payments_count': received['count'], 'payments_total': format(received['total'] or Decimal('0'), '.2f')}
+    if user.role == 'COURIER':
+        deliveries = Order.objects.filter(courier=user)
+        stats.update(delivered=deliveries.filter(status='DELIVERED').count(),
+                     active=deliveries.exclude(status__in=('DELIVERED', 'CANCELLED')).count(),
+                     open_debts=deliveries.filter(status='DELIVERED', on_credit=True, payment__isnull=True).count())
+    elif user.role == 'PASTRY':
+        moves = StatusHistory.objects.filter(actor=user)
+        stats.update(confirmed=moves.filter(to_status='CONFIRMED').count(), cooked=moves.filter(to_status='READY').count())
+    return {**UserSerializer(user).data, 'date_joined': user.date_joined, 'last_login': user.last_login, 'stats': stats}
+
 class AdminCourier(generics.UpdateAPIView, generics.DestroyAPIView):
     permission_classes = [IsAdmin]
     queryset = User.objects.filter(role='COURIER').exclude(last_name=REMOVED_STAFF_MARK)
     serializer_class = CourierUpdateSerializer
-    http_method_names = ['patch', 'delete', 'options']
+    http_method_names = ['get', 'patch', 'delete', 'options']
+
+    def get(self, request, *args, **kwargs):
+        return Response(staff_profile(self.get_object()))
 
     @transaction.atomic
     def destroy(self, request, *args, **kwargs):
@@ -153,17 +176,41 @@ class AdminCourier(generics.UpdateAPIView, generics.DestroyAPIView):
                 dispatch_waiting_orders()
         return Response(UserSerializer(user).data)
 
+class AdminCourierPassword(APIView):
+    """The administrator gives a staff member a new password. Passwords are stored only as hashes, so the old one
+    cannot be shown; the new one is set here and every open session of that account ends."""
+    permission_classes = [IsAdmin]
+    queryset = AdminCourier.queryset
+
+    @transaction.atomic
+    def post(self, request, pk):
+        user = get_object_or_404(self.queryset.select_for_update(), pk=pk)
+        password = serializers.CharField(max_length=128, trim_whitespace=False).run_validation(request.data.get('password'))
+        try:
+            validate_password(password, user)
+        except DjangoValidationError as exc:
+            raise serializers.ValidationError({'password': list(exc.messages)})
+        user.set_password(password)
+        user.save(update_fields=['password'])
+        return Response({'detail': 'Пароль изменён. Передайте новый пароль сотруднику.'})
+
 class AdminCashiers(AdminCouriers):
     role = 'CASHIER'
 
 class AdminCashier(AdminCourier):
     queryset = User.objects.filter(role='CASHIER').exclude(last_name=REMOVED_STAFF_MARK)
 
+class AdminCashierPassword(AdminCourierPassword):
+    queryset = AdminCashier.queryset
+
 class AdminPastryChefs(AdminCouriers):
     role = 'PASTRY'
 
 class AdminPastryChef(AdminCourier):
     queryset = User.objects.filter(role='PASTRY').exclude(last_name=REMOVED_STAFF_MARK)
+
+class AdminPastryChefPassword(AdminCourierPassword):
+    queryset = AdminPastryChef.queryset
 
 class AdminBusinesses(generics.ListAPIView):
     """Business ('заведение') accounts with their approval state, for the administrator to review."""

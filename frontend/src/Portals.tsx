@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
-import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Eye, EyeOff, KeyRound, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
+import { createPortal } from 'react-dom';
+import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Copy, Eye, EyeOff, KeyRound, Mail, Sparkles, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview, type Debts, type DebtOrder, type MyDebt } from './lib';
 import { LazyImage, PhoneInput, phoneDigits, formatPhone } from './ui';
 import { uploadProductPhoto } from './imageUpload';
@@ -715,6 +716,7 @@ function StaffPanel({ kind }: { kind: keyof typeof staffText }) {
   };
   // Deleting takes two confirmations: the first asks, the second warns it cannot be undone.
   const [removing, setRemoving] = useState<{ id: number; step: 1 | 2 } | null>(null);
+  const [profileId, setProfileId] = useState<number | null>(null);
   const remove = async (person: User) => {
     if (lock.current) return;
     lock.current = true; setError(''); setBusy(true); setNotice('');
@@ -755,8 +757,86 @@ function StaffPanel({ kind }: { kind: keyof typeof staffText }) {
         <div className="staff-actions"><button type="button" className="product-secondary" disabled={busy} onClick={() => setAdding(false)}>Отмена</button><button className="portal-button" disabled={busy || !draft.name.trim() || mismatch}>{busy ? 'Добавляем…' : addLabel}<Plus size={17} aria-hidden="true" /></button></div>
       </fieldset></form>
     </section>}
-    {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><a href={`tel:${person.phone}`}>{person.phone}</a></div><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button>{removing?.id !== person.id && <button type="button" className="portal-text-button portal-danger-text" disabled={busy} onClick={() => { setRemoving({ id: person.id, step: 1 }); setError(''); setNotice(''); }}>Удалить</button>}</div>{removing?.id === person.id && <div className="portal-staff-delete" role="alertdialog" aria-label={`Удаление сотрудника ${person.name}`}>{removing.step === 1 ? <><p>Удалить сотрудника <strong>{person.name}</strong> ({person.email})?</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => setRemoving({ id: person.id, step: 2 })}>Да, удалить</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Отмена</button></div></> : <><p><strong>Точно удалить {person.name}?</strong> Сотрудник больше не сможет войти и пропадёт из списка, восстановить аккаунт будет нельзя. В истории заказов и чеках его имя останется.{kind === 'couriers' ? ' Заказы, которые он сейчас везёт или ещё не забрал, сразу перейдут другим свободным курьерам.' : ''}</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => void remove(person)}>{busy ? 'Удаляем…' : 'Удалить навсегда'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Не удалять</button></div></>}</div>}</article>) : <EmptyState icon={kind === 'cashiers' ? <Banknote size={30} aria-hidden="true" /> : kind === 'pastry-chefs' ? <ChefHat size={30} aria-hidden="true" /> : <Truck size={30} aria-hidden="true" />} title={text.empty}>{text.emptyText}</EmptyState>}</div>}
+    {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><button type="button" className="staff-open" onClick={() => setProfileId(person.id)} aria-label={`Открыть профиль: ${person.name}`}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><p>{person.phone}</p><span className="staff-open-hint">Открыть профиль<ChevronRight size={14} aria-hidden="true" /></span></div></button><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button>{removing?.id !== person.id && <button type="button" className="portal-text-button portal-danger-text" disabled={busy} onClick={() => { setRemoving({ id: person.id, step: 1 }); setError(''); setNotice(''); }}>Удалить</button>}</div>{removing?.id === person.id && <div className="portal-staff-delete" role="alertdialog" aria-label={`Удаление сотрудника ${person.name}`}>{removing.step === 1 ? <><p>Удалить сотрудника <strong>{person.name}</strong> ({person.email})?</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => setRemoving({ id: person.id, step: 2 })}>Да, удалить</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Отмена</button></div></> : <><p><strong>Точно удалить {person.name}?</strong> Сотрудник больше не сможет войти и пропадёт из списка, восстановить аккаунт будет нельзя. В истории заказов и чеках его имя останется.{kind === 'couriers' ? ' Заказы, которые он сейчас везёт или ещё не забрал, сразу перейдут другим свободным курьерам.' : ''}</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => void remove(person)}>{busy ? 'Удаляем…' : 'Удалить навсегда'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Не удалять</button></div></>}</div>}</article>) : <EmptyState icon={kind === 'cashiers' ? <Banknote size={30} aria-hidden="true" /> : kind === 'pastry-chefs' ? <ChefHat size={30} aria-hidden="true" /> : <Truck size={30} aria-hidden="true" />} title={text.empty}>{text.emptyText}</EmptyState>}</div>}
+    {profileId !== null && <StaffProfile kind={kind} id={profileId} onClose={() => setProfileId(null)} />}
   </section>;
+}
+
+type StaffProfileData = User & { date_joined: string; last_login: string | null; stats: { payments_count: number; payments_total: string; delivered?: number; active?: number; open_debts?: number; confirmed?: number; cooked?: number } };
+const staffRole = { couriers: 'Курьер', cashiers: 'Кассир', 'pastry-chefs': 'Кондитер' } as const;
+const fullDate = (value: string) => new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(value));
+// A random password without look-alike characters (0/O, 1/l/I), easy to dictate to a colleague.
+const newStaffPassword = () => { const alphabet = 'ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789'; return Array.from(crypto.getRandomValues(new Uint32Array(12)), n => alphabet[n % alphabet.length]).join(''); };
+
+// Admin: a staff member's profile with personal data, a work summary and a new password.
+function StaffProfile({ kind, id, onClose }: { kind: keyof typeof staffText; id: number; onClose: () => void }) {
+  const remote = useRemote<StaffProfileData>(`/admin/${kind}/${id}/`);
+  const [changing, setChanging] = useState(false);
+  const [password, setPassword] = useState('');
+  const [repeat, setRepeat] = useState('');
+  const [show, setShow] = useState(false);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [issued, setIssued] = useState('');
+  const [copied, setCopied] = useState(false);
+  const dialog = useRef<HTMLDivElement>(null);
+  const mismatch = repeat.length > 0 && repeat !== password;
+  useEffect(() => { dialog.current?.focus(); const close = (event: KeyboardEvent) => { if (event.key === 'Escape' && !busy) onClose(); }; window.addEventListener('keydown', close); return () => window.removeEventListener('keydown', close); }, [busy, onClose]);
+  const reset = () => { setChanging(false); setPassword(''); setRepeat(''); setShow(false); setError(''); };
+  const generate = () => { const value = newStaffPassword(); setPassword(value); setRepeat(value); setShow(true); setError(''); };
+  const save = async (event: FormEvent) => {
+    event.preventDefault();
+    if (password !== repeat) { setError('Пароли не совпадают.'); return; }
+    setBusy(true); setError('');
+    try { await api(`/admin/${kind}/${id}/password/`, json({ password })); setIssued(password); setCopied(false); reset(); }
+    catch (err) { setError(failure(err)); }
+    finally { setBusy(false); }
+  };
+  const copy = async () => { try { await navigator.clipboard.writeText(issued); setCopied(true); } catch { setCopied(false); } };
+  const person = remote.data;
+  const stats = person?.stats;
+  const tiles: [string, string, string?][] = !stats ? [] : kind === 'couriers'
+    ? [['Доставлено', String(stats.delivered ?? 0)], ['Сейчас в работе', String(stats.active ?? 0)], ['Принял наличными', money(stats.payments_total), `оплат: ${stats.payments_count}`], ['Клиентов в долгу', String(stats.open_debts ?? 0)]]
+    : kind === 'cashiers'
+      ? [['Принял оплат', String(stats.payments_count)], ['На сумму', money(stats.payments_total)]]
+      : [['Подтвердил заказов', String(stats.confirmed ?? 0)], ['Приготовил заказов', String(stats.cooked ?? 0)]];
+  const toggle = <button type="button" className="portal-password-toggle" onClick={() => setShow(value => !value)} aria-label={show ? 'Скрыть пароль' : 'Показать пароль'} aria-pressed={show}>{show ? <EyeOff size={18} aria-hidden="true" /> : <Eye size={18} aria-hidden="true" />}</button>;
+  return createPortal(<div className="staff-profile-backdrop" onMouseDown={event => { if (event.target === event.currentTarget && !busy) onClose(); }}>
+    <div ref={dialog} tabIndex={-1} className="staff-profile" role="dialog" aria-modal="true" aria-label={person ? `Профиль: ${person.name}` : 'Профиль сотрудника'}>
+      <button type="button" className="portal-icon-button staff-profile-close" onClick={onClose} disabled={busy} aria-label="Закрыть профиль"><X size={20} aria-hidden="true" /></button>
+      {remote.error ? <ErrorNotice message={remote.error} retry={remote.retry} /> : !person ? <p className="portal-loading" role="status">Загружаем профиль…</p> : <>
+        <header className="staff-profile-head">
+          <span className="staff-profile-avatar" aria-hidden="true">{person.name.charAt(0).toUpperCase()}</span>
+          <div><p className="portal-eyebrow">{staffRole[kind].toUpperCase()}</p><h3>{person.name}</h3><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span></div>
+        </header>
+        <section className="staff-profile-block"><h4><UserRound size={17} aria-hidden="true" />Личные данные</h4>
+          <dl className="staff-profile-data">
+            <div><dt><Phone size={15} aria-hidden="true" />Телефон</dt><dd>{person.phone ? <a href={`tel:${person.phone.replace(/\s/g, '')}`}>{person.phone}</a> : 'Не указан'}</dd></div>
+            <div><dt><Mail size={15} aria-hidden="true" />Почта (логин)</dt><dd>{person.email}</dd></div>
+            <div><dt><CircleCheck size={15} aria-hidden="true" />В команде с</dt><dd>{fullDate(person.date_joined)}</dd></div>
+            <div><dt><Clock3 size={15} aria-hidden="true" />Последний вход</dt><dd>{person.last_login ? fullDate(person.last_login) : 'Ещё не входил(а)'}</dd></div>
+          </dl>
+        </section>
+        <section className="staff-profile-block"><h4><ChefHat size={17} aria-hidden="true" />Работа</h4>
+          <div className="staff-profile-stats">{tiles.map(([label, value, note]) => <article key={label}><span>{label}</span><strong>{value}</strong>{note && <small>{note}</small>}</article>)}</div>
+        </section>
+        <section className="staff-profile-block"><h4><KeyRound size={17} aria-hidden="true" />Пароль для входа</h4>
+          <p className="staff-profile-note">Пароли хранятся в зашифрованном виде, поэтому старый пароль посмотреть нельзя. Если сотрудник его забыл, задайте новый и передайте ему лично.</p>
+          {issued && <div className="staff-profile-issued" role="status"><p><Check size={16} aria-hidden="true" />Новый пароль сохранён. Передайте его сотруднику — после закрытия окна он больше не будет показан.</p><div><code>{issued}</code><button type="button" className="product-secondary" onClick={() => void copy()}><Copy size={16} aria-hidden="true" />{copied ? 'Скопировано' : 'Скопировать'}</button></div></div>}
+          {changing ? <form className="portal-form staff-profile-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}>
+            <div className="staff-fields">
+              <label><span>Новый пароль <i>*</i></span><span className="portal-password"><input type={show ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" placeholder="Не менее 10 символов" />{toggle}</span></label>
+              <label><span>Повторите пароль <i>*</i></span><span className="portal-password"><input type={show ? 'text' : 'password'} value={repeat} onChange={e => setRepeat(e.target.value)} required minLength={10} maxLength={128} autoComplete="new-password" aria-invalid={mismatch || undefined} />{toggle}</span>{mismatch ? <small className="portal-danger-text">Пароли не совпадают.</small> : repeat && <small className="portal-password-ok"><Check size={14} aria-hidden="true" /> Пароли совпадают</small>}</label>
+            </div>
+            <button type="button" className="portal-text-button staff-generate" onClick={generate}><Sparkles size={15} aria-hidden="true" />Придумать надёжный пароль</button>
+            <p className="staff-note"><LockKeyhole size={15} aria-hidden="true" />Старый пароль сразу перестанет работать, а сотрудник выйдет из кабинета на всех устройствах.</p>
+            <ErrorNotice message={error} />
+            <div className="staff-actions"><button type="button" className="product-secondary" onClick={reset}>Отмена</button><button className="portal-button" disabled={busy || !password || mismatch}>{busy ? 'Сохраняем…' : 'Сохранить новый пароль'}<KeyRound size={16} aria-hidden="true" /></button></div>
+          </fieldset></form> : <button type="button" className="portal-button portal-button-outline staff-profile-reset" onClick={() => { setChanging(true); setIssued(''); }}><KeyRound size={16} aria-hidden="true" />Задать новый пароль</button>}
+        </section>
+      </>}
+    </div>
+  </div>, document.body);
 }
 
 const shiftDay = (value: string, days: number) => { const date = new Date(`${value}T12:00:00Z`); date.setUTCDate(date.getUTCDate() + days); return date.toISOString().slice(0, 10); };
