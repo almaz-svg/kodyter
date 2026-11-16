@@ -2,7 +2,7 @@ import { useState, useEffect, useRef } from 'react';
 import type { ImgHTMLAttributes } from 'react';
 import { ArrowRight, Minus, Plus, LoaderCircle, ShoppingBag } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import { money, unitPrice, formatWeight, MAX_ORDER_ITEM_QUANTITY } from './lib';
+import { money, unitPrice, formatWeight, productSize, MAX_ORDER_ITEM_QUANTITY } from './lib';
 import type { Product } from './lib';
 import { useShop } from './store';
 import { useI18n } from './i18n';
@@ -196,8 +196,8 @@ export function FeaturedCard({ product }: { product: Product }) {
     <article className="feat-card">
       <Link to={`/product/${product.id}`} className="feat-photo" tabIndex={-1} aria-hidden="true">
         <LazyImage src={product.image || '/images/croissant.webp'} alt="" />
-        {product.weight && <span className="feat-pill">{formatWeight(product.weight, t.weightUnit)}</span>}
-        {product.weight && <span className="feat-ribbon"><span className="feat-ribbon-logo" aria-hidden="true" />{formatWeight(product.weight, t.weightUnit)}</span>}
+        {(product.weight || product.pieces) && <span className="feat-pill">{productSize(product, t.weightUnit, t.piecesUnit)}</span>}
+        {(product.weight || product.pieces) && <span className="feat-ribbon"><span className="feat-ribbon-logo" aria-hidden="true" />{productSize(product, t.weightUnit, t.piecesUnit)}</span>}
         {!product.is_available && <span className="availability">{t.soonAvail}</span>}
       </Link>
       <div className="feat-body">

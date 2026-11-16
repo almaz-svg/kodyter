@@ -15,7 +15,7 @@ export function unitPrice(product: Product, quantity: number): number {
 }
 
 export interface Category {id:number;name:string;slug:string;description:string;image:string;is_visible:boolean}
-export interface Product {id:number;category:number;name:string;description:string;image:string;price:number|string;retail_price?:number|string;wholesale_price?:number|string|null;wholesale_min_qty?:number;weight:string;ingredients:string;allergens:string;is_available:boolean;is_visible:boolean}
+export interface Product {id:number;category:number;name:string;description:string;image:string;price:number|string;retail_price?:number|string;wholesale_price?:number|string|null;wholesale_min_qty?:number;weight:string;pieces?:number|null;ingredients:string;allergens:string;is_available:boolean;is_visible:boolean}
 export interface Order {id:number;number:string;created_at:string;status:string;recipient_name:string;phone:string;address:string;comment:string;subtotal:number|string;delivery_fee:number|string;total:number|string;courier:number|null;courier_name:string|null;courier_is_active?:boolean|null;cancellation_reason:string;payment_status?:PaymentStatus;paid_at?:string|null;paid_by?:number|null;paid_by_name?:string|null;on_credit?:boolean;credit_at?:string|null;credit_by_name?:string;customer_name?:string;customer_company?:string;items:{id:number;product_id:number;name:string;price:number|string;quantity:number;image:string;is_prepared?:boolean}[];status_history:{id:number;from_status:string|null;to_status:string;created_at:string;actor_name?:string}[];problems:{id:number;message:string;created_at:string;actor_name?:string}[]}
 export interface AdminOverview {new:number;unassigned:number;on_the_way:number;unpaid_delivered:number}
 export interface DebtOrder {id:number;number:string;created_at:string;credit_at:string|null;total:string;address:string;recipient_name:string;phone:string;courier_name:string;credit_by_name:string;payment_status:'DEBT'|'PAID';paid_at:string|null;paid_by_name:string}
@@ -30,6 +30,8 @@ export const statusSteps = ['NEW','CONFIRMED','PREPARING','READY','HANDED_OVER',
 export const statusLabel:Record<string,string> = {NEW:'Новый',CONFIRMED:'Подтверждён',PREPARING:'Готовится',READY:'Готов к выдаче',HANDED_OVER:'Передан курьеру',IN_TRANSIT:'В пути',DELIVERED:'Доставлен',CANCELLED:'Отменён'};
 // Weight as typed in the admin panel; a bare number such as "120" gets the gram unit.
 export const formatWeight=(weight:string|null|undefined,unit='г')=>{const value=(weight||'').trim();return /^\d+(?:[.,]\d+)?$/.test(value)?`${value} ${unit}`:value};
+// "120 г · 6 шт.": weight and pieces of one item, whichever are set.
+export const productSize=(product:{weight?:string;pieces?:number|null},weightUnit='г',piecesUnit='шт.')=>[formatWeight(product.weight,weightUnit),product.pieces?`${product.pieces} ${piecesUnit}`:''].filter(Boolean).join(' · ');
 export const money=(value:number|string)=>new Intl.NumberFormat('ru-RU',{maximumFractionDigits:2}).format(Number(value))+' ₸';
 const fieldNames:Record<string,string>={email:'Почта',password:'Пароль',name:'Имя',recipient_name:'Имя получателя',phone:'Телефон',address:'Адрес',price:'Цена',category:'Категория',image:'Фотография',non_field_errors:''};
 function errorText(value:unknown):string {if(Array.isArray(value))return value.map(errorText).join(' ');if(value&&typeof value==='object')return Object.values(value).map(errorText).join(' ');return String(value??'')}

@@ -28,7 +28,7 @@ EXPECTED_CLIENT_WRITES = {
     CategorySerializer: {'name', 'slug', 'description', 'image', 'is_visible'},
     # Only an administrator writes business approval.
     BusinessAccountSerializer: {'business_approved'},
-    ProductSerializer: {'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible'},
+    ProductSerializer: {'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'pieces', 'ingredients', 'allergens', 'is_available', 'is_visible'},
     CourierUpdateSerializer: {'name', 'phone', 'is_active'},
     PaymentRequestSerializer: {'method', 'idempotency_key'},
     CheckoutSerializer: {'recipient_name', 'phone', 'address', 'comment', 'items', 'expected_delivery_fee', 'idempotency_key'},

@@ -1,6 +1,6 @@
 import {useEffect,useState} from 'react';
 import {Link,useParams,useSearchParams} from 'react-router-dom';
-import {ArrowLeft,ArrowRight,Search,ShoppingBag,Leaf,Truck,Weight} from 'lucide-react';
+import {ArrowLeft,ArrowRight,Search,ShoppingBag,Leaf,Truck,Weight,Layers} from 'lucide-react';
 import {api,money,formatWeight} from './lib';
 import type {Product,Category} from './lib';
 import {useShop} from './store';
@@ -106,6 +106,7 @@ export function ProductPage() {
               {product.is_available ? 'В наличии' : 'Временно недоступно'}
             </span>
             {product.weight && <p className="detail-weight"><Weight size={18} aria-hidden="true" />{t.weightLabel}: <strong>{formatWeight(product.weight, t.weightUnit)}</strong></p>}
+            {product.pieces ? <p className="detail-weight"><Layers size={18} aria-hidden="true" />{t.piecesLabel}: <strong>{product.pieces} {t.piecesUnit}</strong></p> : null}
             <p className="detail-description">{product.description}</p>
             <div className="detail-price"><PriceTag product={product} quantity={n} /></div>
             <div className="buy-row">

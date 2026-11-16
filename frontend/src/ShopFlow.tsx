@@ -2,7 +2,7 @@ import {useEffect,useState} from 'react';
 import type {FormEvent} from 'react';
 import {Link,useNavigate,useSearchParams} from 'react-router-dom';
 import {ArrowLeft,ArrowRight,ShoppingBag,Trash2,ShieldCheck,Check,Truck,Croissant,LockKeyhole,UserRound,Store,Eye,EyeOff,Info} from 'lucide-react';
-import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey,unitPrice,formatWeight} from './lib';
+import {api,ApiError,money,roleHome,getCheckoutKey,clearCheckoutKey,unitPrice,productSize} from './lib';
 import type {Product,Order,User,AccountType} from './lib';
 import {useShop} from './store';
 import {Qty,ErrorBox,Loading,LazyImage,PriceTag,Branch} from './ui';
@@ -29,7 +29,7 @@ export function Cart() {
                 <Link to={`/product/${p.id}`}><LazyImage src={p.image} alt={productName(p, lang)}/></Link>
                 <div className="cart-info">
                   <Link to={`/product/${p.id}`}><h3>{productName(p, lang)}</h3></Link>
-                  <span><PriceTag product={p} quantity={n}/>{p.weight ? ` · ${formatWeight(p.weight, t.weightUnit)}` : ''}</span>
+                  <span><PriceTag product={p} quantity={n}/>{p.weight || p.pieces ? ` · ${productSize(p, t.weightUnit, t.piecesUnit)}` : ''}</span>
                   <Qty value={n} onChange={v => quantity(p.id,v)}/>
                 </div>
                 <div className="cart-row-end">

@@ -66,6 +66,8 @@ class Product(models.Model):
     # Optional wholesale price for business accounts. Empty means business customers pay the retail price.
     wholesale_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     weight = models.CharField(max_length=80, blank=True)
+    # Optional: how many pieces one item contains ("6 шт.").
+    pieces = models.PositiveSmallIntegerField(null=True, blank=True)
     ingredients = models.TextField(blank=True)
     allergens = models.TextField(blank=True)
     is_available = models.BooleanField(default=True)

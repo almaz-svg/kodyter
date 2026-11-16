@@ -75,10 +75,11 @@ class ProductSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSe
     """Admin view and input: `price` is the retail price, `wholesale_price` is the business price."""
     price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
     wholesale_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'), required=False, allow_null=True)
+    pieces = serializers.IntegerField(min_value=1, max_value=1000, required=False, allow_null=True)
 
     class Meta:
         model = Product
-        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible']
+        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'pieces', 'ingredients', 'allergens', 'is_available', 'is_visible']
         extra_kwargs = {'image': {'validators': [validate_image_reference]}}
 
     def validate(self, attrs):
@@ -98,7 +99,7 @@ class PublicProductSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Product
-        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'retail_price', 'weight', 'ingredients', 'allergens', 'is_available', 'is_visible']
+        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'retail_price', 'weight', 'pieces', 'ingredients', 'allergens', 'is_available', 'is_visible']
         read_only_fields = fields
 
     def to_representation(self, product):

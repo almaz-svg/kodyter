@@ -245,6 +245,8 @@ export interface Translations {
   priceSoon: string;
   weightLabel: string;
   weightUnit: string;
+  piecesLabel: string;
+  piecesUnit: string;
   buy: string;
   outOfStock: string;
   inCart: (n: number) => string;
@@ -444,6 +446,8 @@ const kz: Translations = {
   priceSoon:'Бағасы нақтылануда',
   weightLabel:'Салмағы',
   weightUnit:'г',
+  piecesLabel:'Саны',
+  piecesUnit:'дана',
   buy:'Сатып алу', outOfStock:'Жоқ',
   inCart:(n)=>`Себетте: ${n} дана`,
   perItem:'1 данасы', toCart:'Себетке',
@@ -631,6 +635,8 @@ const ru: Translations = {
   priceSoon:'Цена уточняется',
   weightLabel:'Вес',
   weightUnit:'г',
+  piecesLabel:'Количество',
+  piecesUnit:'шт.',
   buy:'Купить', outOfStock:'Нет в наличии',
   inCart:(n)=>`В корзине: ${n} шт.`,
   perItem:'За 1 шт.', toCart:'В корзину',
@@ -818,6 +824,8 @@ const en: Translations = {
   priceSoon:'Price coming soon',
   weightLabel:'Weight',
   weightUnit:'g',
+  piecesLabel:'Quantity',
+  piecesUnit:'pcs',
   buy:'Buy', outOfStock:'Out of stock',
   inCart:(n)=>`In cart: ${n}`,
   perItem:'Per item', toCart:'To cart',
