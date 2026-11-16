@@ -58,3 +58,13 @@ class RegisterPhoneTests(APITestCase):
         staff = User.objects.create_user(email='staff@phone.test', password='Staff-password-123!', name='Staff', role='COURIER', phone='+77010000000')
         self.client.force_login(staff)
         self.assertEqual(self.client.patch('/api/auth/profile/', {'phone': ''}, format='json').status_code, 200)
+
+    def test_staff_phone_is_stored_in_the_same_format(self):
+        admin = User.objects.create_user(email='admin2@phone.test', password='Staff-password-123!', name='Admin', role='ADMIN')
+        self.client.force_login(admin)
+        for kind, typed in (('couriers', '+7 700 111 22 33'), ('cashiers', '87001112244'), ('pastry-chefs', '7001112255')):
+            response = self.client.post(f'/api/admin/{kind}/', {'name': 'Staff', 'email': f'{kind}@phone.test', 'password': 'Staff-pass-12345!', 'phone': typed}, format='json')
+            self.assertEqual(response.status_code, 201, kind)
+            self.assertEqual(User.objects.get(email=f'{kind}@phone.test').phone, '+7 700 111 22 ' + typed[-2:], kind)
+        bad = self.client.post('/api/admin/couriers/', {'name': 'Staff', 'email': 'bad@phone.test', 'password': 'Staff-pass-12345!', 'phone': '12345'}, format='json')
+        self.assertEqual(bad.status_code, 400)

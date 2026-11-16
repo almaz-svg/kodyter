@@ -97,11 +97,11 @@ class RegisterSerializer(MarkupFreeMixin, serializers.Serializer):
         return data
 
 class StaffCreateSerializer(RegisterSerializer):
-    """An administrator adds a courier, cashier or pastry chef: the phone stays optional for staff."""
+    """An administrator adds a courier, cashier or pastry chef. The phone is stored like a customer's: "+7 700 000 00 00"."""
     phone = serializers.CharField(max_length=30, required=False, allow_blank=True, default='')
 
     def validate_phone(self, value):
-        return value
+        return normalize_kz_phone(value) if value.strip() else ''
 
 class CategorySerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
     class Meta:
@@ -156,6 +156,9 @@ class CourierUpdateSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.M
     class Meta:
         model = User
         fields = ['name', 'phone', 'is_active']
+
+    def validate_phone(self, value):
+        return normalize_kz_phone(value) if value.strip() else ''
 
 class OrderItemSerializer(serializers.ModelSerializer):
     class Meta:
