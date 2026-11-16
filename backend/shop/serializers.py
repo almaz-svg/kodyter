@@ -41,13 +41,24 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
         fields = ['id', 'name', 'email', 'phone', 'company_name', 'business_approved']
         read_only_fields = ['id', 'name', 'email', 'phone', 'company_name']
 
+PHONE_FORMAT_ERROR = 'Укажите телефон в международном формате, например +7 701 123 45 67.'
+
+def validate_phone_number(value):
+    if not re.fullmatch(r'[+\d()\s-]+', value) or not 10 <= len(re.sub(r'\D', '', value)) <= 15:
+        raise serializers.ValidationError(PHONE_FORMAT_ERROR)
+    return value
+
 class RegisterSerializer(MarkupFreeMixin, serializers.Serializer):
     name = serializers.CharField(max_length=120)
     email = serializers.EmailField(max_length=254)
-    phone = serializers.CharField(max_length=30, required=False, allow_blank=True)
+    # Required for every new customer, individual or business: couriers and the bakery call this number.
+    phone = serializers.CharField(max_length=30, error_messages={'required': 'Укажите номер телефона.', 'blank': 'Укажите номер телефона.'})
     password = serializers.CharField(write_only=True, max_length=128, trim_whitespace=False)
     account_type = serializers.ChoiceField(choices=User.AccountType.choices, default=User.AccountType.INDIVIDUAL)
     company_name = serializers.CharField(max_length=160, required=False, allow_blank=True, default='')
+
+    def validate_phone(self, value):
+        return validate_phone_number(value.strip())
 
     def validate_email(self, value):
         value = value.lower()
@@ -64,6 +75,13 @@ class RegisterSerializer(MarkupFreeMixin, serializers.Serializer):
         except DjangoValidationError as exc:
             raise serializers.ValidationError({'password': list(exc.messages)})
         return data
+
+class StaffCreateSerializer(RegisterSerializer):
+    """An administrator adds a courier, cashier or pastry chef: the phone stays optional for staff."""
+    phone = serializers.CharField(max_length=30, required=False, allow_blank=True, default='')
+
+    def validate_phone(self, value):
+        return value
 
 class CategorySerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
     class Meta:
@@ -255,9 +273,7 @@ class CheckoutSerializer(MarkupFreeMixin, serializers.Serializer):
     idempotency_key = serializers.UUIDField()
 
     def validate_phone(self, value):
-        if not re.fullmatch(r'[+\d()\s-]+', value) or not 10 <= len(re.sub(r'\D', '', value)) <= 15:
-            raise serializers.ValidationError('Укажите телефон в международном формате, например +7 701 123 45 67.')
-        return value
+        return validate_phone_number(value)
 
     def validate_items(self, items):
         ids = [item['product_id'] for item in items]

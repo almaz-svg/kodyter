@@ -74,7 +74,7 @@ class BusinessApprovalTests(APITestCase):
         self.assertFalse(self.individual.business_approved)
 
     def test_registration_cannot_self_approve(self):
-        response = self.client.post('/api/auth/register/', {'name': 'Self', 'email': 'self@approval.test', 'password': 'Self-password-123!', 'account_type': 'BUSINESS', 'company_name': 'Self Cafe', 'business_approved': True}, format='json')
+        response = self.client.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'Self', 'email': 'self@approval.test', 'password': 'Self-password-123!', 'account_type': 'BUSINESS', 'company_name': 'Self Cafe', 'business_approved': True}, format='json')
         self.assertEqual(response.status_code, 201, response.content)
         user = User.objects.get(email='self@approval.test')
         self.assertFalse(user.business_approved)

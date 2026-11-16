@@ -79,17 +79,17 @@ class WholesalePricingTests(APITestCase):
         self.assertIsNone(self.without_wholesale.wholesale_price)
 
     def test_registration_defaults_to_individual(self):
-        response = self.client.post('/api/auth/register/', {'name': 'New Person', 'email': 'new@wholesale.test', 'password': 'Another-password-123!'}, format='json')
+        response = self.client.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'New Person', 'email': 'new@wholesale.test', 'password': 'Another-password-123!'}, format='json')
         self.assertEqual(response.status_code, 201, response.content)
         self.assertEqual(User.objects.get(email='new@wholesale.test').account_type, 'INDIVIDUAL')
 
     def test_business_registration_needs_company_name(self):
-        response = self.client.post('/api/auth/register/', {'name': 'Manager', 'email': 'nocafe@wholesale.test', 'password': 'Another-password-123!', 'account_type': 'BUSINESS'}, format='json')
+        response = self.client.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'Manager', 'email': 'nocafe@wholesale.test', 'password': 'Another-password-123!', 'account_type': 'BUSINESS'}, format='json')
         self.assertEqual(response.status_code, 400)
         self.assertFalse(User.objects.filter(email='nocafe@wholesale.test').exists())
 
     def test_business_registration_stores_company_name(self):
-        response = self.client.post('/api/auth/register/', {'name': 'Manager', 'email': 'cafe2@wholesale.test', 'password': 'Another-password-123!', 'account_type': 'BUSINESS', 'company_name': 'Second Cafe'}, format='json')
+        response = self.client.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'Manager', 'email': 'cafe2@wholesale.test', 'password': 'Another-password-123!', 'account_type': 'BUSINESS', 'company_name': 'Second Cafe'}, format='json')
         self.assertEqual(response.status_code, 201, response.content)
         user = User.objects.get(email='cafe2@wholesale.test')
         self.assertEqual((user.account_type, user.company_name), ('BUSINESS', 'Second Cafe'))

@@ -56,7 +56,7 @@ class MarkupRejectionTests(TestCase):
         self.assertEqual(reject_markup('Анастасия Иванова'), 'Анастасия Иванова')
 
     def test_registration_refuses_script_in_name(self):
-        serializer = RegisterSerializer(data={'name': '<script>alert(1)</script>', 'email': 'xss@example.test', 'password': 'Strong-password-222!'})
+        serializer = RegisterSerializer(data={'name': '<script>alert(1)</script>', 'phone': '+77011234567', 'email': 'xss@example.test', 'password': 'Strong-password-222!'})
         self.assertFalse(serializer.is_valid())
         self.assertIn('non_field_errors', serializer.errors)
 
@@ -80,7 +80,7 @@ class PasswordStorageTests(TestCase):
         self.client_api = APIClient()
 
     def test_registered_password_is_stored_only_as_hash(self):
-        response = self.client_api.post('/api/auth/register/', {'name': 'Айгерим', 'email': 'hash@example.test', 'password': 'Strong-password-222!'})
+        response = self.client_api.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'Айгерим', 'email': 'hash@example.test', 'password': 'Strong-password-222!'})
         self.assertEqual(response.status_code, 201)
         user = User.objects.get(email='hash@example.test')
         self.assertTrue(user.password.startswith('pbkdf2_'))

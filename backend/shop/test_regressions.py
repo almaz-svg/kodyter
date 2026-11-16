@@ -33,7 +33,7 @@ class InputRegressionTests(APITestCase):
         email = 'x' * 64 + '@' + 'a' * 63 + '.' + 'b' * 63 + '.' + 'c' * 63 + '.test'
         self.assertGreater(len(email), 254)
         self.client.raise_request_exception = False
-        response = self.client.post('/api/auth/register/', {'name': 'Long email', 'email': email, 'password': 'Long-password-456!'})
+        response = self.client.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'Long email', 'email': email, 'password': 'Long-password-456!'})
         self.assertEqual(response.status_code, 400)
         self.assertIn('email', response.json())
 

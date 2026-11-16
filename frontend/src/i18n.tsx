@@ -194,6 +194,7 @@ export interface Translations {
   checkoutNamePlaceholder: string;
   checkoutPhone: string;
   checkoutPhonePlaceholder: string;
+  authPhoneHint: string;
   checkoutAddress: string;
   checkoutAddressPl: string;
   checkoutComment: string;
@@ -410,7 +411,7 @@ const kz: Translations = {
   checkoutStep3:'03', checkoutStep3Title:'Алу кезінде төлем',
   checkoutStep3Note:'Онлайн-төлем қажет емес. Қорытынды сомасы «Тапсырысыңыз» блогында көрсетілген.',
   checkoutName:'Алушының аты', checkoutNamePlaceholder:'Сіздің атыңыз',
-  checkoutPhone:'Телефон', checkoutPhonePlaceholder:'+7 (___) ___ __ __',
+  checkoutPhone:'Телефон', checkoutPhonePlaceholder:'+7 (___) ___ __ __', authPhoneHint:'Халықаралық форматта енгізіңіз, мысалы +7 701 123 45 67',
   checkoutAddress:'Жеткізу мекен-жайы', checkoutAddressPl:'Қала, көше, үй, пәтер',
   checkoutComment:'Пікір',
   checkoutCommentPl:'Кіреберіс, қабат, домофон немесе тапсырысқа тілектер',
@@ -599,7 +600,7 @@ const ru: Translations = {
   checkoutStep3:'03', checkoutStep3Title:'Оплата при получении',
   checkoutStep3Note:'Онлайн-оплата не требуется. Итоговая сумма указана в блоке «Ваш заказ».',
   checkoutName:'Имя получателя', checkoutNamePlaceholder:'Ваше имя',
-  checkoutPhone:'Телефон', checkoutPhonePlaceholder:'+7 (___) ___ __ __',
+  checkoutPhone:'Телефон', checkoutPhonePlaceholder:'+7 (___) ___ __ __', authPhoneHint:'Укажите телефон в формате +7 701 123 45 67',
   checkoutAddress:'Адрес доставки', checkoutAddressPl:'Город, улица, дом, квартира',
   checkoutComment:'Комментарий',
   checkoutCommentPl:'Подъезд, этаж, домофон или пожелания к заказу',
@@ -788,7 +789,7 @@ const en: Translations = {
   checkoutStep3:'03', checkoutStep3Title:'Payment on delivery',
   checkoutStep3Note:"No online payment needed. The total is shown in the 'Your Order' block.",
   checkoutName:'Recipient name', checkoutNamePlaceholder:'Your name',
-  checkoutPhone:'Phone', checkoutPhonePlaceholder:'+7 (___) ___ __ __',
+  checkoutPhone:'Phone', checkoutPhonePlaceholder:'+7 (___) ___ __ __', authPhoneHint:'Enter the phone in international format, e.g. +7 701 123 45 67',
   checkoutAddress:'Delivery address', checkoutAddressPl:'City, street, house, apt',
   checkoutComment:'Comment',
   checkoutCommentPl:'Entrance, floor, intercom or order notes',

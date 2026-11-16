@@ -45,14 +45,14 @@ class AuthContractTests(APITestCase):
         self.assertEqual(self.client.get('/api/auth/me/').status_code, 401)
 
     def test_signup_ignores_attempt_to_grant_admin_role(self):
-        response = self.client.post('/api/auth/register/', {'name': 'Amina', 'email': 'amina@example.test', 'password': 'Safe-test-password-719!', 'role': 'ADMIN'})
+        response = self.client.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'Amina', 'email': 'amina@example.test', 'password': 'Safe-test-password-719!', 'role': 'ADMIN'})
         self.assertEqual(response.status_code, 201)
         self.assertEqual(response.json()['role'], 'CUSTOMER')
         self.assertEqual(self.client.get('/api/auth/me/').json()['email'], 'amina@example.test')
 
     def test_password_whitespace_survives_registration_and_login(self):
         password = '  A-safe-password-456!  '
-        self.assertEqual(self.client.post('/api/auth/register/', {'name': 'Spaces', 'email': 'spaces@example.test', 'password': password}).status_code, 201)
+        self.assertEqual(self.client.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'Spaces', 'email': 'spaces@example.test', 'password': password}).status_code, 201)
         self.client.post('/api/auth/logout/')
         self.assertEqual(self.client.post('/api/auth/login/', {'email': 'spaces@example.test', 'password': password}).status_code, 200)
 
@@ -69,9 +69,9 @@ class AuthContractTests(APITestCase):
     def test_login_and_anonymous_registration_require_csrf(self):
         browser = APIClient(enforce_csrf_checks=True)
         self.assertEqual(browser.post('/api/auth/login/', {'email': 'x@example.test', 'password': 'X'}).status_code, 403)
-        self.assertEqual(browser.post('/api/auth/register/', {'name': 'X', 'email': 'x@example.test', 'password': 'Safe-test-password-719!'}).status_code, 403)
+        self.assertEqual(browser.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'X', 'email': 'x@example.test', 'password': 'Safe-test-password-719!'}).status_code, 403)
         token = browser.get('/api/auth/csrf/').json()['csrfToken']
-        response = browser.post('/api/auth/register/', {'name': 'X', 'email': 'x@example.test', 'password': 'Safe-test-password-719!'}, HTTP_X_CSRFTOKEN=token)
+        response = browser.post('/api/auth/register/', {'phone': '+77011234567', 'name': 'X', 'email': 'x@example.test', 'password': 'Safe-test-password-719!'}, HTTP_X_CSRFTOKEN=token)
         self.assertEqual(response.status_code, 201)
         self.assertEqual(browser.patch('/api/auth/profile/', {'name': 'Y'}).status_code, 403)
         token = browser.get('/api/auth/csrf/').json()['csrfToken']

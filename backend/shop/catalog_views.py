@@ -10,7 +10,7 @@ from .models import REMOVED_STAFF_MARK, Category, Product, User
 from django.db import transaction
 from .dispatch import dispatch_waiting_orders, release_courier_orders
 from .security import IsAdmin
-from .serializers import BusinessAccountSerializer, CategorySerializer, ProductSerializer, PublicProductSerializer, RegisterSerializer, UserSerializer, CourierUpdateSerializer
+from .serializers import BusinessAccountSerializer, CategorySerializer, ProductSerializer, PublicProductSerializer, StaffCreateSerializer, UserSerializer, CourierUpdateSerializer
 
 class Categories(generics.ListAPIView):
     permission_classes = [AllowAny]
@@ -106,7 +106,7 @@ class AdminCouriers(APIView):
         return Response(UserSerializer(staff, many=True).data)
 
     def post(self, request):
-        serializer = RegisterSerializer(data=request.data)
+        serializer = StaffCreateSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
         try:
             courier = User.objects.create_user(**serializer.validated_data, role=self.role)

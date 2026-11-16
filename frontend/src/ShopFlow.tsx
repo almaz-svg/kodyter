@@ -165,6 +165,7 @@ export function Auth() {
                 </fieldset>
               )}
               <label>{t.authEmail}<input name="email" type="email" autoComplete="email" required placeholder="you@example.com"/></label>
+              {mode==='register' && <label>{t.checkoutPhone}<input name="phone" type="tel" autoComplete="tel" inputMode="tel" required maxLength={30} pattern="[+0-9 \(\)\-]{10,30}" title={t.authPhoneHint} placeholder={t.checkoutPhonePlaceholder}/></label>}
               {mode !== 'reset' && (
                 <label>{t.authPassword}
                   <span className="auth-password">
