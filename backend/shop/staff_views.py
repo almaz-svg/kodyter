@@ -131,12 +131,13 @@ class CashierSummary(APIView):
         on_the_way = Order.objects.filter(status__in=('HANDED_OVER', 'IN_TRANSIT')).select_related('courier').order_by('created_at', 'id')
         in_delivery = on_the_way.aggregate(total=Sum('total'), count=Count('id'))
         in_delivery_orders = [{'id': o.id, 'number': o.number, 'status': o.status, 'total': format(o.total, '.2f'), 'address': o.address, 'courier_name': o.courier.name if o.courier else ''} for o in on_the_way[:50]]
-        # Orders placed in the period. Revenue counts only delivered orders whose money has been received:
-        # an order on credit joins it once the debt is paid. Orders still in work are reported separately,
-        # and cancelled orders are only counted.
+        # Revenue is the money received in the period, on the day the payment was confirmed: cash taken at the door
+        # and debts paid later. An order on credit therefore counts on the day its debt is marked paid.
+        payments = Payment.objects.filter(paid_at__date__gte=start, paid_at__date__lte=end)
+        sales = payments.aggregate(total=Sum('amount'), count=Count('id'))
+        items = OrderItem.objects.filter(order__payment__in=payments).aggregate(count=Sum('quantity'))
+        debt_paid = payments.filter(order__on_credit=True).aggregate(total=Sum('amount'), count=Count('id'))
+        # Orders placed in the period that are still in work; cancelled orders are only counted.
         placed = Order.objects.filter(created_at__date__gte=start, created_at__date__lte=end)
-        earned = placed.filter(status='DELIVERED', payment__isnull=False)
-        sales = earned.aggregate(total=Sum('total'), count=Count('id'))
-        items = OrderItem.objects.filter(order__in=earned).aggregate(count=Sum('quantity'))
         pending = placed.exclude(status__in=('DELIVERED', 'CANCELLED')).aggregate(total=Sum('total'), count=Count('id'))
-        return Response({'date': start.isoformat(), 'date_from': start.isoformat(), 'date_to': end.isoformat(), 'currency': 'KZT', 'cash_received': format(cash['total'] or Decimal('0'), '.2f'), 'paid_count': cash['count'], 'unpaid_delivered_total': format(unpaid['total'] or Decimal('0'), '.2f'), 'unpaid_delivered_count': unpaid['count'], 'debt_total': format(debt['total'] or Decimal('0'), '.2f'), 'debt_count': debt['count'], 'in_delivery_total': format(in_delivery['total'] or Decimal('0'), '.2f'), 'in_delivery_count': in_delivery['count'], 'in_delivery_orders': in_delivery_orders, 'orders_total': format(sales['total'] or Decimal('0'), '.2f'), 'orders_count': sales['count'], 'items_count': items['count'] or 0, 'cancelled_count': placed.filter(status='CANCELLED').count(), 'pending_total': format(pending['total'] or Decimal('0'), '.2f'), 'pending_count': pending['count']})
+        return Response({'date': start.isoformat(), 'date_from': start.isoformat(), 'date_to': end.isoformat(), 'currency': 'KZT', 'cash_received': format(cash['total'] or Decimal('0'), '.2f'), 'paid_count': cash['count'], 'unpaid_delivered_total': format(unpaid['total'] or Decimal('0'), '.2f'), 'unpaid_delivered_count': unpaid['count'], 'debt_total': format(debt['total'] or Decimal('0'), '.2f'), 'debt_count': debt['count'], 'in_delivery_total': format(in_delivery['total'] or Decimal('0'), '.2f'), 'in_delivery_count': in_delivery['count'], 'in_delivery_orders': in_delivery_orders, 'orders_total': format(sales['total'] or Decimal('0'), '.2f'), 'orders_count': sales['count'], 'items_count': items['count'] or 0, 'cancelled_count': placed.filter(status='CANCELLED').count(), 'pending_total': format(pending['total'] or Decimal('0'), '.2f'), 'pending_count': pending['count'], 'debt_paid_total': format(debt_paid['total'] or Decimal('0'), '.2f'), 'debt_paid_count': debt_paid['count']})
