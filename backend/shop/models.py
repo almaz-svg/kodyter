@@ -114,6 +114,10 @@ class Order(models.Model):
     delivery_fee = models.DecimalField(max_digits=10, decimal_places=2)
     total = models.DecimalField(max_digits=14, decimal_places=2)
     cancellation_reason = models.TextField(blank=True)
+    # The courier delivered the order without taking the money: the customer owes it until a payment is recorded.
+    on_credit = models.BooleanField(default=False)
+    credit_at = models.DateTimeField(null=True, blank=True)
+    credit_by_name = models.CharField(max_length=120, blank=True)
     idempotency_key = models.UUIDField()
     request_fingerprint = models.CharField(max_length=64)
 

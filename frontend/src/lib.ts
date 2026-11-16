@@ -3,7 +3,7 @@ export type Role = 'CUSTOMER'|'ADMIN'|'COURIER'|'CASHIER'|'PASTRY';
 export const MAX_ORDER_ITEM_QUANTITY = 200;
 const roleRoutes:Record<Role,string> = {CUSTOMER:'/account',ADMIN:'/admin',COURIER:'/courier',CASHIER:'/cashier',PASTRY:'/pastry'};
 export const roleHome=(role?:Role|null)=>role?roleRoutes[role]:'/account';
-export type PaymentStatus = 'UNPAID'|'PAID';
+export type PaymentStatus = 'UNPAID'|'PAID'|'DEBT';
 export type AccountType = 'INDIVIDUAL'|'BUSINESS';
 export interface User {id:number;name:string;email:string;phone:string;role:Role;is_active:boolean;account_type?:AccountType;company_name?:string;business_approved?:boolean}
 /** Unit price for `quantity` units of this product in one order. The server sends wholesale fields only to approved businesses. */
@@ -16,9 +16,13 @@ export function unitPrice(product: Product, quantity: number): number {
 
 export interface Category {id:number;name:string;slug:string;description:string;image:string;is_visible:boolean}
 export interface Product {id:number;category:number;name:string;description:string;image:string;price:number|string;retail_price?:number|string;wholesale_price?:number|string|null;wholesale_min_qty?:number;weight:string;ingredients:string;allergens:string;is_available:boolean;is_visible:boolean}
-export interface Order {id:number;number:string;created_at:string;status:string;recipient_name:string;phone:string;address:string;comment:string;subtotal:number|string;delivery_fee:number|string;total:number|string;courier:number|null;courier_name:string|null;courier_is_active?:boolean|null;cancellation_reason:string;payment_status?:PaymentStatus;paid_at?:string|null;paid_by?:number|null;paid_by_name?:string|null;items:{id:number;product_id:number;name:string;price:number|string;quantity:number;image:string;is_prepared?:boolean}[];status_history:{id:number;from_status:string|null;to_status:string;created_at:string;actor_name?:string}[];problems:{id:number;message:string;created_at:string;actor_name?:string}[]}
+export interface Order {id:number;number:string;created_at:string;status:string;recipient_name:string;phone:string;address:string;comment:string;subtotal:number|string;delivery_fee:number|string;total:number|string;courier:number|null;courier_name:string|null;courier_is_active?:boolean|null;cancellation_reason:string;payment_status?:PaymentStatus;paid_at?:string|null;paid_by?:number|null;paid_by_name?:string|null;on_credit?:boolean;credit_at?:string|null;credit_by_name?:string;customer_name?:string;customer_company?:string;items:{id:number;product_id:number;name:string;price:number|string;quantity:number;image:string;is_prepared?:boolean}[];status_history:{id:number;from_status:string|null;to_status:string;created_at:string;actor_name?:string}[];problems:{id:number;message:string;created_at:string;actor_name?:string}[]}
 export interface AdminOverview {new:number;unassigned:number;on_the_way:number;unpaid_delivered:number}
-export interface CashierSummary {date:string;currency:'KZT';cash_received:number|string;paid_count:number;unpaid_delivered_total:number|string;unpaid_delivered_count:number;orders_total:number|string;orders_count:number;items_count:number;cancelled_count:number}
+export interface DebtOrder {id:number;number:string;created_at:string;credit_at:string|null;total:string;address:string;recipient_name:string;phone:string;courier_name:string;credit_by_name:string;payment_status:'DEBT'|'PAID';paid_at:string|null;paid_by_name:string}
+export interface DebtCustomer {id:number;name:string;email:string;phone:string;account_type:string;company_name:string;debt_total:string;debt_count:number;paid_total:string;paid_count:number;orders:DebtOrder[]}
+export interface Debts {state:'open'|'paid'|'all';customers:DebtCustomer[];open_total:string;open_count:number;paid_total:string;paid_count:number}
+export interface MyDebt {total:string;count:number;orders:{id:number;number:string;total:string;credit_at:string|null}[]}
+export interface CashierSummary {date:string;currency:'KZT';cash_received:number|string;paid_count:number;unpaid_delivered_total:number|string;unpaid_delivered_count:number;debt_total?:number|string;debt_count?:number;orders_total:number|string;orders_count:number;items_count:number;cancelled_count:number}
 export interface TeamOrder {id:number;number:string;status:Order['status'];created_at:string;total:number|string;address:string;items_count:number;courier:number;courier_name:string}
 export interface TeamOrders {orders:TeamOrder[];couriers:{id:number;name:string}[]}
 export interface AvailableOrder {id:number;number:string;status:Order['status'];created_at:string;total:number|string;address:string;items_count:number;items:{name:string;quantity:number}[]}

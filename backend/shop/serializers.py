@@ -136,6 +136,12 @@ class ProblemSerializer(serializers.ModelSerializer):
         fields = ['id', 'message', 'created_at', 'actor_name']
         read_only_fields = fields
 
+def payment_status(order):
+    # DEBT: delivered on credit and the money has not been recorded yet.
+    if getattr(order, 'payment', None):
+        return 'PAID'
+    return 'DEBT' if order.on_credit else 'UNPAID'
+
 class OrderSerializer(serializers.ModelSerializer):
     items = OrderItemSerializer(many=True, read_only=True)
     status_history = StatusHistorySerializer(many=True, read_only=True)
@@ -146,13 +152,18 @@ class OrderSerializer(serializers.ModelSerializer):
     paid_at = serializers.DateTimeField(source='payment.paid_at', default=None, read_only=True)
     paid_by =serializers.IntegerField(source='payment.paid_by_id', default=None, read_only=True)
     paid_by_name = serializers.CharField(source='payment.paid_by_name', default=None, read_only=True)
+    customer_name = serializers.CharField(source='customer.name', read_only=True)
+    customer_company = serializers.SerializerMethodField()
+
+    def get_customer_company(self, order):
+        return order.customer.company_name if order.customer.account_type == 'BUSINESS' else ''
 
     def get_payment_status(self, order):
-        return 'PAID' if getattr(order, 'payment', None) else 'UNPAID'
+        return payment_status(order)
 
     class Meta:
         model = Order
-        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'courier_is_active', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name']
+        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'courier_is_active', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name', 'on_credit', 'credit_at', 'credit_by_name', 'customer_id', 'customer_name', 'customer_company']
         read_only_fields = fields
 
 class CustomerStatusHistorySerializer(serializers.ModelSerializer):
@@ -179,11 +190,11 @@ class CustomerOrderSerializer(serializers.ModelSerializer):
     paid_at = serializers.DateTimeField(source='payment.paid_at', default=None, read_only=True)
 
     def get_payment_status(self, order):
-        return 'PAID' if getattr(order, 'payment', None) else 'UNPAID'
+        return payment_status(order)
 
     class Meta:
         model = Order
-        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at']
+        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'on_credit', 'credit_at']
         read_only_fields = fields
 
 class AvailableItemSerializer(serializers.ModelSerializer):

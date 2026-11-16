@@ -563,3 +563,49 @@
 .product-reframe { width: 100%; justify-content: center; min-height: 40px; margin-top: 10px; font-size: 13px; }
 
 .product-editor label > span { display: block; }
+
+/* Debts ("Долг"): customer reminder, status badge and the staff tab. */
+.portal-status.status-debt { color: #8a3b12; background: #fbe6d4; }
+.portal-debt-banner { display: flex; gap: 16px; align-items: flex-start; margin: -12px 0 30px; padding: 18px 22px; border: 1px solid #efc7a4; border-left: 5px solid #c4622d; border-radius: 8px; background: #fff4ea; color: #6e2f0e; }
+.portal-debt-banner svg { flex-shrink: 0; color: #c4622d; margin-top: 2px; }
+.portal-debt-banner strong { display: block; font-size: 18px; font-weight: 600; }
+.portal-debt-banner p { margin: 4px 0 0; font-size: 14px; }
+.portal-payment-debt { color: #8a3b12; }
+.portal-debt-button { color: #8a3b12 !important; border-color: #e3b48f !important; }
+.portal-debts .portal-section-title .portal-help { margin: 6px 0 0; max-width: 640px; }
+.portal-debt-summary { margin-bottom: 22px; }
+.portal-debt-summary .portal-debt-open { background: #fff4ea; border-color: #efc7a4; }
+.portal-debt-summary .portal-debt-open strong { color: #8a3b12; }
+.portal-debt-toolbar { display: flex; flex-wrap: wrap; gap: 12px 18px; align-items: center; justify-content: space-between; margin-bottom: 18px; }
+.portal-debt-toolbar .portal-chip-filters { margin: 0; }
+.portal-debt-toolbar .portal-search { flex: 0 1 340px; }
+.portal-debt-list { display: grid; gap: 16px; }
+.portal-debt-card { padding: 22px 24px; }
+.portal-debt-head { display: flex; gap: 14px; align-items: center; padding-bottom: 14px; border-bottom: 1px solid var(--portal-line); }
+.portal-debt-head > div:not(.portal-debt-total) { flex: 1; min-width: 0; }
+.portal-debt-head h3 { margin: 0; font-size: 18px; font-weight: 600; }
+.portal-debt-head p { margin: 2px 0 0; color: var(--portal-muted); font-size: 13px; }
+.portal-debt-avatar { width: 44px; height: 44px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; background: #eef1e8; color: var(--portal-green); flex-shrink: 0; }
+.portal-debt-total { text-align: right; flex-shrink: 0; }
+.portal-debt-total span { display: block; font-size: 12px; color: var(--portal-muted); }
+.portal-debt-total strong { font-family: Georgia, serif; font-size: 26px; font-weight: 400; color: #8a3b12; }
+.portal-debt-orders { list-style: none; margin: 0; padding: 0; }
+.portal-debt-orders li { padding: 14px 0; border-bottom: 1px dashed var(--portal-line); }
+.portal-debt-orders li:last-child { border-bottom: 0; padding-bottom: 0; }
+.portal-debt-order { display: flex; gap: 14px; justify-content: space-between; align-items: flex-start; }
+.portal-debt-order > div { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+.portal-debt-order strong { font-size: 15px; }
+.portal-debt-order span { font-size: 13px; color: var(--portal-muted); }
+.portal-debt-order b { font-size: 17px; white-space: nowrap; }
+.portal-debt-paid { display: inline-flex; align-items: center; gap: 5px; color: #2f6b3f !important; font-weight: 500; }
+.portal-debt-pay { margin-top: 10px; min-height: 38px; }
+.portal-debt-confirm { margin-top: 12px; }
+.portal-debt-confirm h4 { margin: 0 0 6px; font-size: 15px; }
+@media (max-width: 640px) {
+  .portal-debt-banner { margin-top: 0; padding: 14px 16px; }
+  .portal-debt-toolbar .portal-search { flex: 1 1 100%; }
+  .portal-debt-card { padding: 18px 16px; }
+  .portal-debt-head { flex-wrap: wrap; }
+  .portal-debt-total { text-align: left; width: 100%; padding-left: 58px; }
+  .portal-debt-pay { width: 100%; }
+}

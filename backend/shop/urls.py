@@ -4,6 +4,7 @@ from . import catalog_views as catalog
 from . import order_views as orders
 from . import staff_views as staff
 from . import upload_views as uploads
+from . import debt_views as debts
 
 urlpatterns = [
     path('health/', catalog.Health.as_view()),
@@ -46,4 +47,7 @@ urlpatterns = [
     path('orders/<int:pk>/claim/', staff.ClaimOrder.as_view()),
     path('orders/<int:pk>/transfer/', staff.TransferOrder.as_view()),
     path('orders/<int:pk>/payment/', staff.ReceivePayment.as_view()),
+    path('debts/', debts.Debts.as_view()),
+    path('debts/mine/', debts.MyDebt.as_view()),
+    path('debts/<int:pk>/pay/', debts.PayDebt.as_view()),
 ]

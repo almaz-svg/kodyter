@@ -8,6 +8,7 @@ from django.db import transaction
 from django.db.models import Q, F, Value
 from django.db.models.functions import Replace
 from django.shortcuts import get_object_or_404
+from django.utils import timezone
 from django.utils.dateparse import parse_date
 from rest_framework import serializers
 from rest_framework.exceptions import APIException, PermissionDenied
@@ -28,7 +29,7 @@ class Conflict(APIException):
     default_detail = 'Данные изменились. Обновите страницу и подтвердите действие ещё раз.'
 
 def scoped_orders(user):
-    orders = Order.objects.select_related('courier', 'payment').prefetch_related('items', 'status_history', 'problems')
+    orders = Order.objects.select_related('courier', 'payment', 'customer').prefetch_related('items', 'status_history', 'problems')
     if user.role in ('ADMIN', 'CASHIER', 'PASTRY'):
         return orders
     if user.role == 'COURIER':
@@ -45,7 +46,7 @@ def order_serializer_for(user):
 
 def order_response(order, user, status=200):
     # Mutations may have populated prefetch caches before adding a history/problem row.
-    order = Order.objects.select_related('courier', 'payment').prefetch_related('items', 'status_history', 'problems').get(pk=order.pk)
+    order = Order.objects.select_related('courier', 'payment', 'customer').prefetch_related('items', 'status_history', 'problems').get(pk=order.pk)
     return Response(order_serializer_for(user)(order).data, status=status)
 
 class Orders(APIView):
@@ -164,12 +165,23 @@ class Transition(APIView):
             next_state = {'NEW': 'CONFIRMED', 'CONFIRMED': 'PREPARING', 'PREPARING': 'READY', 'READY': 'HANDED_OVER', 'HANDED_OVER': 'IN_TRANSIT', 'IN_TRANSIT': 'DELIVERED'}
             if next_state.get(order.status) != target:
                 raise Conflict('Статусы должны изменяться по порядку. Обновите заказ.')
+        cash_received = request.data.get('cash_received') is True
+        on_credit = request.data.get('on_credit') is True
+        if cash_received and on_credit:
+            raise serializers.ValidationError({'on_credit': 'Выберите что-то одно: деньги получены или заказ записан в долг.'})
         old = order.status
         order.status = target
-        order.save(update_fields=['status', 'cancellation_reason'])
+        fields = ['status', 'cancellation_reason']
+        # A courier may hand over the order without taking the money: the customer then owes the total.
+        if target == 'DELIVERED' and actor.role == 'COURIER' and on_credit and not Payment.objects.filter(order=order).exists():
+            order.on_credit = True
+            order.credit_at = timezone.now()
+            order.credit_by_name = actor.name
+            fields += ['on_credit', 'credit_at', 'credit_by_name']
+        order.save(update_fields=fields)
         StatusHistory.objects.create(order=order, from_status=old, to_status=target, actor=actor, actor_name=actor.name)
         # A courier confirming the delivery can confirm the cash in the same step, which marks the order paid.
-        if target == 'DELIVERED' and actor.role == 'COURIER' and request.data.get('cash_received') is True and not Payment.objects.filter(order=order).exists():
+        if target == 'DELIVERED' and actor.role == 'COURIER' and cash_received and not Payment.objects.filter(order=order).exists():
             Payment.objects.create(order=order, amount=order.total, method='CASH', idempotency_key=uuid.uuid4(), paid_by=actor, paid_by_name=actor.name)
         if target in ('DELIVERED', 'CANCELLED'):
             # The courier of a finished order is free again, so the next waiting order goes to them straight away.
