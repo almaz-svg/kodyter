@@ -29,3 +29,15 @@ class BusinessOrderTests(StaffFixtures, APITestCase):
         order = self.make_order()
         self.client.force_login(self.admin)
         self.assertEqual(self.client.get(f'/api/orders/{order.pk}/').json()['customer_company'], '')
+
+    def test_admin_business_list_has_contacts_and_order_summary(self):
+        User.objects.filter(pk=self.customer.pk).update(account_type='BUSINESS', company_name='Кофе брейк')
+        self.make_order(status='DELIVERED', total='3000.00')
+        self.make_order(status='NEW', total='1000.00')
+        self.make_order(status='CANCELLED', total='9000.00')
+        self.client.force_login(self.admin)
+        row = self.client.get('/api/admin/businesses/').json()[0]
+        self.assertEqual((row['company_name'], row['orders_count'], row['delivered_total']), ('Кофе брейк', 2, '3000.00'))
+        self.assertTrue(row['last_order_at'] and row['date_joined'])
+        updated = self.client.patch(f'/api/admin/businesses/{self.customer.pk}/', {'business_approved': True}, format='json')
+        self.assertEqual((updated.status_code, updated.json()['business_approved']), (200, True))

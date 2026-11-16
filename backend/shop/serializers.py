@@ -43,10 +43,26 @@ class UserSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSeria
 
 class BusinessAccountSerializer(serializers.ModelSerializer):
     """Admin view of business accounts. Only `business_approved` can be written."""
+    # Filled from list annotations (see AdminBusinesses); absent after a single update.
+    orders_count = serializers.SerializerMethodField()
+    delivered_total = serializers.SerializerMethodField()
+    last_order_at = serializers.SerializerMethodField()
+
+    def get_orders_count(self, user):
+        return getattr(user, 'orders_count', None)
+
+    def get_delivered_total(self, user):
+        value = getattr(user, 'delivered_total', None)
+        return None if not hasattr(user, 'delivered_total') else format(value or 0, '.2f')
+
+    def get_last_order_at(self, user):
+        value = getattr(user, 'last_order_at', None)
+        return value.isoformat() if value else None
+
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'phone', 'company_name', 'business_approved']
-        read_only_fields = ['id', 'name', 'email', 'phone', 'company_name']
+        fields = ['id', 'name', 'email', 'phone', 'company_name', 'business_approved', 'date_joined', 'orders_count', 'delivered_total', 'last_order_at']
+        read_only_fields = ['id', 'name', 'email', 'phone', 'company_name', 'date_joined']
 
 PHONE_FORMAT_ERROR = 'Укажите телефон в международном формате, например +7 701 123 45 67.'
 

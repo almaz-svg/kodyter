@@ -165,7 +165,6 @@ export function Auth() {
                   {accountType==='BUSINESS' && (
                     <>
                       <label>{t.authCompanyName}<input name="company_name" required maxLength={160} placeholder={t.authCompanyNamePlaceholder}/></label>
-                      <small className="muted">{t.authBusinessNote}</small>
                     </>
                   )}
                 </fieldset>

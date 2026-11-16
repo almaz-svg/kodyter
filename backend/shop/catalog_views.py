@@ -216,7 +216,14 @@ class AdminBusinesses(generics.ListAPIView):
     """Business ('заведение') accounts with their approval state, for the administrator to review."""
     permission_classes = [IsAdmin]
     serializer_class = BusinessAccountSerializer
-    queryset = User.objects.filter(account_type=User.AccountType.BUSINESS).order_by('company_name', 'id')
+
+    def get_queryset(self):
+        from django.db.models import Count, Max, Sum
+        return User.objects.filter(account_type=User.AccountType.BUSINESS).annotate(
+            orders_count=Count('orders', filter=~Q(orders__status='CANCELLED')),
+            delivered_total=Sum('orders__total', filter=Q(orders__status='DELIVERED')),
+            last_order_at=Max('orders__created_at'),
+        ).order_by('business_approved', 'company_name', 'id')
 
 class AdminBusiness(generics.UpdateAPIView):
     """Approve or revoke wholesale prices. Non-business accounts are not found here."""

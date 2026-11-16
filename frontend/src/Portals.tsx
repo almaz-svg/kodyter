@@ -166,7 +166,7 @@ function Profile({ user, onUserChange }: Props) {
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
-  return <section className="portal-profile portal-card"><div className="portal-section-title"><div><p className="portal-eyebrow">ВАШ ПРОФИЛЬ</p><h2>Давайте познакомимся</h2></div><UserRound size={27} aria-hidden="true" /></div><form onSubmit={save} className="portal-form"><fieldset className="portal-form-fields" disabled={busy}>{user.account_type === 'BUSINESS' && <div className="portal-business-profile"><span className="portal-business-icon" aria-hidden="true"><Store size={24} /></span><div><small>Тип аккаунта: заведение</small><strong>«{user.company_name || 'Без названия'}»</strong><p>{user.business_approved ? 'Заявка одобрена: для вас действуют оптовые цены.' : 'Заявка на проверке. Пока действуют розничные цены, оптовые откроются после одобрения администратором.'}</p></div><span className={`portal-status ${user.business_approved ? 'status-delivered' : 'status-unpaid'}`}>{user.business_approved ? 'Одобрено' : 'На проверке'}</span></div>}<label>{user.account_type === 'BUSINESS' ? 'Имя контактного лица' : 'Имя'}<input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} required maxLength={120} autoComplete="name" /></label><label>Телефон<PhoneInput digits={phone} onChange={value => { setPhone(value); setSaved(false); }} required={user.role === 'CUSTOMER'} /></label><label>Электронная почта<input type="email" value={user.email} readOnly /><small>Почта используется для входа в аккаунт.</small></label><ErrorNotice message={error} />{saved && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" /> Личные данные сохранены.</p>}<button className="portal-button" disabled={busy || !name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить изменения'}<ArrowRight size={17} aria-hidden="true" /></button></fieldset></form></section>;
+  return <section className="portal-profile portal-card"><div className="portal-section-title"><div><p className="portal-eyebrow">ВАШ ПРОФИЛЬ</p><h2>Давайте познакомимся</h2></div><UserRound size={27} aria-hidden="true" /></div><form onSubmit={save} className="portal-form"><fieldset className="portal-form-fields" disabled={busy}>{user.account_type === 'BUSINESS' && <div className="portal-business-profile"><span className="portal-business-icon" aria-hidden="true"><Store size={24} /></span><div><small>Тип аккаунта: заведение</small><strong>«{user.company_name || 'Без названия'}»</strong>{user.business_approved && <p>Вам одобрены оптовые цены — цены в каталоге уже обновлены.</p>}</div>{user.business_approved && <span className="portal-status status-delivered">Оптовые цены</span>}</div>}<label>{user.account_type === 'BUSINESS' ? 'Имя контактного лица' : 'Имя'}<input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} required maxLength={120} autoComplete="name" /></label><label>Телефон<PhoneInput digits={phone} onChange={value => { setPhone(value); setSaved(false); }} required={user.role === 'CUSTOMER'} /></label><label>Электронная почта<input type="email" value={user.email} readOnly /><small>Почта используется для входа в аккаунт.</small></label><ErrorNotice message={error} />{saved && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" /> Личные данные сохранены.</p>}<button className="portal-button" disabled={busy || !name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить изменения'}<ArrowRight size={17} aria-hidden="true" /></button></fieldset></form></section>;
 }
 
 const positions = (count: number) => `${count} ${count % 10 === 1 && count % 100 !== 11 ? 'позиция' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'позиции' : 'позиций'}`;
@@ -655,35 +655,61 @@ function CategoriesPanel() {
   </section>;
 }
 
-type BusinessAccount = { id: number; name: string; email: string; phone: string; company_name: string; business_approved: boolean };
+type BusinessAccount = { id: number; name: string; email: string; phone: string; company_name: string; business_approved: boolean; date_joined?: string; orders_count?: number | null; delivered_total?: string | null; last_order_at?: string | null };
 
 /** Administrator's list of business accounts. Wholesale prices open only after approval here. */
 function BusinessPanel() {
   const remote = useRemote<BusinessAccount[]>('/admin/businesses/');
-  const [busy, setBusy] = useState(false);
+  const [busy, setBusy] = useState<number | null>(null);
   const lock = useRef(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
+  const [show, setShow] = useState<'all' | 'retail' | 'wholesale'>('all');
+  const [search, setSearch] = useState('');
   const setApproved = async (account: BusinessAccount, approved: boolean) => {
     if (lock.current) return;
-    lock.current = true; setError(''); setBusy(true); setNotice('');
+    lock.current = true; setError(''); setBusy(account.id); setNotice('');
     try {
       const updated = await api<BusinessAccount>(`/admin/businesses/${account.id}/`, json({ business_approved: approved }, 'PATCH'));
-      remote.replace((remote.data || []).map(item => item.id === updated.id ? updated : item));
-      setNotice(approved ? 'Оптовые цены открыты для заведения.' : 'Оптовые цены закрыты для заведения.'); remote.retry();
+      remote.replace((remote.data || []).map(item => item.id === updated.id ? { ...item, business_approved: updated.business_approved } : item));
+      setNotice(approved ? `«${account.company_name || account.name}»: открыты оптовые цены.` : `«${account.company_name || account.name}»: снова розничные цены.`);
     } catch (err) { setError(failure(err)); }
-    finally { lock.current = false; setBusy(false); }
+    finally { lock.current = false; setBusy(null); }
   };
   const accounts = remote.data || [];
-  return <section><div className="portal-section-title"><div><p className="portal-eyebrow">ОПТОВЫЕ ЦЕНЫ</p><h2>Заведения <span className="portal-count">{accounts.length}</span></h2></div></div>
+  const wholesale = accounts.filter(item => item.business_approved).length;
+  const query = search.trim().toLowerCase();
+  const shown = accounts.filter(item => (show === 'all' || item.business_approved === (show === 'wholesale')) && (!query || [item.company_name, item.name, item.email, item.phone].some(value => value?.toLowerCase().includes(query))));
+  const day = (value?: string | null) => value ? new Intl.DateTimeFormat('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(value)) : '';
+  return <section className="business-panel">
+    <div className="portal-section-title"><div><p className="portal-eyebrow">КЛИЕНТЫ-ЗАВЕДЕНИЯ</p><h2>Заведения <span className="portal-count">{accounts.length}</span></h2></div></div>
+    <p className="business-intro"><Store size={17} aria-hidden="true" /><span>Оптовые цены видит только заведение, которому вы их открыли. Сами заведения об этой возможности не знают — после одобрения у них просто обновятся цены в каталоге.</span></p>
     <ErrorNotice message={remote.error} retry={remote.retry} />{error && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
-    <p className="portal-queue-note">Заведение получает оптовые цены только после одобрения. Сама регистрация их не открывает.</p>
-    {accounts.length === 0 && !remote.loading && <p>Пока нет заведений.</p>}
-    <ul className="portal-business-list">{accounts.map(account => <li key={account.id} className="portal-card">
-      <div><strong>{account.company_name || 'Без названия'}</strong><span>{account.name} · {account.email}{account.phone ? ` · ${account.phone}` : ''}</span></div>
-      <span className={`portal-status ${account.business_approved ? 'status-delivered' : 'status-unpaid'}`}>{account.business_approved ? 'Одобрено' : 'На проверке'}</span>
-      <button className="portal-button" disabled={busy} onClick={() => setApproved(account, !account.business_approved)}>{account.business_approved ? 'Закрыть оптовые цены' : 'Одобрить'}</button>
-    </li>)}</ul></section>;
+    {accounts.length > 0 && <div className="business-toolbar">
+      <div className="portal-chip-filters" role="group" aria-label="Какие заведения показать">{([['all', 'Все', accounts.length], ['retail', 'Розничные цены', accounts.length - wholesale], ['wholesale', 'Оптовые цены', wholesale]] as const).map(([value, label, count]) => <button type="button" key={value} className={show === value ? 'active' : ''} aria-pressed={show === value} onClick={() => setShow(value)}>{label} · {count}</button>)}</div>
+      <label className="portal-search"><Search size={18} aria-hidden="true" /><input name="business-search" autoComplete="off" aria-label="Поиск заведения" placeholder="Название, имя, телефон или почта" value={search} onChange={e => setSearch(e.target.value)} /></label>
+    </div>}
+    {remote.loading && !remote.data ? <p className="portal-loading" role="status">Загружаем заведения…</p> : !accounts.length ? <EmptyState icon={<Store size={30} aria-hidden="true" />} title="Заведений пока нет">Когда кафе, ресторан или магазин зарегистрируется как заведение, оно появится здесь.</EmptyState> : !shown.length ? <EmptyState icon={<Search size={28} aria-hidden="true" />} title="Ничего не нашли">Измените фильтр или строку поиска.</EmptyState> : <div className="business-list">{shown.map(account => <article key={account.id} className={`business-card${account.business_approved ? ' is-wholesale' : ''}`}>
+      <header className="business-card-head">
+        <span className="business-card-icon" aria-hidden="true"><Store size={22} /></span>
+        <div><h3>{account.company_name || 'Без названия'}</h3>{account.date_joined && <p>Зарегистрировано {day(account.date_joined)}</p>}</div>
+        <span className={`portal-status ${account.business_approved ? 'status-delivered' : 'status-unpaid'}`}>{account.business_approved ? 'Оптовые цены' : 'Розничные цены'}</span>
+      </header>
+      <ul className="business-contacts">
+        <li><UserRound size={15} aria-hidden="true" /><span>{account.name}</span></li>
+        {account.phone && <li><Phone size={15} aria-hidden="true" /><a href={`tel:${account.phone.replace(/\s/g, '')}`}>{account.phone}</a></li>}
+        <li><Mail size={15} aria-hidden="true" /><span>{account.email}</span></li>
+      </ul>
+      <div className="business-stats">
+        <div><span>Заказов</span><strong>{account.orders_count ?? 0}</strong></div>
+        <div><span>Доставлено на сумму</span><strong>{money(account.delivered_total || 0)}</strong></div>
+        <div><span>Последний заказ</span><strong>{account.last_order_at ? day(account.last_order_at) : 'Ещё не заказывали'}</strong></div>
+      </div>
+      <div className="business-actions">{account.business_approved
+        ? <button type="button" className="product-secondary" disabled={busy !== null} onClick={() => void setApproved(account, false)}>{busy === account.id ? 'Сохраняем…' : 'Вернуть розничные цены'}</button>
+        : <button type="button" className="portal-button" disabled={busy !== null} onClick={() => void setApproved(account, true)}>{busy === account.id ? 'Сохраняем…' : 'Открыть оптовые цены'}<Check size={16} aria-hidden="true" /></button>}</div>
+    </article>)}</div>}
+  </section>;
 }
 
 const staffText = {
