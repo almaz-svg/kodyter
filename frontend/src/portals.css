@@ -785,3 +785,47 @@
   .portal-business-profile .portal-status { grid-area: status; justify-self: end; align-self: center; margin: 0; order: 0; }
   .portal-business-profile strong { font-size: 18px; }
 }
+
+/* Profile page */
+.portal-profile { max-width: 680px; padding: 0; overflow: hidden; }
+.portal-profile > .portal-business-profile { margin: 22px 28px 0; }
+.profile-hero { display: flex; align-items: center; gap: 18px; padding: 28px; background: linear-gradient(135deg, #f3ecdc 0%, #fbf7ee 70%); border-bottom: 1px solid var(--portal-line); }
+.profile-avatar { flex-shrink: 0; width: 68px; height: 68px; border-radius: 50%; display: grid; place-items: center; background: var(--portal-green); color: #f6e7c4; font-size: 23px; font-weight: 600; letter-spacing: .5px; box-shadow: 0 0 0 4px #fffdf7, 0 0 0 5px var(--portal-gold); }
+.profile-hero-text { min-width: 0; }
+.profile-hero-text .portal-eyebrow { margin-bottom: 4px; }
+.portal-profile .profile-hero h2 { margin: 0; font-size: 26px; line-height: 1.15; }
+.profile-hero-meta { display: flex; flex-wrap: wrap; gap: 8px 14px; margin-top: 9px; align-items: center; }
+.profile-role { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--portal-green); color: #fffaf0; font-size: 12px; font-weight: 500; }
+.profile-hero-contact { display: inline-flex; align-items: center; gap: 6px; color: #5d6659; font-size: 13px; }
+.profile-form { padding: 26px 28px 28px; }
+.profile-form .portal-form-fields { display: grid; gap: 20px; }
+.profile-section-head h3 { margin: 0; font-size: 17px; }
+.profile-section-head p { margin: 3px 0 0; color: var(--portal-muted); font-size: 13px; }
+.profile-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.profile-label { display: inline-flex; align-items: center; gap: 7px; color: #44503f; font-weight: 600; }
+.profile-label svg { color: #9a7b3c; }
+.profile-fields input { min-height: 46px; border-radius: 8px; transition: border-color .15s, box-shadow .15s; }
+.profile-fields input:focus { outline: none; border-color: var(--portal-green); box-shadow: 0 0 0 3px #07382c1f; }
+.profile-email { display: flex; align-items: center; gap: 13px; padding: 14px 16px; border: 1px dashed #d6d2c1; border-radius: 10px; background: #f7f5ec; }
+.profile-email-icon { flex-shrink: 0; width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #fffdf7; border: 1px solid var(--portal-line); color: var(--portal-green); }
+.profile-email > div { flex: 1; min-width: 0; }
+.profile-email small { display: block; color: var(--portal-muted); font-size: 12px; }
+.profile-email strong { display: block; font-size: 14px; font-weight: 600; overflow-wrap: anywhere; }
+.profile-email-lock { flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px; color: var(--portal-muted); font-size: 11px; }
+.profile-actions { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; padding-top: 4px; }
+.profile-actions .portal-button { border-radius: 8px; min-height: 46px; padding: 11px 22px; }
+.profile-actions .portal-button:disabled { opacity: .45; cursor: default; }
+.profile-saved { margin: 0; display: inline-flex; align-items: center; gap: 6px; color: #326547; font-size: 13px; font-weight: 600; }
+.profile-dirty { margin: 0; color: #9a7b3c; font-size: 12px; }
+@media (max-width: 560px) {
+  .profile-hero { padding: 22px 18px; gap: 14px; }
+  .profile-avatar { width: 56px; height: 56px; font-size: 19px; }
+  .portal-profile .profile-hero h2 { font-size: 22px; }
+  .portal-profile > .portal-business-profile { margin: 18px 18px 0; }
+  .profile-form { padding: 22px 18px; }
+  .profile-fields { grid-template-columns: 1fr; }
+  .profile-email { flex-wrap: wrap; }
+  .profile-email-lock { width: 100%; padding-left: 51px; }
+  .profile-actions .portal-button { width: 100%; }
+}
+.profile-fields .phone-prefix { border-radius: 7px 0 0 7px; background: #f6f1e4; }
