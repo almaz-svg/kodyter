@@ -154,8 +154,12 @@ class Transition(APIView):
         if order.status in ('CANCELLED', 'DELIVERED'):
             raise Conflict('Заказ завершён. Его статус больше нельзя изменить.')
         if target == 'CANCELLED':
-            if actor.role != 'ADMIN':
-                raise PermissionDenied('Отмена доступна только администратору.')
+            # The pastry kitchen may cancel too, but only before the order is ready (e.g. nothing can be baked).
+            if actor.role == 'PASTRY':
+                if order.status not in KITCHEN_EDITABLE:
+                    raise Conflict('Готовый заказ повар отменить не может. Обратитесь к администратору.')
+            elif actor.role != 'ADMIN':
+                raise PermissionDenied('Отмена доступна только администратору и повару.')
             reason = serializers.CharField(max_length=2000).run_validation(request.data.get('reason'))
             order.cancellation_reason = reason
         else:
@@ -210,6 +214,40 @@ class CustomerCancel(APIView):
         return order_response(order, request.user)
 
 KITCHEN_STATUSES = ('CONFIRMED', 'PREPARING')
+# While the kitchen can still change the order: out-of-stock lines and cancelling by the cook.
+KITCHEN_EDITABLE = ('NEW', 'CONFIRMED', 'PREPARING')
+
+class MarkMissing(APIView):
+    """The kitchen marks lines that are out of stock. They leave the order total; the delivery fee stays."""
+    @transaction.atomic
+    def post(self, request, pk):
+        if request.user.role not in ('PASTRY', 'ADMIN'):
+            raise PermissionDenied('Отмечать отсутствующие товары может повар или администратор.')
+        order = locked_order(request.user, pk)
+        actor = lock_active_actor(request.user, ('PASTRY', 'ADMIN'))
+        if order.status not in KITCHEN_EDITABLE:
+            raise Conflict('Заказ уже готов или завершён — состав больше нельзя изменить.')
+        if Payment.objects.filter(order=order).exists():
+            raise Conflict('Заказ уже оплачен — состав нельзя изменить.')
+        ids = set(serializers.ListField(child=serializers.IntegerField(min_value=1), min_length=1, max_length=200).run_validation(request.data.get('item_ids')))
+        items = list(OrderItem.objects.select_for_update().filter(order=order))
+        chosen = [item for item in items if item.pk in ids and not item.is_missing]
+        if len([item for item in items if item.pk in ids]) != len(ids):
+            raise serializers.ValidationError({'item_ids': 'Эти товары не из этого заказа.'})
+        if not chosen:
+            raise Conflict('Эти товары уже отмечены как отсутствующие.')
+        if all(item.is_missing or item in chosen for item in items):
+            raise Conflict('Нельзя убрать все товары — отмените заказ целиком.')
+        for item in chosen:
+            item.is_missing = True
+        OrderItem.objects.bulk_update(chosen, ['is_missing'])
+        subtotal = sum((item.price * item.quantity for item in items if not item.is_missing), Decimal('0')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        order.subtotal = subtotal
+        order.total = subtotal + order.delivery_fee
+        order.save(update_fields=['subtotal', 'total'])
+        names = ', '.join(f'{item.name} ({item.quantity} шт.)' for item in chosen)
+        Problem.objects.create(order=order, message=f'Нет в наличии: {names}. Сумма заказа пересчитана: {format(order.total, ".2f")} ₸.', actor=actor, actor_name=actor.name)
+        return order_response(order, request.user)
 
 class KitchenPrepared(APIView):
     """The pastry kitchen ticks order lines as cooked (or unticks them). Only confirmed or preparing orders can change."""

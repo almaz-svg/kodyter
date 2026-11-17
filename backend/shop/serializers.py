@@ -191,7 +191,7 @@ class OrderItemSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = OrderItem
-        fields = ['id', 'product_id', 'name', 'price', 'retail_price', 'is_wholesale', 'quantity', 'image', 'is_prepared']
+        fields = ['id', 'product_id', 'name', 'price', 'retail_price', 'is_wholesale', 'quantity', 'image', 'is_prepared', 'is_missing']
         read_only_fields = fields
 
 class StatusHistorySerializer(serializers.ModelSerializer):

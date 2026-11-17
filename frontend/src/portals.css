@@ -894,3 +894,34 @@
 .portal-order-items b.is-wholesale s { color: #9a9784; font-size: 12px; font-weight: 400; }
 .portal-totals .portal-totals-saving dt, .portal-totals .portal-totals-saving dd { color: #8a6418; font-weight: 600; }
 .portal-totals-saving dt { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Kitchen: out-of-stock lines and cancelling, under the next-step button */
+.portal-kitchen-tools { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px 18px; margin-top: 16px; padding: 14px 16px; border-radius: 12px; border: 1px solid #ecdcc4; background: #fdf8ef; }
+.portal-kitchen-tools p { margin: 0; display: grid; gap: 2px; }
+.portal-kitchen-tools p strong { font-size: 14px; }
+.portal-kitchen-tools p span { color: var(--portal-muted); font-size: 12px; }
+.portal-kitchen-tools > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.portal-kitchen-tools .portal-button { gap: 8px; border-radius: 8px; }
+.portal-kitchen-tools .portal-kitchen-cancel { color: #a8432c; border-color: #e3b7a9; }
+.portal-kitchen-tools .portal-kitchen-cancel:hover:not(:disabled) { background: #fbeee9; }
+.portal-kitchen-missing { margin-top: 16px; padding: 16px; border-radius: 12px; border: 1px solid #ecdcc4; background: #fdf8ef; display: grid; gap: 12px; }
+.portal-kitchen-missing h3 { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 17px; }
+.portal-kitchen-missing h3 svg { color: #a8432c; }
+.portal-kitchen-missing .portal-help { margin: 0; }
+.portal-kitchen-missing ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.portal-kitchen-missing label { display: flex; align-items: center; gap: 12px; padding: 10px 12px; border-radius: 10px; border: 1px solid var(--portal-line); background: #fffdf7; cursor: pointer; transition: border-color .15s, background .15s; }
+.portal-kitchen-missing label.is-checked { border-color: #e3b7a9; background: #fbeee9; }
+.portal-kitchen-missing input[type="checkbox"] { width: 20px; height: 20px; margin: 0; flex-shrink: 0; accent-color: #a8432c; }
+.portal-kitchen-missing-thumb { width: 42px; height: 42px; flex-shrink: 0; border-radius: 8px; overflow: hidden; background: #ede7da; }
+.portal-kitchen-missing-thumb img { width: 100%; height: 100%; object-fit: cover; }
+.portal-kitchen-missing label > span:last-child { display: grid; min-width: 0; }
+.portal-kitchen-missing label strong { font-size: 14px; }
+.portal-kitchen-missing label small { color: var(--portal-muted); font-size: 12px; }
+.portal-kitchen-missing label.is-checked strong { text-decoration: line-through; color: #8d5a4c; }
+.portal-kitchen-missing-total { margin: 0; font-size: 13px; }
+.portal-kitchen-missing-total s { margin-left: 6px; color: #9a9784; }
+.portal-order-items li.is-missing .portal-item-thumb { opacity: .45; filter: grayscale(1); }
+.portal-order-items li.is-missing strong { text-decoration: line-through; color: #8d8a7a; }
+.portal-order-items li.is-missing > b { text-decoration: line-through; color: #9a9784; font-weight: 500; }
+.portal-item-missing { display: inline-flex !important; align-items: center; gap: 5px; width: fit-content; margin-top: 5px; padding: 2px 9px; border-radius: 999px; background: #fbeee9; border: 1px solid #e3b7a9; color: #a8432c !important; font-size: 11px !important; font-weight: 600; }
+@media (max-width: 560px) { .portal-kitchen-tools > div, .portal-kitchen-tools .portal-button { width: 100%; } .portal-kitchen-tools .portal-button { justify-content: center; } }

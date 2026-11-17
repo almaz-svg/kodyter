@@ -146,6 +146,8 @@ class OrderItem(models.Model):
     image = models.CharField(max_length=500, blank=True)
     # Ticked by the pastry kitchen when this line of the order is cooked.
     is_prepared = models.BooleanField(default=False)
+    # Marked by the kitchen when this product turned out to be out of stock: the line is left out of the order total.
+    is_missing = models.BooleanField(default=False)
 
     class Meta:
         ordering = ['id']
