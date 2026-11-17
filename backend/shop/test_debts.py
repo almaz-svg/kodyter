@@ -11,6 +11,8 @@ class DebtTests(StaffFixtures, APITestCase):
     def setUp(self):
         cache.clear()
         self.make_users()
+        # Only a business allowed by the administrator can receive orders on credit.
+        User.objects.filter(pk=self.customer.pk).update(account_type='BUSINESS', company_name='Кафе Долг', credit_allowed=True)
 
     def deliver(self, body, courier=None):
         courier = courier or self.couriers[0]
@@ -93,3 +95,49 @@ class DebtTests(StaffFixtures, APITestCase):
         self.assertEqual((summary['in_delivery_count'], summary['in_delivery_total']), (2, '5716.00'))
         self.assertEqual(summary['in_delivery_orders'][0]['id'], carried.pk)
         self.assertEqual(summary['in_delivery_orders'][0]['courier_name'], 'Courier 0')
+
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'], AUTO_DISPATCH_COURIERS=False)
+class CreditPermissionTests(StaffFixtures, APITestCase):
+    def setUp(self):
+        cache.clear()
+        self.make_users()
+
+    def deliver_on_credit(self):
+        order = self.make_order(status='IN_TRANSIT', courier=self.couriers[0])
+        self.client.force_login(self.couriers[0])
+        return order, self.client.post(f'/api/orders/{order.pk}/transition/', {'status': 'DELIVERED', 'on_credit': True}, format='json')
+
+    def test_individual_customer_cannot_get_credit(self):
+        order, response = self.deliver_on_credit()
+        self.assertEqual(response.status_code, 400)
+        order.refresh_from_db()
+        self.assertEqual((order.status, order.on_credit), ('IN_TRANSIT', False))
+
+    def test_business_without_permission_cannot_get_credit(self):
+        User.objects.filter(pk=self.customer.pk).update(account_type='BUSINESS', company_name='Кафе')
+        order, response = self.deliver_on_credit()
+        self.assertEqual(response.status_code, 400)
+        order.refresh_from_db()
+        self.assertFalse(order.on_credit)
+
+    def test_admin_allows_credit_and_courier_sees_it(self):
+        User.objects.filter(pk=self.customer.pk).update(account_type='BUSINESS', company_name='Кафе')
+        order = self.make_order(status='IN_TRANSIT', courier=self.couriers[0])
+        self.client.force_login(self.couriers[0])
+        self.assertFalse(self.client.get(f'/api/orders/{order.pk}/').json()['credit_allowed'])
+        self.assertEqual(self.client.patch(f'/api/admin/businesses/{self.customer.pk}/', {'credit_allowed': True}, format='json').status_code, 403)
+        self.client.force_login(self.admin)
+        response = self.client.patch(f'/api/admin/businesses/{self.customer.pk}/', {'credit_allowed': True}, format='json')
+        self.assertEqual((response.status_code, response.json()['credit_allowed']), (200, True))
+        self.client.force_login(self.couriers[0])
+        self.assertTrue(self.client.get(f'/api/orders/{order.pk}/').json()['credit_allowed'])
+        response = self.client.post(f'/api/orders/{order.pk}/transition/', {'status': 'DELIVERED', 'on_credit': True}, format='json')
+        self.assertEqual((response.status_code, response.json()['payment_status']), (200, 'DEBT'))
+
+    def test_customer_cannot_allow_own_credit(self):
+        User.objects.filter(pk=self.customer.pk).update(account_type='BUSINESS', company_name='Кафе')
+        self.client.force_login(self.customer)
+        self.client.patch('/api/auth/profile/', {'credit_allowed': True}, format='json')
+        self.customer.refresh_from_db()
+        self.assertFalse(self.customer.credit_allowed)

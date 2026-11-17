@@ -829,3 +829,18 @@
   .profile-actions .portal-button { width: 100%; }
 }
 .profile-fields .phone-prefix { border-radius: 7px 0 0 7px; background: #f6f1e4; }
+
+/* Business card: credit permission switch */
+.business-credit { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 10px; border: 1px solid #e6e0d0; background: #faf8f1; }
+.business-credit.is-on { border-color: #e7c98d; background: #fdf6e6; }
+.business-credit > div { flex: 1; min-width: 0; }
+.business-credit strong { display: block; font-size: 13px; }
+.business-credit small { display: block; color: var(--portal-muted); font-size: 12px; line-height: 1.4; }
+.business-credit-icon { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; background: #fffdf7; border: 1px solid #e6e0d0; color: #8a7a55; }
+.business-credit.is-on .business-credit-icon { color: #9a6a12; border-color: #e7c98d; }
+.business-switch { flex-shrink: 0; position: relative; width: 46px; height: 26px; padding: 0; border-radius: 999px; border: 0; background: #cfd2c6; cursor: pointer; transition: background .2s; }
+.business-switch span { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 3px #0003; transition: transform .2s; }
+.business-switch[aria-checked="true"] { background: #b9822a; }
+.business-switch[aria-checked="true"] span { transform: translateX(20px); }
+.business-switch:disabled { opacity: .55; cursor: default; }
+.business-switch:focus-visible { outline: 2px solid var(--portal-green); outline-offset: 2px; }

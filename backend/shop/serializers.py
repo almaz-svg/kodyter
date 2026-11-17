@@ -48,7 +48,7 @@ class UserSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSeria
         return normalize_kz_phone(value)
 
 class BusinessAccountSerializer(serializers.ModelSerializer):
-    """Admin view of business accounts. Only `business_approved` can be written."""
+    """Admin view of business accounts. Only `business_approved` and `credit_allowed` can be written."""
     # Filled from list annotations (see AdminBusinesses); absent after a single update.
     orders_count = serializers.SerializerMethodField()
     delivered_total = serializers.SerializerMethodField()
@@ -67,7 +67,7 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'phone', 'company_name', 'business_approved', 'date_joined', 'orders_count', 'delivered_total', 'last_order_at']
+        fields = ['id', 'name', 'email', 'phone', 'company_name', 'business_approved', 'credit_allowed', 'date_joined', 'orders_count', 'delivered_total', 'last_order_at']
         read_only_fields = ['id', 'name', 'email', 'phone', 'company_name', 'date_joined']
 
 PHONE_FORMAT_ERROR = 'Укажите телефон в международном формате, например +7 701 123 45 67.'
@@ -218,16 +218,20 @@ class OrderSerializer(serializers.ModelSerializer):
     paid_by_name = serializers.CharField(source='payment.paid_by_name', default=None, read_only=True)
     customer_name = serializers.CharField(source='customer.name', read_only=True)
     customer_company = serializers.SerializerMethodField()
+    credit_allowed = serializers.SerializerMethodField()
 
     def get_customer_company(self, order):
         return business_name(order)
+
+    def get_credit_allowed(self, order):
+        return credit_allowed(order)
 
     def get_payment_status(self, order):
         return payment_status(order)
 
     class Meta:
         model = Order
-        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'courier_is_active', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name', 'on_credit', 'credit_at', 'credit_by_name', 'customer_id', 'customer_name', 'customer_company']
+        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'courier_is_active', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name', 'on_credit', 'credit_at', 'credit_by_name', 'customer_id', 'customer_name', 'customer_company', 'credit_allowed']
         read_only_fields = fields
 
 class CustomerStatusHistorySerializer(serializers.ModelSerializer):
@@ -266,6 +270,10 @@ class AvailableItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['name', 'quantity']
         read_only_fields = fields
+
+def credit_allowed(order):
+    """Only a business that the administrator allowed may receive an order on credit."""
+    return order.customer.account_type == 'BUSINESS' and order.customer.credit_allowed
 
 def business_name(order):
     """The ordering business ('заведение'), so staff see at once who the order is for; empty for individuals."""

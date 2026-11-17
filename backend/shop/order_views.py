@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .security import reject_markup
 from .models import Order, OrderItem, Payment, Product, User, StatusHistory, Problem
-from .serializers import CheckoutSerializer, CustomerOrderSerializer, OrderSerializer
+from .serializers import CheckoutSerializer, CustomerOrderSerializer, OrderSerializer, credit_allowed
 from .security import lock_active_actor
 from .dispatch import dispatch_waiting_orders
 
@@ -169,6 +169,8 @@ class Transition(APIView):
         on_credit = request.data.get('on_credit') is True
         if cash_received and on_credit:
             raise serializers.ValidationError({'on_credit': 'Выберите что-то одно: деньги получены или заказ записан в долг.'})
+        if on_credit and not credit_allowed(order):
+            raise serializers.ValidationError({'on_credit': 'В долг можно отдать только заведению, которому это разрешил администратор.'})
         old = order.status
         order.status = target
         fields = ['status', 'cancellation_reason']

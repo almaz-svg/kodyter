@@ -40,6 +40,8 @@ class User(AbstractUser):
     company_name = models.CharField(max_length=160, blank=True)
     # Set only by an administrator. A business gets wholesale prices after approval, not at registration.
     business_approved = models.BooleanField(default=False)
+    # Set only by an administrator: the courier may deliver this business's orders on credit.
+    credit_allowed = models.BooleanField(default=False)
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = ['name']
     objects = UserManager()

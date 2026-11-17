@@ -27,7 +27,7 @@ EXPECTED_CLIENT_WRITES = {
     RegisterSerializer: {'name', 'email', 'phone', 'password', 'account_type', 'company_name'},
     CategorySerializer: {'name', 'slug', 'description', 'image', 'is_visible'},
     # Only an administrator writes business approval.
-    BusinessAccountSerializer: {'business_approved'},
+    BusinessAccountSerializer: {'business_approved', 'credit_allowed'},
     ProductSerializer: {'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'pieces', 'ingredients', 'allergens', 'is_available', 'is_visible'},
     CourierUpdateSerializer: {'name', 'phone', 'is_active'},
     PaymentRequestSerializer: {'method', 'idempotency_key'},
