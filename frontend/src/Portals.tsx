@@ -170,23 +170,40 @@ function Profile({ user, onUserChange }: Props) {
   const roleLabel = isBusiness ? 'Заведение' : ({ CUSTOMER: 'Покупатель', COURIER: 'Курьер', ADMIN: 'Администратор', CASHIER: 'Кассир', PASTRY: 'Кондитер' } as Record<string, string>)[user.role] ?? user.role;
   const initials = (user.name || user.email).trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() ?? '').join('');
   const dirty = name.trim() !== user.name.trim() || phone !== phoneDigits(user.phone);
-  return <section className="portal-profile portal-card">
-    <header className="profile-hero">
+  const company = (user.company_name || '').trim() || 'Без названия';
+  const companyInitials = company.replace(/[«»"']/g, '').trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() ?? '').join('');
+  const phoneShown = user.phone ? formatPhone(phoneDigits(user.phone)) : '';
+  return <section className={`portal-profile portal-card${isBusiness ? ' is-business' : ''}`}>
+    {isBusiness ? <header className="profile-hero profile-hero-business">
+      <span className="profile-avatar" aria-hidden="true">{companyInitials || <Store size={28} />}</span>
+      <div className="profile-hero-text">
+        <p className="portal-eyebrow">ПРОФИЛЬ ЗАВЕДЕНИЯ</p>
+        <h2>{company}</h2>
+        <div className="profile-hero-meta"><span className="profile-role"><Store size={14} aria-hidden="true" />Заведение</span>{user.business_approved && <span className="profile-role profile-role-gold"><Sparkles size={14} aria-hidden="true" />Оптовые цены</span>}</div>
+        <div className="profile-hero-contacts"><span><UserRound size={14} aria-hidden="true" />{user.name || 'Контактное лицо не указано'}</span>{phoneShown && <span><Phone size={14} aria-hidden="true" />{phoneShown}</span>}</div>
+      </div>
+    </header> : <header className="profile-hero">
       <span className="profile-avatar" aria-hidden="true">{initials || <UserRound size={26} />}</span>
       <div className="profile-hero-text">
         <p className="portal-eyebrow">ВАШ ПРОФИЛЬ</p>
         <h2>{user.name || 'Без имени'}</h2>
-        <div className="profile-hero-meta"><span className="profile-role">{isBusiness ? <Store size={14} aria-hidden="true" /> : user.role === 'COURIER' ? <Truck size={14} aria-hidden="true" /> : <UserRound size={14} aria-hidden="true" />}{roleLabel}</span>{user.phone && <span className="profile-hero-contact"><Phone size={14} aria-hidden="true" />{formatPhone(phoneDigits(user.phone))}</span>}</div>
+        <div className="profile-hero-meta"><span className="profile-role">{user.role === 'COURIER' ? <Truck size={14} aria-hidden="true" /> : <UserRound size={14} aria-hidden="true" />}{roleLabel}</span>{phoneShown && <span className="profile-hero-contact"><Phone size={14} aria-hidden="true" />{phoneShown}</span>}</div>
       </div>
-    </header>
-    {isBusiness && <div className="portal-business-profile"><span className="portal-business-icon" aria-hidden="true"><Store size={24} /></span><div><small>Тип аккаунта: заведение</small><strong>«{user.company_name || 'Без названия'}»</strong>{user.business_approved && <div className="portal-wholesale-info"><p>Для вашего заведения открыты <b>оптовые цены</b> — цены в каталоге уже обновлены.</p><p className="portal-wholesale-rule"><Package size={16} aria-hidden="true" /><span>Оптовая цена действует, когда в заказе <b>достаточно штук одного товара</b> — с какого количества, указано у каждого товара в каталоге. В корзине она применится сама — обычная цена будет зачёркнута.</span></p></div>}</div>{user.business_approved && <span className="portal-status status-delivered">Оптовые цены</span>}</div>}
+    </header>}
+    {isBusiness && user.business_approved && <div className="profile-wholesale">
+      <span className="profile-wholesale-icon" aria-hidden="true"><Sparkles size={20} /></span>
+      <div><strong>Для вашего заведения открыты оптовые цены</strong><p>Оптовая цена применяется, когда в заказе достаточно штук одного товара — с какого количества, написано у каждого товара в каталоге. В корзине она подставится сама, а обычная цена будет зачёркнута.</p></div>
+    </div>}
     <form onSubmit={save} className="portal-form profile-form"><fieldset className="portal-form-fields" disabled={busy}>
-      <div className="profile-section-head"><h3>Личные данные</h3><p>{user.role === 'CUSTOMER' ? 'По этим данным курьер свяжется с вами при доставке.' : 'По этим данным с вами свяжется администратор.'}</p></div>
+      <div className="profile-section-head"><h3>{isBusiness ? 'Контакты заведения' : 'Личные данные'}</h3><p>{isBusiness ? 'По этим данным курьер и пекарня свяжутся с вами по заказам.' : user.role === 'CUSTOMER' ? 'По этим данным курьер свяжется с вами при доставке.' : 'По этим данным с вами свяжется администратор.'}</p></div>
       <div className="profile-fields">
         <label><span className="profile-label"><UserRound size={15} aria-hidden="true" />{isBusiness ? 'Имя контактного лица' : 'Имя'}</span><input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} required maxLength={120} autoComplete="name" placeholder="Как к вам обращаться" /></label>
         <label><span className="profile-label"><Phone size={15} aria-hidden="true" />Телефон</span><PhoneInput digits={phone} onChange={value => { setPhone(value); setSaved(false); }} required={user.role === 'CUSTOMER'} /></label>
       </div>
-      <div className="profile-email"><span className="profile-email-icon" aria-hidden="true"><Mail size={18} /></span><div><small>Электронная почта для входа</small><strong>{user.email}</strong></div><span className="profile-email-lock"><LockKeyhole size={13} aria-hidden="true" />Не меняется</span></div>
+      <div className={isBusiness ? 'profile-locked-grid' : undefined}>
+        {isBusiness && <div className="profile-email"><span className="profile-email-icon" aria-hidden="true"><Store size={18} /></span><div><small>Название заведения</small><strong>{company}</strong></div><span className="profile-email-lock"><LockKeyhole size={13} aria-hidden="true" />Меняет администратор</span></div>}
+        <div className="profile-email"><span className="profile-email-icon" aria-hidden="true"><Mail size={18} /></span><div><small>Электронная почта для входа</small><strong>{user.email}</strong></div><span className="profile-email-lock"><LockKeyhole size={13} aria-hidden="true" />Не меняется</span></div>
+      </div>
       <ErrorNotice message={error} />
       <div className="profile-actions">
         <button className="portal-button" disabled={busy || !name.trim() || !dirty}>{busy ? 'Сохраняем…' : 'Сохранить изменения'}<ArrowRight size={17} aria-hidden="true" /></button>

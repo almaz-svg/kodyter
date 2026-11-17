@@ -855,3 +855,34 @@
 .product-fields > .product-span { grid-column: 1 / -1; }
 .product-wholesale-card > h4 small { font-family: 'Manrope', Arial, sans-serif; font-size: 12px; color: var(--portal-muted); }
 .product-wholesale-hint { display: block; margin-top: 12px; color: var(--portal-muted); font-size: 12px; line-height: 1.45; }
+
+/* Business profile: the business itself is the headline */
+.profile-hero-business { background: linear-gradient(135deg, #07382c 0%, #0d4a3a 100%); border-bottom: 0; color: #f7f3eb; }
+.profile-hero-business .portal-eyebrow { color: #d7b779; }
+.portal-profile .profile-hero-business h2 { color: #fffaf0; }
+.profile-hero-business .profile-avatar { background: linear-gradient(135deg, #e9cf94, #c9a35f); color: #07382c; box-shadow: 0 0 0 4px #07382c, 0 0 0 5px #d7b77999; }
+.profile-hero-business .profile-role { background: #ffffff1f; color: #f7f3eb; border: 1px solid #ffffff2e; }
+.profile-hero-business .profile-role-gold { background: #d7b779; color: #07382c; border-color: #d7b779; }
+.profile-hero-contacts { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 10px; font-size: 13px; color: #d9e0d2; }
+.profile-hero-contacts span { display: inline-flex; align-items: center; gap: 6px; }
+.profile-hero-contacts svg { color: #d7b779; }
+.profile-business-summary { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--portal-line); background: #fbf8f0; }
+.profile-business-summary > div { min-width: 0; padding: 14px 20px; }
+.profile-business-summary > div + div { border-left: 1px solid var(--portal-line); }
+.profile-business-summary small { display: block; color: var(--portal-muted); font-size: 11px; letter-spacing: .3px; text-transform: uppercase; }
+.profile-business-summary strong { display: block; margin-top: 2px; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.profile-wholesale { display: flex; gap: 14px; align-items: flex-start; margin: 22px 28px 0; padding: 16px 18px; border-radius: 12px; border: 1px solid #e7c98d; background: linear-gradient(135deg, #fdf6e6, #fbf1da); }
+.profile-wholesale-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #07382c; color: #d7b779; }
+.profile-wholesale strong { display: block; font-size: 15px; }
+.profile-wholesale p { margin: 4px 0 0; font-size: 13px; line-height: 1.5; color: #5d5a47; }
+.profile-locked-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.profile-locked-grid .profile-email { flex-wrap: wrap; }
+.profile-locked-grid .profile-email-lock { width: 100%; padding-left: 51px; }
+@media (max-width: 640px) {
+  .profile-business-summary { grid-template-columns: minmax(0, 1fr); }
+  .profile-business-summary > div { padding: 10px 18px; display: flex; justify-content: space-between; gap: 12px; align-items: baseline; }
+  .profile-business-summary > div + div { border-left: 0; border-top: 1px solid var(--portal-line); }
+  .profile-business-summary strong { margin: 0; text-align: right; }
+  .profile-wholesale { margin: 18px 18px 0; }
+  .profile-locked-grid { grid-template-columns: minmax(0, 1fr); }
+}
