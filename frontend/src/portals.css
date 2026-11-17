@@ -900,7 +900,8 @@
 .portal-kitchen-tools p { margin: 0; display: grid; gap: 2px; }
 .portal-kitchen-tools p strong { font-size: 14px; }
 .portal-kitchen-tools p span { color: var(--portal-muted); font-size: 12px; }
-.portal-kitchen-tools > div { display: flex; flex-wrap: wrap; gap: 8px; }
+.portal-kitchen-tools > p { flex: 1 1 100%; }
+.portal-kitchen-buttons { display: flex; flex-wrap: wrap; gap: 8px; }
 .portal-kitchen-tools .portal-button { gap: 8px; border-radius: 8px; }
 .portal-kitchen-tools .portal-kitchen-cancel { color: #a8432c; border-color: #e3b7a9; }
 .portal-kitchen-tools .portal-kitchen-cancel:hover:not(:disabled) { background: #fbeee9; }
@@ -924,4 +925,22 @@
 .portal-order-items li.is-missing strong { text-decoration: line-through; color: #8d8a7a; }
 .portal-order-items li.is-missing > b { text-decoration: line-through; color: #9a9784; font-weight: 500; }
 .portal-item-missing { display: inline-flex !important; align-items: center; gap: 5px; width: fit-content; margin-top: 5px; padding: 2px 9px; border-radius: 999px; background: #fbeee9; border: 1px solid #e3b7a9; color: #a8432c !important; font-size: 11px !important; font-weight: 600; }
-@media (max-width: 560px) { .portal-kitchen-tools > div, .portal-kitchen-tools .portal-button { width: 100%; } .portal-kitchen-tools .portal-button { justify-content: center; } }
+
+
+/* Kitchen: contact the customer about the order */
+.portal-kitchen-contact { flex: 1 1 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 12px 14px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--portal-line); background: #fffdf7; }
+.portal-kitchen-contact-icon { flex-shrink: 0; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: #eef3ea; color: var(--portal-green); }
+.portal-kitchen-contact > div:not(.portal-kitchen-contact-actions) { flex: 1; min-width: 160px; display: grid; }
+.portal-kitchen-contact small { color: var(--portal-muted); font-size: 11px; }
+.portal-kitchen-contact strong { font-size: 14px; }
+.portal-kitchen-contact > div:not(.portal-kitchen-contact-actions) > a { width: fit-content; font-size: 13px; font-weight: 600; color: var(--portal-green); text-decoration: none; }
+.portal-kitchen-contact-actions { display: flex; flex-wrap: wrap; gap: 8px; }
+.portal-kitchen-tools .portal-kitchen-contact-actions .portal-button { min-height: 40px; padding: 8px 16px; text-decoration: none; }
+.portal-kitchen-tools .portal-kitchen-whatsapp { color: #1f7a4a; border-color: #b9dcc6; }
+.portal-kitchen-tools .portal-kitchen-whatsapp:hover { background: #ecf7f0; }
+@media (max-width: 560px) {
+  .portal-kitchen-contact-actions, .portal-kitchen-buttons { width: 100%; }
+  .portal-kitchen-contact-actions .portal-button { flex: 1 1 0; justify-content: center; }
+  .portal-kitchen-buttons .portal-button { flex: 1 1 100%; justify-content: center; }
+}
+.portal-kitchen-tools .portal-kitchen-call { color: #fffaf0; }
