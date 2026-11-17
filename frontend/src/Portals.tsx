@@ -201,7 +201,7 @@ function Profile({ user, onUserChange }: Props) {
         <label><span className="profile-label"><Phone size={15} aria-hidden="true" />Телефон</span><PhoneInput digits={phone} onChange={value => { setPhone(value); setSaved(false); }} required={user.role === 'CUSTOMER'} /></label>
       </div>
       <div className={isBusiness ? 'profile-locked-grid' : undefined}>
-        {isBusiness && <div className="profile-email"><span className="profile-email-icon" aria-hidden="true"><Store size={18} /></span><div><small>Название заведения</small><strong>{company}</strong></div><span className="profile-email-lock"><LockKeyhole size={13} aria-hidden="true" />Меняет администратор</span></div>}
+        {isBusiness && <div className="profile-email"><span className="profile-email-icon" aria-hidden="true"><Store size={18} /></span><div><small>Название заведения</small><strong>{company}</strong></div><span className="profile-email-lock"><LockKeyhole size={13} aria-hidden="true" />Не меняется</span></div>}
         <div className="profile-email"><span className="profile-email-icon" aria-hidden="true"><Mail size={18} /></span><div><small>Электронная почта для входа</small><strong>{user.email}</strong></div><span className="profile-email-lock"><LockKeyhole size={13} aria-hidden="true" />Не меняется</span></div>
       </div>
       <ErrorNotice message={error} />
