@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Copy, Eye, EyeOff, KeyRound, Mail, Sparkles, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
+import { ArrowRight, ArrowUpRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Copy, Eye, EyeOff, KeyRound, Mail, Sparkles, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview, type Debts, type DebtOrder, type MyDebt } from './lib';
 import { LazyImage, PhoneInput, phoneDigits, formatPhone } from './ui';
 import { uploadProductPhoto } from './imageUpload';
-import { PhotoCropper } from './photoCropper';
+import { CATEGORY_PHOTO_ASPECT, PhotoCropper } from './photoCropper';
 import './portals.css';
 
 type Props = { user: User; onUserChange: (user: User) => void };
@@ -638,22 +638,40 @@ function ProductsPanel() {
 
 type CategoryDraft = { name: string; slug: string; description: string; image: string; is_visible: boolean };
 const newCategory: CategoryDraft = { name: '', slug: '', description: '', image: '', is_visible: true };
+const latin: Record<string, string> = { а: 'a', ә: 'a', б: 'b', в: 'v', г: 'g', ғ: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'i', і: 'i', к: 'k', қ: 'k', л: 'l', м: 'm', н: 'n', ң: 'n', о: 'o', ө: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ұ: 'u', ү: 'u', ф: 'f', х: 'h', һ: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
+/** Category address from its name: "Торты и пироги" → "torty-i-pirogi". */
+const slugify = (value: string) => [...value.toLowerCase()].map(ch => latin[ch] ?? ch).join('').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50);
+
+/** The category card exactly as the home page draws it: photo, green shade, name with the gold swoosh and the arrow. */
+function CategoryTilePreview({ name, image, shape }: { name: string; image: string; shape: 'wide' | 'square' }) {
+  return <div className={`category-preview-tile is-${shape}`}>
+    {image ? <img src={image} alt="" /> : <span className="category-preview-empty"><ImageIcon size={30} strokeWidth={1.3} aria-hidden="true" /></span>}
+    <span className="category-preview-title"><span>{name.trim() || 'Название категории'}</span><svg viewBox="0 0 120 8" aria-hidden="true" preserveAspectRatio="none"><path d="M1 6 C 30 1, 70 1, 119 4" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" /></svg></span>
+    <span className="category-preview-arrow" aria-hidden="true"><ArrowUpRight size={shape === 'wide' ? 18 : 15} /></span>
+  </div>;
+}
+
 function CategoriesPanel() {
   const remote = useRemote<Category[]>('/admin/categories/');
   const [editing, setEditing] = useState<Category | 'new' | null>(null);
   const editor = useEditorReveal(editing === 'new' ? 'new' : editing?.id ?? null);
   const [draft, setDraft] = useState(newCategory);
+  const [slugTouched, setSlugTouched] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
+  // As with products: a chosen file (or the current photo) opens in the cropper first; only the framed result is uploaded.
+  const [cropSource, setCropSource] = useState<File | string | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
-  // Same upload as product photos: the photo is shrunk in the browser, stored by the server, and its URL saved here.
-  const chooseCategoryPhoto = async (file?: File) => {
-    if (!file) return;
+  const field = <K extends keyof CategoryDraft>(key: K, value: CategoryDraft[K]) => setDraft(current => ({ ...current, [key]: value }));
+  const changeName = (value: string) => setDraft(current => ({ ...current, name: value, slug: editing === 'new' && !slugTouched ? slugify(value) : current.slug }));
+  const choosePhoto = (file?: File) => { if (!file) return; setError(''); setCropSource(file); };
+  const uploadFramed = async (photo: Blob) => {
+    setCropSource(null);
     setPhotoBusy(true);
     setError('');
-    try { const url = await uploadProductPhoto(file); setDraft(current => ({ ...current, image: url })); }
+    try { field('image', await uploadProductPhoto(new File([photo], 'category.jpg', { type: 'image/jpeg' }))); }
     catch (err) { setError((err as Error).message); }
     finally { setPhotoBusy(false); }
   };
@@ -663,7 +681,7 @@ function CategoriesPanel() {
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
-  const start = (category: Category | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(category); setDraft(category === 'new' ? newCategory : category); setError(''); setNotice(''); };
+  const start = (category: Category | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(category); setDraft(category === 'new' ? newCategory : { name: category.name, slug: category.slug, description: category.description || '', image: category.image || '', is_visible: category.is_visible }); setSlugTouched(category !== 'new'); setError(''); setNotice(''); };
   const toggle = async (category: Category) => {
     setError(''); setBusy(true);
     try { await api(`/admin/categories/${category.id}/`, json({ is_visible: !category.is_visible }, 'PATCH')); remote.retry(); }
@@ -676,8 +694,39 @@ function CategoriesPanel() {
     catch (err) { setError(failure(err)); setConfirming(null); }
     finally { setBusy(false); }
   };
-  return <section><div className="portal-section-title"><div><p className="portal-eyebrow">ПОРЯДОК НА ВИТРИНЕ</p><h2>Категории</h2></div><button className="portal-button" disabled={busy} onClick={event => start('new', event.currentTarget)}><Plus size={17} aria-hidden="true" /> Добавить категорию</button></div><ErrorNotice message={remote.error} retry={remote.retry} />{!editing && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
-    {editing && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{editing === 'new' ? 'Новая категория' : 'Редактировать категорию'}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть редактирование категории" onClick={() => setEditing(null)}><X size={20} aria-hidden="true" /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Название<input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} required maxLength={120} /></label><label>Адрес категории<input value={draft.slug} onChange={e => setDraft({ ...draft, slug: e.target.value })} required pattern="[a-z0-9_\-]+" placeholder="croissants" maxLength={50} /><small>Латинские буквы, цифры, дефис или подчёркивание.</small></label><label className="portal-wide">Описание<textarea value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} maxLength={3000} /></label><div className="portal-wide portal-photo"><span>Фотография категории</span>{draft.image && <img src={draft.image} alt="" className="portal-photo-preview" />}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy} onChange={e => { void chooseCategoryPhoto(e.target.files?.[0]); e.target.value = ''; }} /><small>{photoBusy ? 'Загружаем фото…' : 'JPEG, PNG или WebP с компьютера или телефона. Фото автоматически уменьшится.'}</small></div></div><div className="portal-checks"><label><input type="checkbox" checked={draft.is_visible} onChange={e => setDraft({ ...draft, is_visible: e.target.checked })} /> Показывать в каталоге</label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || photoBusy || !draft.name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить категорию'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setEditing(null)}>Отмена</button></div></fieldset></form></section>}
+  return <section><div className="portal-section-title"><div><p className="portal-eyebrow">ПОРЯДОК НА ВИТРИНЕ</p><h2>Категории <span className="portal-count">{remote.data?.length || 0}</span></h2></div><button className="portal-button" disabled={busy} onClick={event => start('new', event.currentTarget)}><Plus size={17} aria-hidden="true" /> Добавить категорию</button></div><ErrorNotice message={remote.error} retry={remote.retry} />{!editing && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
+    {editing && <section ref={editor.ref} tabIndex={-1} className="portal-editor product-editor category-editor"><div className="portal-section-title"><h3>{editing === 'new' ? 'Новая категория' : `Редактировать: ${editing.name}`}</h3></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}>
+      <div className="product-editor-grid">
+        <div className="product-editor-main">
+          <section className="product-card"><h4><LayoutGrid size={20} aria-hidden="true" />Основная информация</h4><div className="product-fields">
+            <label><span>Название <i>*</i></span><input value={draft.name} onChange={e => changeName(e.target.value)} required maxLength={120} placeholder="Круассаны" /></label>
+            <label><span>Адрес категории <i>*</i></span><input value={draft.slug} onChange={e => { setSlugTouched(true); field('slug', e.target.value.toLowerCase()); }} required pattern="[a-z0-9_\-]+" placeholder="croissants" maxLength={50} /><small>{editing === 'new' && !slugTouched ? 'Заполняется сам из названия. Можно изменить.' : 'Латинские буквы, цифры, дефис или подчёркивание.'}</small></label>
+          </div></section>
+          <section className="product-card"><h4><FileText size={20} aria-hidden="true" />Описание</h4><label className="product-full"><span className="sr-only">Описание</span><textarea value={draft.description} onChange={e => field('description', e.target.value)} placeholder="Пара слов о том, что в этой категории" maxLength={3000} /></label></section>
+          <section className="product-card"><h4><Settings size={20} aria-hidden="true" />Настройки</h4><div className="product-switches">
+            <label><input type="checkbox" checked={draft.is_visible} onChange={e => field('is_visible', e.target.checked)} />Показывать в каталоге и на главной</label>
+          </div>{!draft.is_visible && <p className="product-hint">Скрытая категория и её товары не видны покупателям.</p>}</section>
+        </div>
+        <div className="product-editor-side">
+          <section className="product-card"><h4><ImageIcon size={20} aria-hidden="true" />Фотография категории</h4>
+            <p className="category-preview-label">Так карточка выглядит на главной</p>
+            <CategoryTilePreview name={draft.name} image={draft.image} shape="wide" />
+            <div className="category-preview-phone"><CategoryTilePreview name={draft.name} image={draft.image} shape="square" /><small>На телефоне карточка квадратная — края фото обрезаются.</small></div>
+            <label className={`product-dropzone${photoBusy ? ' is-busy' : ''}`} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); choosePhoto(event.dataTransfer.files?.[0]); }}>
+              <Upload size={22} aria-hidden="true" />
+              <span className="product-dropzone-button">{photoBusy ? 'Загружаем фото…' : draft.image ? 'Заменить фото' : 'Выбрать файл'}</span>
+              <small>или перетащите фото сюда</small>
+              <input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy} onChange={e => { choosePhoto(e.target.files?.[0]); e.target.value = ''; }} />
+            </label>
+            {draft.image && <div className="category-photo-actions"><button type="button" className="product-secondary product-reframe" disabled={photoBusy} onClick={() => setCropSource(draft.image)}><Crop size={16} aria-hidden="true" />Изменить кадр</button><button type="button" className="product-secondary" disabled={photoBusy} onClick={() => field('image', '')}><Trash2 size={16} aria-hidden="true" />Убрать фото</button></div>}
+            <p className="product-hint">JPEG, PNG или WebP. После выбора можно подвинуть, приблизить и повернуть фото. Пока у категории нет своего фото, на главной показываются фото её товаров.</p>
+          </section>
+        </div>
+      </div>
+      <ErrorNotice message={error} />
+      {cropSource && <PhotoCropper source={cropSource} aspect={CATEGORY_PHOTO_ASPECT} hint="Рамка — это карточка категории на главной странице. На телефоне она квадратная: края слева и справа будут обрезаны, держите главное в центре." onCancel={() => setCropSource(null)} onDone={photo => void uploadFramed(photo)} />}
+      <div className="product-actions"><button className="portal-button product-save" disabled={busy || photoBusy || !draft.name.trim()}><Check size={18} aria-hidden="true" />{busy ? 'Сохраняем…' : 'Сохранить категорию'}</button><button type="button" className="product-secondary" disabled={busy} onClick={() => setEditing(null)}>Отмена</button><button type="button" className="product-secondary product-close" disabled={busy} onClick={() => setEditing(null)} aria-label="Закрыть редактирование категории"><X size={17} aria-hidden="true" />Закрыть</button></div>
+    </fieldset></form></section>}
     {remote.loading ? <p className="portal-loading" role="status">Загружаем категории…</p> : remote.data && <div className="portal-manage-list">{remote.data?.length ? remote.data.map(category => <article className="portal-manage-row" key={category.id}><div className="portal-category-image">{category.image ? <LazyImage src={category.image} alt="" /> : <LayoutGrid size={23} aria-hidden="true" />}</div><div className="portal-manage-main"><h3>{category.name}</h3><p>{category.description || `/${category.slug}`}</p><span className="portal-help">{category.is_visible ? 'Видна в каталоге' : 'Скрыта из каталога'}</span>{confirming === category.id && <div className="portal-product-confirm portal-category-confirm"><p>Удалить категорию «{category.name}» навсегда? Это действие нельзя отменить. Категорию с товарами удалить нельзя — сначала перенесите или удалите товары.</p><div><button className="portal-button portal-button-danger" disabled={busy} onClick={() => void remove(category)}>{busy ? 'Удаляем…' : 'Удалить'}<Trash2 size={16} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setConfirming(null)}>Отмена</button></div></div>}</div><div className="portal-row-actions"><button className="portal-icon-button" disabled={busy} aria-label={`Изменить категорию «${category.name}»`} onClick={event => start(category, event.currentTarget)}><Pencil size={18} aria-hidden="true" /></button><button className="portal-icon-button" disabled={busy} aria-label={`${category.is_visible ? 'Скрыть' : 'Показать'} категорию «${category.name}»`} onClick={() => void toggle(category)}>{category.is_visible ? <Eye size={18} aria-hidden="true" /> : <EyeOff size={18} aria-hidden="true" />}</button><button className="portal-icon-button portal-delete" disabled={busy} aria-label={`Удалить категорию «${category.name}»`} title="Удалить категорию" onClick={() => { setConfirming(category.id); setError(''); setNotice(''); }}><Trash2 size={18} aria-hidden="true" /></button></div></article>) : <EmptyState icon={<LayoutGrid size={30} aria-hidden="true" />} title="Первая категория ждёт">Добавьте категории, чтобы покупателям было проще найти любимую выпечку.</EmptyState>}</div>}
   </section>;
 }

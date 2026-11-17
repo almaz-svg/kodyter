@@ -9,8 +9,9 @@ import './category-slider.css';
 const fallbackImages = ['/images/croissant.webp', '/images/cake.webp', '/images/tart.webp', '/images/buns.webp', '/images/catering.webp'];
 const ROTATE_MS = 5000;
 
-// Photos for a category card: the distinct images of its own products, or the category photo when it has none.
+// Photos for a category card: the photo the administrator framed for the category, or else the distinct images of its products.
 function photosFor(category: Category, products: Product[], fallback: string): string[] {
+ if (category.image) return [category.image];
  const photos = [...new Set(products.filter(p => p.category === category.id && p.image).map(p => p.image))];
  return photos.length ? photos : [category.image || fallback];
 }

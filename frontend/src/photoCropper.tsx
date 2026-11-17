@@ -5,13 +5,15 @@ import { Check, Minus, Plus, RotateCw, X } from 'lucide-react';
 // Width / height of the product photo everywhere it is shown: catalog card (.feat-photo), product page,
 // admin preview and this frame. Keep in sync with --product-photo-aspect in styles.css and portals.css.
 export const PRODUCT_PHOTO_ASPECT = 1.05;
+// Category cards on the home page are 4:3 on a computer (and cropped to the centre on a phone).
+export const CATEGORY_PHOTO_ASPECT = 4 / 3;
 const OUTPUT_LONG_SIDE = 1200;
 const MAX_ZOOM = 4;
 
-type Props = { source: File | string; onCancel: () => void; onDone: (photo: Blob) => void };
+type Props = { source: File | string; onCancel: () => void; onDone: (photo: Blob) => void; aspect?: number; hint?: string };
 
 /** Frame a product photo before upload: drag to move, zoom, rotate and pick the frame shape. */
-export function PhotoCropper({ source, onCancel, onDone }: Props) {
+export function PhotoCropper({ source, onCancel, onDone, aspect = PRODUCT_PHOTO_ASPECT, hint }: Props) {
   const [image, setImage] = useState<HTMLImageElement | null>(null);
   const [error, setError] = useState('');
   const [zoom, setZoom] = useState(1);
@@ -44,7 +46,6 @@ export function PhotoCropper({ source, onCancel, onDone }: Props) {
   const turned = rotation % 180 !== 0;
   const naturalWidth = image ? (turned ? image.naturalHeight : image.naturalWidth) : 1;
   const naturalHeight = image ? (turned ? image.naturalWidth : image.naturalHeight) : 1;
-  const aspect = PRODUCT_PHOTO_ASPECT;
   const frameHeight = frameWidth / aspect;
   // "Cover" scale: the photo always fills the whole frame, zoom only enlarges it.
   const scale = Math.max(frameWidth / naturalWidth, frameHeight / naturalHeight) * zoom;
@@ -87,7 +88,7 @@ export function PhotoCropper({ source, onCancel, onDone }: Props) {
   return createPortal(<div className="cropper-backdrop" role="dialog" aria-modal="true" aria-label="Настройка фото товара" onKeyDown={event => { if (event.key === 'Escape') onCancel(); }}>
     <div className="cropper">
       <div className="cropper-head"><h3>Настройте фото</h3><button type="button" className="portal-icon-button" onClick={onCancel} aria-label="Закрыть без сохранения"><X size={20} aria-hidden="true" /></button></div>
-      <p className="cropper-hint">Рамка — это ровно то, что покупатели увидят в каталоге и на странице товара. Перетащите фото и приблизьте ползунком или колёсиком мыши.</p>
+      <p className="cropper-hint">{hint ?? 'Рамка — это ровно то, что покупатели увидят в каталоге и на странице товара.'} Перетащите фото и приблизьте ползунком или колёсиком мыши.</p>
       <div className="cropper-stage">
         <div ref={frameRef} className="cropper-frame" style={{ width: frameWidth, height: frameHeight }} onPointerDown={pointerDown} onPointerMove={pointerMove} onPointerUp={pointerUp} onPointerCancel={pointerUp} onWheel={event => changeZoom(zoom - event.deltaY * 0.0015)}>
           {image && <img src={image.src} alt="" draggable={false} style={{ width: image.naturalWidth * scale, height: image.naturalHeight * scale, transform: `translate(-50%, -50%) translate(${offset.x}px, ${offset.y}px) rotate(${rotation}deg)` }} />}
