@@ -130,7 +130,7 @@ class Orders(APIView):
         # Money is Decimal end to end; the sum is fixed to kopecks so storage never has to round it.
         subtotal = subtotal.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         order = Order.objects.create(customer=actor, recipient_name=data['recipient_name'], phone=data['phone'], address=data['address'], comment=data['comment'], subtotal=subtotal, delivery_fee=settings.DELIVERY_FEE, total=subtotal + settings.DELIVERY_FEE, idempotency_key=data['idempotency_key'], request_fingerprint=fingerprint)
-        OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=unit_prices[item['product_id']], image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
+        OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=unit_prices[item['product_id']], retail_price=products[item['product_id']].price, image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
         StatusHistory.objects.create(order=order, from_status='', to_status='NEW', actor=actor, actor_name=actor.name)
         if dispatch_waiting_orders():
             order.refresh_from_db(fields=['courier'])

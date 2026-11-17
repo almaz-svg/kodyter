@@ -184,9 +184,14 @@ class CourierUpdateSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.M
         return normalize_kz_phone(value) if value.strip() else ''
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    is_wholesale = serializers.SerializerMethodField()
+
+    def get_is_wholesale(self, item):
+        return item.retail_price is not None and item.price < item.retail_price
+
     class Meta:
         model = OrderItem
-        fields = ['id', 'product_id', 'name', 'price', 'quantity', 'image', 'is_prepared']
+        fields = ['id', 'product_id', 'name', 'price', 'retail_price', 'is_wholesale', 'quantity', 'image', 'is_prepared']
         read_only_fields = fields
 
 class StatusHistorySerializer(serializers.ModelSerializer):

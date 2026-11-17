@@ -140,6 +140,8 @@ class OrderItem(models.Model):
     product = models.ForeignKey(Product, on_delete=models.PROTECT)
     name = models.CharField(max_length=160)
     price = models.DecimalField(max_digits=10, decimal_places=2)
+    # The retail price at checkout. When it is higher than `price`, this line was bought at the wholesale price.
+    retail_price = models.DecimalField(max_digits=10, decimal_places=2, null=True, blank=True)
     quantity = models.PositiveIntegerField()
     image = models.CharField(max_length=500, blank=True)
     # Ticked by the pastry kitchen when this line of the order is cooked.

@@ -886,3 +886,11 @@
   .profile-wholesale { margin: 18px 18px 0; }
   .profile-locked-grid { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* Order receipt: lines bought at the wholesale price */
+.portal-item-retail { margin-right: 5px; color: #9a9784; }
+.portal-item-wholesale { display: inline-flex !important; align-items: center; gap: 5px; width: fit-content; margin-top: 5px; padding: 2px 9px; border-radius: 999px; background: #f6ebd0; border: 1px solid #e7c98d; color: #8a6418 !important; font-size: 11px !important; font-weight: 600; }
+.portal-order-items b.is-wholesale { display: flex; flex-direction: column; align-items: flex-end; line-height: 1.25; }
+.portal-order-items b.is-wholesale s { color: #9a9784; font-size: 12px; font-weight: 400; }
+.portal-totals .portal-totals-saving dt, .portal-totals .portal-totals-saving dd { color: #8a6418; font-weight: 600; }
+.portal-totals-saving dt { display: inline-flex; align-items: center; gap: 6px; }

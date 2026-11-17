@@ -139,3 +139,24 @@ class ProductWholesaleThresholdTests(WholesaleThresholdTests):
         self.assertIsNone(response.json()['wholesale_min_qty'])
         self.croissant.refresh_from_db()
         self.assertEqual(self.croissant.wholesale_threshold, 10)
+
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+class WholesaleReceiptTests(APITestCase):
+    """The order shows which lines were bought at the wholesale price."""
+
+    def setUp(self):
+        cache.clear()
+        self.business = User.objects.create_user(email='receipt@threshold.test', password=PASSWORD, name='Cafe', account_type='BUSINESS', company_name='Кафе', business_approved=True)
+        category = Category.objects.create(name='Выпечка', slug='bakery-receipt')
+        self.croissant = Product.objects.create(category=category, name='Круассан', price='890.00', wholesale_price='756.50')
+        self.bun = Product.objects.create(category=category, name='Булочка', price='500.00')
+
+    def test_wholesale_line_is_marked(self):
+        self.client.force_login(self.business)
+        items = [{'product_id': self.croissant.pk, 'quantity': 10, 'expected_price': '756.50'}, {'product_id': self.bun.pk, 'quantity': 2, 'expected_price': '500.00'}]
+        response = self.client.post('/api/orders/', {'recipient_name': 'Cafe', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': '', 'items': items, 'expected_delivery_fee': '1500.00', 'idempotency_key': str(uuid.uuid4())}, format='json')
+        self.assertEqual(response.status_code, 201, response.content)
+        lines = {line['name']: line for line in response.json()['items']}
+        self.assertEqual((lines['Круассан']['is_wholesale'], Decimal(lines['Круассан']['retail_price'])), (True, Decimal('890.00')))
+        self.assertFalse(lines['Булочка']['is_wholesale'])
