@@ -70,17 +70,23 @@ class Product(models.Model):
     weight = models.CharField(max_length=80, blank=True)
     # Optional: how many pieces one item contains ("6 шт.").
     pieces = models.PositiveSmallIntegerField(null=True, blank=True)
+    # Optional: from how many units of this product the wholesale price applies. Empty means WHOLESALE_MIN_QTY.
+    wholesale_min_qty = models.PositiveSmallIntegerField(null=True, blank=True)
     ingredients = models.TextField(blank=True)
     allergens = models.TextField(blank=True)
     is_available = models.BooleanField(default=True)
     is_visible = models.BooleanField(default=True)
 
+    @property
+    def wholesale_threshold(self):
+        return self.wholesale_min_qty or settings.WHOLESALE_MIN_QTY
+
     def price_for(self, user, quantity=1):
         """Unit price this user pays for `quantity` units of this product in one order.
-        Wholesale needs an approved business account, a wholesale price, and at least WHOLESALE_MIN_QTY units of this product.
+        Wholesale needs an approved business account, a wholesale price, and at least `wholesale_threshold` units of this product.
         The count is per product: units of different products are never added together."""
         is_approved_business = getattr(user, 'account_type', None) == User.AccountType.BUSINESS and getattr(user, 'business_approved', False)
-        if is_approved_business and self.wholesale_price is not None and quantity >= settings.WHOLESALE_MIN_QTY:
+        if is_approved_business and self.wholesale_price is not None and quantity >= self.wholesale_threshold:
             return self.wholesale_price
         return self.price
 

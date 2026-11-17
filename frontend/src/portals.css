@@ -850,3 +850,12 @@
 .category-photo-actions { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 12px; }
 .category-photo-actions .product-reframe { margin: 0; }
 .category-photo-actions .product-secondary { flex: 1 1 140px; justify-content: center; }
+
+/* Product editor: wholesale price and the quantity it starts from */
+.product-wholesale { grid-column: 1 / -1; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px 18px; padding: 14px 16px; border-radius: 12px; border: 1px solid #e3d6b8; background: #fbf6ea; }
+.product-wholesale-title { grid-column: 1 / -1; display: flex; align-items: center; gap: 8px; margin: 0; font-size: 13px; font-weight: 600; color: var(--portal-green); }
+.product-wholesale-title svg { color: #9a7b3c; }
+.product-wholesale-title small { font-weight: 400; color: var(--portal-muted); }
+.product-wholesale-hint { grid-column: 1 / -1; color: var(--portal-muted); font-size: 12px; line-height: 1.45; }
+@media (max-width: 900px) { .product-wholesale { grid-template-columns: minmax(0, 1fr); } }
+.product-wholesale-title { flex-wrap: wrap; } .product-wholesale-title > span { white-space: nowrap; }

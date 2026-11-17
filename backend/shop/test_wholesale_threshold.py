@@ -110,3 +110,32 @@ class WholesaleThresholdTests(APITestCase):
     def test_approved_business_product_without_wholesale_has_no_offer(self):
         row = self.catalog_row(self.approved, self.plain)
         self.assertNotIn('wholesale_price', row)
+
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'])
+class ProductWholesaleThresholdTests(WholesaleThresholdTests):
+    """The administrator can set the threshold per product; empty keeps the common one."""
+
+    def test_own_threshold_applies_from_that_quantity(self):
+        Product.objects.filter(pk=self.croissant.pk).update(wholesale_min_qty=3)
+        self.assertEqual(self.catalog_row(self.approved, self.croissant)['wholesale_min_qty'], 3)
+        self.assertEqual(self.order(self.approved, [(self.croissant, 3, '756.50')]).status_code, 201)
+        self.assertEqual(self.order(self.approved, [(self.croissant, 2, '756.50')]).status_code, 409)
+        # Another product without its own threshold still needs ten.
+        self.assertEqual(self.catalog_row(self.approved, self.eclair)['wholesale_min_qty'], 10)
+
+    def test_higher_threshold_keeps_ten_retail(self):
+        Product.objects.filter(pk=self.croissant.pk).update(wholesale_min_qty=20)
+        self.assertEqual(self.order(self.approved, [(self.croissant, 10, '890.00')]).status_code, 201)
+        self.assertEqual(self.order(self.approved, [(self.croissant, 20, '756.50')]).status_code, 201)
+
+    def test_admin_sets_and_clears_threshold(self):
+        admin = User.objects.create_user(email='admin@threshold.test', password=PASSWORD, name='Admin', role='ADMIN')
+        self.client.force_login(admin)
+        response = self.client.patch(f'/api/admin/products/{self.croissant.pk}/', {'wholesale_min_qty': 5}, format='json')
+        self.assertEqual((response.status_code, response.json()['wholesale_min_qty']), (200, 5))
+        self.assertEqual(self.client.patch(f'/api/admin/products/{self.croissant.pk}/', {'wholesale_min_qty': 0}, format='json').status_code, 400)
+        response = self.client.patch(f'/api/admin/products/{self.croissant.pk}/', {'wholesale_min_qty': None}, format='json')
+        self.assertIsNone(response.json()['wholesale_min_qty'])
+        self.croissant.refresh_from_db()
+        self.assertEqual(self.croissant.wholesale_threshold, 10)

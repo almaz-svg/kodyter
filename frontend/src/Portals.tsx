@@ -179,7 +179,7 @@ function Profile({ user, onUserChange }: Props) {
         <div className="profile-hero-meta"><span className="profile-role">{isBusiness ? <Store size={14} aria-hidden="true" /> : user.role === 'COURIER' ? <Truck size={14} aria-hidden="true" /> : <UserRound size={14} aria-hidden="true" />}{roleLabel}</span>{user.phone && <span className="profile-hero-contact"><Phone size={14} aria-hidden="true" />{formatPhone(phoneDigits(user.phone))}</span>}</div>
       </div>
     </header>
-    {isBusiness && <div className="portal-business-profile"><span className="portal-business-icon" aria-hidden="true"><Store size={24} /></span><div><small>Тип аккаунта: заведение</small><strong>«{user.company_name || 'Без названия'}»</strong>{user.business_approved && <div className="portal-wholesale-info"><p>Для вашего заведения открыты <b>оптовые цены</b> — цены в каталоге уже обновлены.</p><p className="portal-wholesale-rule"><Package size={16} aria-hidden="true" /><span>Оптовая цена действует <b>от {user.wholesale_min_qty ?? 10} шт. одного товара</b> в заказе. В корзине она применится сама — обычная цена будет зачёркнута.</span></p></div>}</div>{user.business_approved && <span className="portal-status status-delivered">Оптовые цены</span>}</div>}
+    {isBusiness && <div className="portal-business-profile"><span className="portal-business-icon" aria-hidden="true"><Store size={24} /></span><div><small>Тип аккаунта: заведение</small><strong>«{user.company_name || 'Без названия'}»</strong>{user.business_approved && <div className="portal-wholesale-info"><p>Для вашего заведения открыты <b>оптовые цены</b> — цены в каталоге уже обновлены.</p><p className="portal-wholesale-rule"><Package size={16} aria-hidden="true" /><span>Оптовая цена действует, когда в заказе <b>достаточно штук одного товара</b> — с какого количества, указано у каждого товара в каталоге. В корзине она применится сама — обычная цена будет зачёркнута.</span></p></div>}</div>{user.business_approved && <span className="portal-status status-delivered">Оптовые цены</span>}</div>}
     <form onSubmit={save} className="portal-form profile-form"><fieldset className="portal-form-fields" disabled={busy}>
       <div className="profile-section-head"><h3>Личные данные</h3><p>{user.role === 'CUSTOMER' ? 'По этим данным курьер свяжется с вами при доставке.' : 'По этим данным с вами свяжется администратор.'}</p></div>
       <div className="profile-fields">
@@ -541,8 +541,8 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   </article>;
 }
 
-type ProductDraft = { name: string; category: string; description: string; image: string; price: string; wholesale_price: string; weight: string; pieces: string; ingredients: string; allergens: string; is_visible: boolean; is_available: boolean };
-const newProduct: ProductDraft = { name: '', category: '', description: '', image: '', price: '', wholesale_price: '', weight: '', pieces: '', ingredients: '', allergens: '', is_visible: true, is_available: true };
+type ProductDraft = { name: string; category: string; description: string; image: string; price: string; wholesale_price: string; wholesale_min_qty: string; weight: string; pieces: string; ingredients: string; allergens: string; is_visible: boolean; is_available: boolean };
+const newProduct: ProductDraft = { name: '', category: '', description: '', image: '', price: '', wholesale_price: '', wholesale_min_qty: '', weight: '', pieces: '', ingredients: '', allergens: '', is_visible: true, is_available: true };
 function ProductsPanel() {
   const remote = useRemote<Product[]>('/admin/products/');
   const categories = useRemote<Category[]>('/admin/categories/');
@@ -557,7 +557,7 @@ function ProductsPanel() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [confirming, setConfirming] = useState<number | null>(null);
-  const start = (product: Product | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(product); setError(''); setNotice(''); setDraft(product === 'new' ? { ...newProduct, category: String(categories.data?.[0]?.id || '') } : { ...product, category: String(product.category), price: String(product.price), wholesale_price: product.wholesale_price == null ? '' : String(product.wholesale_price), pieces: product.pieces == null ? '' : String(product.pieces) }); };
+  const start = (product: Product | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(product); setError(''); setNotice(''); setDraft(product === 'new' ? { ...newProduct, category: String(categories.data?.[0]?.id || '') } : { ...product, category: String(product.category), price: String(product.price), wholesale_price: product.wholesale_price == null ? '' : String(product.wholesale_price), pieces: product.pieces == null ? '' : String(product.pieces), wholesale_min_qty: product.wholesale_min_qty == null ? '' : String(product.wholesale_min_qty) }); };
   const field = (key: keyof ProductDraft, value: string | boolean) => setDraft(current => ({ ...current, [key]: value }));
   const choosePhoto = (file?: File) => {
     if (!file) return;
@@ -574,7 +574,7 @@ function ProductsPanel() {
   };
   const save = async (event: FormEvent) => {
     event.preventDefault(); setError(''); setBusy(true);
-    try { await api(`/admin/products/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), category: Number(draft.category), wholesale_price: draft.wholesale_price.trim() ? draft.wholesale_price.trim() : null, pieces: draft.pieces.trim() ? Number(draft.pieces) : null }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Товар сохранён.'); remote.retry(); }
+    try { await api(`/admin/products/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), category: Number(draft.category), wholesale_price: draft.wholesale_price.trim() ? draft.wholesale_price.trim() : null, pieces: draft.pieces.trim() ? Number(draft.pieces) : null, wholesale_min_qty: draft.wholesale_min_qty.trim() ? Number(draft.wholesale_min_qty) : null }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Товар сохранён.'); remote.retry(); }
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
@@ -598,10 +598,15 @@ function ProductsPanel() {
           <section className="product-card"><h4><Package size={20} aria-hidden="true" />Основная информация</h4><div className="product-fields">
             <label><span>Название <i>*</i></span><input value={draft.name} onChange={e => field('name', e.target.value)} required maxLength={160} /></label>
             <label><span>Категория <i>*</i></span><select value={draft.category} onChange={e => field('category', e.target.value)} required><option value="">Выберите категорию</option>{categories.data?.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
-            <label><span>Цена, ₸ <i>*</i></span><input type="number" min="0" step="0.01" value={draft.price} onChange={e => field('price', e.target.value)} required /></label>
-            <label><span>Оптовая цена для заведений, ₸ <small>(необязательно)</small></span><input type="number" min="0.01" step="0.01" value={draft.wholesale_price} onChange={e => field('wholesale_price', e.target.value)} /></label>
             <label>Вес или объём<input value={draft.weight} onChange={e => field('weight', e.target.value)} placeholder="120 г" maxLength={80} /></label>
             <label><span>Количество, шт. <small>(необязательно)</small></span><input type="number" min="1" max="1000" step="1" inputMode="numeric" value={draft.pieces} onChange={e => field('pieces', e.target.value)} placeholder="6" /></label>
+            <div className="product-wholesale">
+              <p className="product-wholesale-title"><Banknote size={16} aria-hidden="true" /><span>Цены</span> <small>— оптовая цена и количество необязательны</small></p>
+              <label><span>Цена, ₸ <i>*</i></span><input type="number" min="0" step="0.01" value={draft.price} onChange={e => field('price', e.target.value)} required /></label>
+              <label><span>Оптовая цена для заведений, ₸</span><input type="number" min="0.01" step="0.01" value={draft.wholesale_price} onChange={e => field('wholesale_price', e.target.value)} placeholder="Не задана" /></label>
+              <label><span>Оптовая цена от, шт.</span><input type="number" min="1" max="10000" step="1" inputMode="numeric" value={draft.wholesale_min_qty} onChange={e => field('wholesale_min_qty', e.target.value)} placeholder="10" /></label>
+              <small className="product-wholesale-hint">{draft.wholesale_price.trim() ? `Одобренное заведение платит ${draft.wholesale_price} ₸ за штуку, когда берёт от ${draft.wholesale_min_qty.trim() || 10} шт. этого товара в одном заказе.` : 'Укажите оптовую цену, чтобы одобренные заведения видели её в каталоге.'}{!draft.wholesale_min_qty.trim() && ' Если количество не указано — от 10 шт.'}</small>
+            </div>
           </div></section>
           <section className="product-card"><h4><FileText size={20} aria-hidden="true" />Описание</h4><label className="product-full"><span className="sr-only">Описание</span><textarea value={draft.description} onChange={e => field('description', e.target.value)} placeholder="Описание товара" maxLength={5000} /></label></section>
           <section className="product-card"><h4><FlaskConical size={20} aria-hidden="true" />Состав и аллергены</h4><div className="product-fields">

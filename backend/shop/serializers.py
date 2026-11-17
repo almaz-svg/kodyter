@@ -136,10 +136,11 @@ class ProductSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSe
     price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
     wholesale_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'), required=False, allow_null=True)
     pieces = serializers.IntegerField(min_value=1, max_value=1000, required=False, allow_null=True)
+    wholesale_min_qty = serializers.IntegerField(min_value=1, max_value=10000, required=False, allow_null=True)
 
     class Meta:
         model = Product
-        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'pieces', 'ingredients', 'allergens', 'is_available', 'is_visible']
+        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'wholesale_min_qty', 'weight', 'pieces', 'ingredients', 'allergens', 'is_available', 'is_visible']
         extra_kwargs = {'image': {'validators': [validate_image_reference]}}
 
     def validate(self, attrs):
@@ -171,7 +172,7 @@ class PublicProductSerializer(serializers.ModelSerializer):
         approved = getattr(user, 'account_type', None) == User.AccountType.BUSINESS and getattr(user, 'business_approved', False)
         if approved and product.wholesale_price is not None:
             data['wholesale_price'] = format(product.wholesale_price, '.2f')
-            data['wholesale_min_qty'] = settings.WHOLESALE_MIN_QTY
+            data['wholesale_min_qty'] = product.wholesale_threshold
         return data
 
 class CourierUpdateSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):

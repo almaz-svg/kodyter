@@ -120,7 +120,7 @@ class Orders(APIView):
             if product.price <= 0:
                 raise Conflict(f'У товара «{product.name}» ещё не указана цена, поэтому его пока нельзя заказать. Уберите его из корзины.')
             # Server prices are authoritative. The unit price depends on the buyer's account and on this line's quantity:
-            # wholesale only for an approved business and only from WHOLESALE_MIN_QTY units of this product.
+            # wholesale only for an approved business and only from this product's wholesale threshold.
             # A zero or negative price is never orderable.
             unit = product.price_for(actor, item['quantity'])
             if unit <= 0 or unit != item['expected_price']:
