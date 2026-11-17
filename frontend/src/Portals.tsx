@@ -596,18 +596,16 @@ function ProductsPanel() {
       <div className="product-editor-grid">
         <div className="product-editor-main">
           <section className="product-card"><h4><Package size={20} aria-hidden="true" />Основная информация</h4><div className="product-fields">
-            <label><span>Название <i>*</i></span><input value={draft.name} onChange={e => field('name', e.target.value)} required maxLength={160} /></label>
+            <label className="product-span"><span>Название <i>*</i></span><input value={draft.name} onChange={e => field('name', e.target.value)} required maxLength={160} /></label>
             <label><span>Категория <i>*</i></span><select value={draft.category} onChange={e => field('category', e.target.value)} required><option value="">Выберите категорию</option>{categories.data?.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
+            <label><span>Цена, ₸ <i>*</i></span><input type="number" min="0" step="0.01" value={draft.price} onChange={e => field('price', e.target.value)} required /></label>
             <label>Вес или объём<input value={draft.weight} onChange={e => field('weight', e.target.value)} placeholder="120 г" maxLength={80} /></label>
             <label><span>Количество, шт. <small>(необязательно)</small></span><input type="number" min="1" max="1000" step="1" inputMode="numeric" value={draft.pieces} onChange={e => field('pieces', e.target.value)} placeholder="6" /></label>
-            <div className="product-wholesale">
-              <p className="product-wholesale-title"><Banknote size={16} aria-hidden="true" /><span>Цены</span> <small>— оптовая цена и количество необязательны</small></p>
-              <label><span>Цена, ₸ <i>*</i></span><input type="number" min="0" step="0.01" value={draft.price} onChange={e => field('price', e.target.value)} required /></label>
-              <label><span>Оптовая цена для заведений, ₸</span><input type="number" min="0.01" step="0.01" value={draft.wholesale_price} onChange={e => field('wholesale_price', e.target.value)} placeholder="Не задана" /></label>
-              <label><span>Оптовая цена от, шт.</span><input type="number" min="1" max="10000" step="1" inputMode="numeric" value={draft.wholesale_min_qty} onChange={e => field('wholesale_min_qty', e.target.value)} placeholder="10" /></label>
-              <small className="product-wholesale-hint">{draft.wholesale_price.trim() ? `Одобренное заведение платит ${draft.wholesale_price} ₸ за штуку, когда берёт от ${draft.wholesale_min_qty.trim() || 10} шт. этого товара в одном заказе.` : 'Укажите оптовую цену, чтобы одобренные заведения видели её в каталоге.'}{!draft.wholesale_min_qty.trim() && ' Если количество не указано — от 10 шт.'}</small>
-            </div>
           </div></section>
+          <section className="product-card product-wholesale-card"><h4><Store size={20} aria-hidden="true" />Оптовая цена для заведений <small>(необязательно)</small></h4><div className="product-fields">
+            <label><span>Оптовая цена, ₸</span><input type="number" min="0.01" step="0.01" value={draft.wholesale_price} onChange={e => field('wholesale_price', e.target.value)} placeholder="Не задана" /></label>
+            <label><span>Действует от, шт.</span><input type="number" min="1" max="10000" step="1" inputMode="numeric" value={draft.wholesale_min_qty} onChange={e => field('wholesale_min_qty', e.target.value)} placeholder="10" /></label>
+          </div><small className="product-wholesale-hint">{draft.wholesale_price.trim() ? `Одобренное заведение платит ${draft.wholesale_price} ₸ за штуку, когда берёт от ${draft.wholesale_min_qty.trim() || 10} шт. этого товара в одном заказе.` : 'Укажите оптовую цену, чтобы одобренные заведения видели её в каталоге.'}{!draft.wholesale_min_qty.trim() && ' Если количество не указано — от 10 шт.'}</small></section>
           <section className="product-card"><h4><FileText size={20} aria-hidden="true" />Описание</h4><label className="product-full"><span className="sr-only">Описание</span><textarea value={draft.description} onChange={e => field('description', e.target.value)} placeholder="Описание товара" maxLength={5000} /></label></section>
           <section className="product-card"><h4><FlaskConical size={20} aria-hidden="true" />Состав и аллергены</h4><div className="product-fields">
             <label>Состав<textarea value={draft.ingredients} onChange={e => field('ingredients', e.target.value)} maxLength={3000} /></label>
