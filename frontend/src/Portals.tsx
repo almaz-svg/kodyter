@@ -1,10 +1,10 @@
-import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+﻿import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, Download, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Copy, Eye, EyeOff, KeyRound, Mail, Sparkles, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
-import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview, type Debts, type DebtOrder, type MyDebt, type Shift } from './lib';
+import { MessageCircle, PackageX, ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, Download, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Copy, Eye, EyeOff, KeyRound, Mail, Sparkles, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
+import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview, type Debts, type DebtOrder, type MyDebt } from './lib';
 import { LazyImage, PhoneInput, phoneDigits, formatPhone } from './ui';
 import { uploadProductPhoto } from './imageUpload';
-import { PhotoCropper } from './photoCropper';
+import { CATEGORY_PHOTO_ASPECT, PhotoCropper } from './photoCropper';
 import './portals.css';
 
 type Props = { user: User; onUserChange: (user: User) => void };
@@ -143,7 +143,7 @@ export default function Portals({ user, onUserChange }: Props) {
     <nav className={`portal-tabs ${isAdmin ? 'portal-admin-tabs' : ''}`} aria-label="Разделы личного кабинета">{tabs.map(item => <button type="button" key={item.value} className={tab === item.value ? 'active' : ''} aria-current={tab === item.value ? 'page' : undefined} onClick={() => setTab(item.value)}>{item.icon}{item.name}</button>)}</nav>
     {tab === 'orders' && <OrdersPanel user={user} />}
     {tab === 'kitchen' && (isAdmin || isPastry) && <KitchenPanel user={user} />}
-    {tab === 'profile' && <>{(isCashier || isCourier) && <ShiftBlock />}<Profile user={user} onUserChange={onUserChange} /></>}
+    {tab === 'profile' && <Profile user={user} onUserChange={onUserChange} />}
     {isAdmin && tab === 'products' && <ProductsPanel />}
     {isAdmin && tab === 'categories' && <CategoriesPanel />}
     {isAdmin && tab === 'couriers' && <StaffPanel key="couriers" kind="couriers" />}
@@ -154,58 +154,6 @@ export default function Portals({ user, onUserChange }: Props) {
     {(isAdmin || isCourier) && tab === 'debts' && <DebtsPanel user={user} />}
   </main>;
 }
-function formatDuration(seconds: number) {
-  const h = Math.floor(seconds / 3600);
-  const m = Math.floor((seconds % 3600) / 60);
-  return h > 0 ? `${h} ч ${m} мин` : `${m} мин`;
-}
-
-function formatShiftTime(iso: string) {
-  const d = new Date(iso);
-  return d.toLocaleString('ru-RU', { timeZone: 'Asia/Qyzylorda', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
-}
-
-function ShiftBlock() {
-  const [shifts, setShifts] = useState<Shift[]>([]);
-  const [busy, setBusy] = useState(false);
-  const [error, setError] = useState('');
-  const [confirm, setConfirm] = useState(false);
-  const load = useCallback(async () => { try { setShifts(await api<Shift[]>('/shifts/')); } catch {} }, []);
-  useEffect(() => { load(); }, [load]);
-  const open = shifts.find(s => !s.ended_at);
-  const start = async () => {
-    setBusy(true); setError('');
-    try { await api<Shift>('/shifts/start/', json({}, 'POST')); await load(); }
-    catch (e) { setError(failure(e)); }
-    finally { setBusy(false); }
-  };
-  const end = async () => {
-    setBusy(true); setError(''); setConfirm(false);
-    try { await api<Shift>('/shifts/end/', json({}, 'POST')); await load(); }
-    catch (e) { setError(failure(e)); }
-    finally { setBusy(false); }
-  };
-  return <section className="portal-card portal-shift">
-    <div className="portal-section-title"><div><p className="portal-eyebrow">МОЯ СМЕНА</p><h2>{open ? 'На смене' : 'Вне смены'}</h2></div><Clock3 size={27} aria-hidden="true" /></div>
-    {open && <p className="portal-shift-since">С {formatShiftTime(open.started_at)}</p>}
-    <ErrorNotice message={error} />
-    {confirm
-      ? <div className="portal-shift-confirm"><p>Завершить смену?</p><div className="portal-shift-confirm-buttons"><button type="button" className="portal-button" disabled={busy} onClick={end}>{busy ? 'Завершаем…' : 'Да, завершить'}</button><button type="button" className="portal-button portal-button-outline" onClick={() => setConfirm(false)}>Отмена</button></div></div>
-      : open
-        ? <button type="button" className="portal-button portal-button-outline" disabled={busy} onClick={() => setConfirm(true)}><Clock3 size={16} aria-hidden="true" />Завершить смену</button>
-        : <button type="button" className="portal-button" disabled={busy} onClick={start}>{busy ? 'Начинаем…' : 'Начать смену'}<ArrowRight size={16} aria-hidden="true" /></button>}
-    {shifts.length > 0 && <>
-      <h3 className="portal-shift-history-title">История смен</h3>
-      <div className="portal-shift-list">{shifts.map(s => <div key={s.id} className="portal-shift-row">
-        <span className="portal-shift-date">{formatShiftTime(s.started_at)}</span>
-        <span className="portal-shift-arrow">→</span>
-        <span className="portal-shift-date">{s.ended_at ? formatShiftTime(s.ended_at) : 'В процессе'}</span>
-        <span className="portal-shift-dur">{s.duration != null ? formatDuration(s.duration) : '—'}</span>
-      </div>)}</div>
-    </>}
-  </section>;
-}
-
 function Profile({ user, onUserChange }: Props) {
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(phoneDigits(user.phone));
@@ -218,7 +166,51 @@ function Profile({ user, onUserChange }: Props) {
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
-  return <section className="portal-profile portal-card"><div className="portal-section-title"><div><p className="portal-eyebrow">ВАШ ПРОФИЛЬ</p><h2>Давайте познакомимся</h2></div><UserRound size={27} aria-hidden="true" /></div><form onSubmit={save} className="portal-form"><fieldset className="portal-form-fields" disabled={busy}>{user.account_type === 'BUSINESS' && <div className="portal-business-profile"><span className="portal-business-icon" aria-hidden="true"><Store size={24} /></span><div><small>Тип аккаунта: заведение</small><strong>«{user.company_name || 'Без названия'}»</strong>{user.business_approved && <div className="portal-wholesale-info"><p>Для вашего заведения открыты <b>оптовые цены</b> — цены в каталоге уже обновлены.</p><p className="portal-wholesale-rule"><Package size={16} aria-hidden="true" /><span>Оптовая цена действует <b>от {user.wholesale_min_qty ?? 10} шт. одного товара</b> в заказе. В корзине она применится сама — обычная цена будет зачёркнута.</span></p></div>}</div>{user.business_approved && <span className="portal-status status-delivered">Оптовые цены</span>}</div>}<label>{user.account_type === 'BUSINESS' ? 'Имя контактного лица' : 'Имя'}<input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} required maxLength={120} autoComplete="name" /></label><label>Телефон<PhoneInput digits={phone} onChange={value => { setPhone(value); setSaved(false); }} required={user.role === 'CUSTOMER'} /></label><label>Электронная почта<input type="email" value={user.email} readOnly /><small>Почта используется для входа в аккаунт.</small></label><ErrorNotice message={error} />{saved && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" /> Личные данные сохранены.</p>}<button className="portal-button" disabled={busy || !name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить изменения'}<ArrowRight size={17} aria-hidden="true" /></button></fieldset></form></section>;
+  const isBusiness = user.account_type === 'BUSINESS';
+  const roleLabel = isBusiness ? 'Заведение' : ({ CUSTOMER: 'Покупатель', COURIER: 'Курьер', ADMIN: 'Администратор', CASHIER: 'Кассир', PASTRY: 'Кондитер' } as Record<string, string>)[user.role] ?? user.role;
+  const initials = (user.name || user.email).trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() ?? '').join('');
+  const dirty = name.trim() !== user.name.trim() || phone !== phoneDigits(user.phone);
+  const company = (user.company_name || '').trim() || 'Без названия';
+  const companyInitials = company.replace(/[«»"']/g, '').trim().split(/\s+/).slice(0, 2).map(part => part[0]?.toUpperCase() ?? '').join('');
+  const phoneShown = user.phone ? formatPhone(phoneDigits(user.phone)) : '';
+  return <section className={`portal-profile portal-card${isBusiness ? ' is-business' : ''}`}>
+    {isBusiness ? <header className="profile-hero profile-hero-business">
+      <span className="profile-avatar" aria-hidden="true">{companyInitials || <Store size={28} />}</span>
+      <div className="profile-hero-text">
+        <p className="portal-eyebrow">ПРОФИЛЬ ЗАВЕДЕНИЯ</p>
+        <h2>{company}</h2>
+        <div className="profile-hero-meta"><span className="profile-role"><Store size={14} aria-hidden="true" />Заведение</span>{user.business_approved && <span className="profile-role profile-role-gold"><Sparkles size={14} aria-hidden="true" />Оптовые цены</span>}</div>
+        <div className="profile-hero-contacts"><span><UserRound size={14} aria-hidden="true" />{user.name || 'Контактное лицо не указано'}</span>{phoneShown && <span><Phone size={14} aria-hidden="true" />{phoneShown}</span>}</div>
+      </div>
+    </header> : <header className="profile-hero">
+      <span className="profile-avatar" aria-hidden="true">{initials || <UserRound size={26} />}</span>
+      <div className="profile-hero-text">
+        <p className="portal-eyebrow">ВАШ ПРОФИЛЬ</p>
+        <h2>{user.name || 'Без имени'}</h2>
+        <div className="profile-hero-meta"><span className="profile-role">{user.role === 'COURIER' ? <Truck size={14} aria-hidden="true" /> : <UserRound size={14} aria-hidden="true" />}{roleLabel}</span>{phoneShown && <span className="profile-hero-contact"><Phone size={14} aria-hidden="true" />{phoneShown}</span>}</div>
+      </div>
+    </header>}
+    {isBusiness && user.business_approved && <div className="profile-wholesale">
+      <span className="profile-wholesale-icon" aria-hidden="true"><Sparkles size={20} /></span>
+      <div><strong>Для вашего заведения открыты оптовые цены</strong><p>Оптовая цена применяется, когда в заказе достаточно штук одного товара — с какого количества, написано у каждого товара в каталоге. В корзине она подставится сама, а обычная цена будет зачёркнута.</p></div>
+    </div>}
+    <form onSubmit={save} className="portal-form profile-form"><fieldset className="portal-form-fields" disabled={busy}>
+      <div className="profile-section-head"><h3>{isBusiness ? 'Контакты заведения' : 'Личные данные'}</h3><p>{isBusiness ? 'По этим данным курьер и пекарня свяжутся с вами по заказам.' : user.role === 'CUSTOMER' ? 'По этим данным курьер свяжется с вами при доставке.' : 'По этим данным с вами свяжется администратор.'}</p></div>
+      <div className="profile-fields">
+        <label><span className="profile-label"><UserRound size={15} aria-hidden="true" />{isBusiness ? 'Имя контактного лица' : 'Имя'}</span><input value={name} onChange={e => { setName(e.target.value); setSaved(false); }} required maxLength={120} autoComplete="name" placeholder="Как к вам обращаться" /></label>
+        <label><span className="profile-label"><Phone size={15} aria-hidden="true" />Телефон</span><PhoneInput digits={phone} onChange={value => { setPhone(value); setSaved(false); }} required={user.role === 'CUSTOMER'} /></label>
+      </div>
+      <div className={isBusiness ? 'profile-locked-grid' : undefined}>
+        {isBusiness && <div className="profile-email"><span className="profile-email-icon" aria-hidden="true"><Store size={18} /></span><div><small>Название заведения</small><strong>{company}</strong></div><span className="profile-email-lock"><LockKeyhole size={13} aria-hidden="true" />Не меняется</span></div>}
+        <div className="profile-email"><span className="profile-email-icon" aria-hidden="true"><Mail size={18} /></span><div><small>Электронная почта для входа</small><strong>{user.email}</strong></div><span className="profile-email-lock"><LockKeyhole size={13} aria-hidden="true" />Не меняется</span></div>
+      </div>
+      <ErrorNotice message={error} />
+      <div className="profile-actions">
+        <button className="portal-button" disabled={busy || !name.trim() || !dirty}>{busy ? 'Сохраняем…' : 'Сохранить изменения'}<ArrowRight size={17} aria-hidden="true" /></button>
+        {saved && !dirty ? <p className="profile-saved" role="status"><Check size={16} aria-hidden="true" /> Сохранено</p> : dirty ? <p className="profile-dirty">Есть несохранённые изменения</p> : null}
+      </div>
+    </fieldset></form>
+  </section>;
 }
 
 const positions = (count: number) => `${count} ${count % 10 === 1 && count % 100 !== 11 ? 'позиция' : [2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100) ? 'позиции' : 'позиций'}`;
@@ -272,6 +264,7 @@ function KitchenBoard({ orders, onOpen, onChanged }: { orders: Order[]; onOpen: 
   const ready = orders.filter(order => order.status === 'READY');
   const groups = new Map<string, { key: string; name: string; image: string; total: number; left: number; lines: { orderId: number; number: string; itemId: number; quantity: number; prepared: boolean; started: boolean }[] }>();
   for (const order of kitchen) for (const item of order.items) {
+    if (item.is_missing) continue;
     const key = String(item.product_id || item.name);
     const group = groups.get(key) || { key, name: item.name, image: item.image, total: 0, left: 0, lines: [] };
     group.total += item.quantity;
@@ -469,12 +462,12 @@ function OrdersPanel({ user }: { user: User }) {
       <ErrorNotice message={remote.error} retry={remote.retry} />{isAdmin && <ErrorNotice message={couriers.error} retry={couriers.retry} />}
       {remote.loading ? <div className="portal-loading" role="status"><RefreshCw size={22} aria-hidden="true" /> Загружаем заказы…</div> : remote.data && <div className={`portal-orders-layout ${selected ? 'has-selection' : ''} ${!orders.length && !selected ? 'portal-empty-layout' : ''}`}>
         <div className="portal-order-list portal-order-list-fancy">{orders.length ? orders.map(order => <button type="button" key={order.id} className={`portal-order-card ${selected === order.id ? 'selected' : ''}`} aria-pressed={selected === order.id} onClick={() => setSelected(order.id)}>
-          <div className="portal-order-card-top"><span className="portal-order-icon" aria-hidden="true"><Package size={20} strokeWidth={1.6} /></span><strong>Заказ №{order.number}</strong><ChevronRight size={19} aria-hidden="true" /></div><div className="portal-order-date">{dateTime(order.created_at)}{order.scheduled_at && <span className="portal-scheduled-badge"> · 📅 {dateTime(order.scheduled_at)}</span>}</div>
+          <div className="portal-order-card-top"><span className="portal-order-icon" aria-hidden="true"><Package size={20} strokeWidth={1.6} /></span><strong>Заказ №{order.number}</strong><ChevronRight size={19} aria-hidden="true" /></div><div className="portal-order-date">{dateTime(order.created_at)}</div>
           <div className="portal-order-badges"><Status status={order.status} customer={!isStaff} /><PaymentStatusLabel order={order} /></div>
           {isStaff && <BusinessBadge name={order.customer_company} />}
           {isStaff && <p className="portal-order-recipient">{order.recipient_name}<span>{order.address}</span></p>}
           {!isCourier && isStaff && (order.courier_name ? <p className="portal-order-courier"><Truck size={14} aria-hidden="true" /><span>Курьер:</span> <strong>{order.courier_name}</strong></p> : !terminal(order) && <p className="portal-order-courier is-waiting"><Clock3 size={14} aria-hidden="true" /><span>Ищем свободного курьера</span></p>)}
-          <div className="portal-order-card-bottom"><span>{order.items.reduce((sum, item) => sum + item.quantity, 0)} шт.</span><strong>{money(order.total)}</strong></div>
+          <div className="portal-order-card-bottom"><span>{order.items.reduce((sum, item) => sum + (item.is_missing ? 0 : item.quantity), 0)} шт.</span><strong>{money(order.total)}</strong></div>
         </button>) : <EmptyState icon={isCourier ? <Truck size={32} aria-hidden="true" /> : <ShoppingBag size={32} aria-hidden="true" />} title={isPastry ? 'Заказов пока нет' : isCourier ? view === 'history' ? 'Доставки ещё впереди' : 'Пока нет активных доставок' : isAdmin || isCashier ? 'Заказы не найдены' : 'Здесь будет ваша история'}>{isPastry ? 'Новые заказы появятся здесь автоматически.' : isCourier ? view === 'history' ? 'Завершённые доставки появятся здесь.' : 'Откройте доступные заказы и примите подходящую доставку.' : isAdmin || isCashier ? 'Измените фильтры или дождитесь нового заказа.' : <>Выберите что-нибудь к чаю — и первый заказ появится здесь. <a href="/catalog">Перейти в каталог <ArrowRight size={15} aria-hidden="true" /></a></>}</EmptyState>}{allOrders.length >= orderLimit && orderLimit < MAX_ORDER_LIMIT && <button type="button" className="portal-text-button" onClick={() => setOrderLimit(limit => Math.min(limit + ORDER_PAGE_SIZE, MAX_ORDER_LIMIT))}>Показать ещё</button>}{allOrders.length >= MAX_ORDER_LIMIT && <p className="portal-help">Показаны последние {MAX_ORDER_LIMIT} заказов. Более ранние можно найти через фильтры.</p>}</div>
         {selected ? <OrderDetail key={selected} id={selected} user={user} couriers={couriers.data || []} onChange={refresh} onClose={() => setSelected(null)} /> : orders.length > 0 && <div className="portal-detail-placeholder"><ShoppingBag size={34} strokeWidth={1.3} aria-hidden="true" /><h3>Всё о вашем заказе</h3><p>Выберите заказ, чтобы увидеть состав, адрес и историю статусов.</p></div>}
       </div>}
@@ -497,7 +490,10 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   const [creditAgreed, setCreditAgreed] = useState(false);
   const [agreed, setAgreed] = useState(false);
   const [nakladnaya, setNakladnaya] = useState<NakladnayaData | null>(null);
-  useEffect(() => { setAgreed(false); setCreditConfirm(false); setCreditAgreed(false); }, [remote.data?.status]);
+  // The kitchen picks out-of-stock lines here before removing them from the order.
+  const [missingMode, setMissingMode] = useState(false);
+  const [missingIds, setMissingIds] = useState<number[]>([]);
+  useEffect(() => { setAgreed(false); setCreditConfirm(false); setCreditAgreed(false); setMissingMode(false); setMissingIds([]); }, [remote.data?.status]);
   const paymentKey = useRef<string | null>(null);
   const mutationLock = useRef(false);
   const assignmentChanged = useRef(false);
@@ -522,6 +518,7 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
       if (suffix === 'assign') assignmentChanged.current = false;
       if (suffix === 'problem') setProblem('');
       if (suffix === 'payment') setPaymentConfirm(false);
+      if (suffix === 'missing') { setMissingMode(false); setMissingIds([]); }
       if (updated.status === 'CANCELLED') { setCancel(false); setReason(''); }
       onChange();
     }
@@ -536,10 +533,12 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   const isPastry = user.role === 'PASTRY';
   const nextStatuses: Record<string, string> = isAdmin ? { NEW: 'CONFIRMED', CONFIRMED: 'PREPARING', PREPARING: 'READY' } : isPastry ? { NEW: 'CONFIRMED', CONFIRMED: 'PREPARING', PREPARING: 'READY' } : isCourier ? { READY: 'HANDED_OVER', HANDED_OVER: 'IN_TRANSIT', IN_TRANSIT: 'DELIVERED' } : {};
   const next = nextStatuses[order.status];
+  // Before the order is ready and paid, the kitchen (or an admin) can still drop out-of-stock lines or cancel it.
+  const kitchenEditable = ['NEW', 'CONFIRMED', 'PREPARING'].includes(order.status) && order.payment_status !== 'PAID';
   const nextLabels: Record<string, string> = { CONFIRMED: 'Подтвердить заказ', PREPARING: 'Начать приготовление', READY: 'Заказ готов', HANDED_OVER: 'Забрать заказ из пекарни', IN_TRANSIT: 'Начать доставку', DELIVERED: 'Подтвердить доставку' };
   const openNakladnaya = () => setNakladnaya({ recipient: order.recipient_name + (order.customer_company ? ` (${order.customer_company})` : ''), date_from: order.created_at.slice(0, 10), date_to: null, rows: order.items.map(item => ({ date: dateTime(order.created_at), number: order.number, name: item.name, quantity: item.quantity, price: String(item.price), total: String(order.total), status: statusLabel[order.status] || order.status, paid: order.payment_status === 'PAID' })) });
-  return <article ref={detailRef} className="portal-card portal-order-detail portal-detail-fancy"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}{order.scheduled_at && <strong className="portal-scheduled-badge"> · Доставка: {dateTime(order.scheduled_at)}</strong>}</p><h2>Заказ №{order.number}</h2>{user.role !== 'CUSTOMER' && <BusinessBadge name={order.customer_company} />}</div><div style={{display:'flex',gap:'4px'}}><button type="button" className="portal-icon-button" aria-label="Накладная по заказу" title="Накладная" onClick={openNakladnaya}><FileText size={20} aria-hidden="true" /></button><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div></div>{nakladnaya && <NakladnayaPrint data={nakladnaya} onClose={() => setNakladnaya(null)} />}{order.status !== 'CANCELLED' ? <OrderProgress order={order} role={user.role} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
-    <section className="portal-detail-section"><h3><ShoppingBag size={17} aria-hidden="true" /> Состав заказа<span className="portal-items-count">{positions(order.items.length)}</span></h3><ul className="portal-order-items">{order.items.map(item => <li key={item.id}><div className="portal-item-thumb">{item.image && <LazyImage src={item.image} alt="" />}<em aria-hidden="true">×{item.quantity}</em></div><div><strong>{item.name}</strong><span><mark>{item.quantity} шт.</mark> по {money(item.price)}</span></div><b>{money(Number(item.price) * item.quantity)}</b></li>)}</ul><dl className="portal-totals"><div><dt>Выпечка</dt><dd>{money(order.subtotal)}</dd></div><div><dt>Доставка</dt><dd>{Number(order.delivery_fee) ? money(order.delivery_fee) : 'Бесплатно'}</dd></div><div className="portal-total"><dt>Итого</dt><dd>{money(order.total)}</dd></div></dl></section>
+  return <article ref={detailRef} className="portal-card portal-order-detail portal-detail-fancy"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2>{user.role !== 'CUSTOMER' && <BusinessBadge name={order.customer_company} />}</div><div style={{display:'flex',gap:'4px'}}><button type="button" className="portal-icon-button" aria-label="Накладная по заказу" title="Накладная" onClick={openNakladnaya}><FileText size={20} aria-hidden="true" /></button><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div></div>{nakladnaya && <NakladnayaPrint data={nakladnaya} onClose={() => setNakladnaya(null)} />}{order.status !== 'CANCELLED' ? <OrderProgress order={order} role={user.role} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
+    <section className="portal-detail-section"><h3><ShoppingBag size={17} aria-hidden="true" /> Состав заказа<span className="portal-items-count">{positions(order.items.length)}</span></h3><ul className="portal-order-items">{order.items.map(item => <li key={item.id} className={item.is_missing ? 'is-missing' : undefined}><div className="portal-item-thumb">{item.image && <LazyImage src={item.image} alt="" />}<em aria-hidden="true">×{item.quantity}</em></div><div><strong>{item.name}</strong><span><mark>{item.quantity} шт.</mark> по {item.is_wholesale && <s className="portal-item-retail">{money(item.retail_price ?? 0)}</s>}{money(item.price)}</span>{item.is_wholesale && <span className="portal-item-wholesale"><Sparkles size={12} aria-hidden="true" />Оптовая цена</span>}{item.is_missing && <span className="portal-item-missing"><PackageX size={12} aria-hidden="true" />Нет в наличии — не входит в сумму</span>}</div><b className={item.is_wholesale ? 'is-wholesale' : undefined}>{item.is_wholesale && <s>{money(Number(item.retail_price) * item.quantity)}</s>}{money(Number(item.price) * item.quantity)}</b></li>)}</ul><dl className="portal-totals"><div><dt>Выпечка</dt><dd>{money(order.subtotal)}</dd></div>{(() => { const saved = order.items.reduce((sum, item) => sum + (item.is_wholesale ? (Number(item.retail_price) - Number(item.price)) * item.quantity : 0), 0); return saved > 0 ? <div className="portal-totals-saving"><dt><Sparkles size={13} aria-hidden="true" />Сэкономлено на опте</dt><dd>{money(saved)}</dd></div> : null; })()}<div><dt>Доставка</dt><dd>{Number(order.delivery_fee) ? money(order.delivery_fee) : 'Бесплатно'}</dd></div><div className="portal-total"><dt>Итого</dt><dd>{money(order.total)}</dd></div></dl></section>
     {order.cancellation_reason && <div className="portal-notice portal-error"><div><strong>Причина отмены</strong><p>{order.cancellation_reason}</p></div></div>}
     <div className="portal-detail-grid">
     <section className="portal-detail-section portal-detail-delivery"><h3><MapPin size={17} aria-hidden="true" /> Куда доставить</h3><dl className="portal-delivery">{user.role !== 'CUSTOMER' && order.customer_company && <div className="portal-delivery-business"><dt>Заказчик</dt><dd><Store size={15} aria-hidden="true" />Заведение «{order.customer_company}»{order.customer_name ? <small>аккаунт: {order.customer_name}</small> : null}</dd></div>}<div><dt>Адрес</dt><dd className="portal-delivery-address">{order.address}</dd></div><div><dt>Получатель</dt><dd className="portal-delivery-name">{order.recipient_name}</dd></div><div><dt>Телефон</dt><dd><a className="portal-phone" href={`tel:${order.phone}`}><Phone size={14} aria-hidden="true" />{order.phone}</a></dd></div>{user.role !== 'CUSTOMER' && (order.courier_name || !['DELIVERED', 'CANCELLED'].includes(order.status)) && <div><dt>Курьер</dt><dd className={`portal-delivery-courier${order.courier_name ? '' : ' is-waiting'}`}><Truck size={16} aria-hidden="true" />{order.courier_name || 'Ещё не назначен — заказ уйдёт первому свободному курьеру'}</dd></div>}</dl>{order.comment && <div className="portal-comment"><span>Комментарий к заказу</span><p>{order.comment}</p></div>}</section>
@@ -556,20 +555,27 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
       {isCourier && ['NEW', 'CONFIRMED', 'PREPARING'].includes(order.status) && <p className="portal-waiting"><Clock3 size={19} aria-hidden="true" /><span>Заказ закреплён за вами. Ожидайте, пока пекарня подготовит его к выдаче.</span></p>}
       {isAdmin && courierBlocked && <p className="portal-help">Курьер заблокирован. Назначьте другого курьера, чтобы завершить доставку.</p>}
       {isAdmin && !order.courier && ['NEW', 'CONFIRMED', 'PREPARING', 'READY'].includes(order.status) && <p className="portal-waiting"><Clock3 size={19} aria-hidden="true" /><span>Все курьеры заняты. Заказ автоматически уйдёт первому, кто освободится.</span></p>}{isAdmin && courierBlocked && <form className="portal-assign" onSubmit={event => { event.preventDefault(); void mutate('assign', { courier_id: Number(courier) }, 'Курьер назначен.'); }}><label>Курьер<select disabled={busy} value={courier} onChange={event => { assignmentChanged.current = true; setCourier(event.target.value); }} required><option value="">Выберите курьера</option>{couriers.filter(person => person.is_active || person.id === order.courier).map(person => <option value={person.id} key={person.id} disabled={!person.is_active}>{person.name}{!person.is_active ? ' (заблокирован)' : ''}</option>)}</select></label><button className="portal-button portal-button-small" disabled={busy || !courier || Number(courier) === order.courier}>Назначить</button></form>}
-      {next === 'DELIVERED' && cashConfirm && creditConfirm && <form className="portal-payment-confirm portal-credit-confirm" onSubmit={event => { event.preventDefault(); if (!creditAgreed) return; setCashConfirm(false); setCreditConfirm(false); void mutate('transition', { status: 'DELIVERED', on_credit: true }, `Заказ доставлен и записан в долг клиенту: ${money(order.total)}. Он появится во вкладке «Долг».`); }}><h3><HandCoins size={19} aria-hidden="true" /> Точно записать в долг?</h3><p>Заказ №{order.number} будет завершён, а клиент <strong>{order.recipient_name}</strong> останется должен <strong>{money(order.total)}</strong>. Отменить запись в долг потом нельзя — только отметить оплату.</p><label className="portal-step-agree"><input type="checkbox" checked={creditAgreed} disabled={busy} onChange={event => setCreditAgreed(event.target.checked)} /><span>Я передал(а) заказ клиенту, денег не получил(а). Клиент оплатит позже.</span></label><div className="portal-form-actions"><button className="portal-button portal-debt-confirm-button" disabled={busy || !creditAgreed}>{busy ? 'Сохраняем…' : 'Да, записать в долг'}<HandCoins size={17} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => { setCreditConfirm(false); setCreditAgreed(false); }}>Назад</button></div></form>}
-      {next === 'DELIVERED' && cashConfirm && !creditConfirm && <form className="portal-payment-confirm" onSubmit={event => { event.preventDefault(); setCashConfirm(false); void mutate('transition', { status: 'DELIVERED', cash_received: true }, 'Доставка и оплата подтверждены. Заказ отмечен как оплаченный — сдайте наличные в кассу.'); }}><h3>Клиент оплатил заказ?</h3><p>Заказ №{order.number} оплачивается наличными при получении. Возьмите у клиента <strong>{money(order.total)}</strong> и только потом подтвердите доставку.</p><div className="portal-form-actions"><button className="portal-button" disabled={busy}>{busy ? 'Сохраняем…' : 'Да, деньги получены'}<Banknote size={17} aria-hidden="true" /></button><button type="button" className="portal-button portal-button-outline portal-debt-button" disabled={busy} onClick={() => { setCreditConfirm(true); setCreditAgreed(false); setError(''); }}>Записать в долг<HandCoins size={17} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setCashConfirm(false)}>Назад</button></div><p className="portal-help">Если клиент оплатит позже, нажмите «Записать в долг»: заказ будет завершён, а сумма появится в долге клиента.</p></form>}
+      {next === 'DELIVERED' && cashConfirm && creditConfirm && order.credit_allowed && <form className="portal-payment-confirm portal-credit-confirm" onSubmit={event => { event.preventDefault(); if (!creditAgreed) return; setCashConfirm(false); setCreditConfirm(false); void mutate('transition', { status: 'DELIVERED', on_credit: true }, `Заказ доставлен и записан в долг клиенту: ${money(order.total)}. Он появится во вкладке «Долг».`); }}><h3><HandCoins size={19} aria-hidden="true" /> Точно записать в долг?</h3><p>Заказ №{order.number} будет завершён, а клиент <strong>{order.recipient_name}</strong> останется должен <strong>{money(order.total)}</strong>. Отменить запись в долг потом нельзя — только отметить оплату.</p><label className="portal-step-agree"><input type="checkbox" checked={creditAgreed} disabled={busy} onChange={event => setCreditAgreed(event.target.checked)} /><span>Я передал(а) заказ клиенту, денег не получил(а). Клиент оплатит позже.</span></label><div className="portal-form-actions"><button className="portal-button portal-debt-confirm-button" disabled={busy || !creditAgreed}>{busy ? 'Сохраняем…' : 'Да, записать в долг'}<HandCoins size={17} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => { setCreditConfirm(false); setCreditAgreed(false); }}>Назад</button></div></form>}
+      {next === 'DELIVERED' && cashConfirm && !creditConfirm && <form className="portal-payment-confirm" onSubmit={event => { event.preventDefault(); setCashConfirm(false); void mutate('transition', { status: 'DELIVERED', cash_received: true }, 'Доставка и оплата подтверждены. Заказ отмечен как оплаченный — сдайте наличные в кассу.'); }}><h3>Клиент оплатил заказ?</h3><p>Заказ №{order.number} оплачивается наличными при получении. Возьмите у клиента <strong>{money(order.total)}</strong> и только потом подтвердите доставку.</p><div className="portal-form-actions"><button className="portal-button" disabled={busy}>{busy ? 'Сохраняем…' : 'Да, деньги получены'}<Banknote size={17} aria-hidden="true" /></button>{order.credit_allowed && <button type="button" className="portal-button portal-button-outline portal-debt-button" disabled={busy} onClick={() => { setCreditConfirm(true); setCreditAgreed(false); setError(''); }}>Записать в долг<HandCoins size={17} aria-hidden="true" /></button>}<button type="button" className="portal-text-button" disabled={busy} onClick={() => setCashConfirm(false)}>Назад</button></div>{order.credit_allowed && <p className="portal-help">Этому заведению администратор разрешил заказы в долг. Если оплатят позже, нажмите «Записать в долг»: заказ будет завершён, а сумма появится в долге заведения.</p>}</form>}
       {next && !isAdmin && !(next === 'DELIVERED' && cashConfirm) && <label className="portal-step-agree"><input type="checkbox" checked={agreed} disabled={busy} onChange={event => setAgreed(event.target.checked)} /><span>Я проверил(а) заказ №{order.number} и подтверждаю следующий шаг: <strong>«{nextLabels[next]}»</strong></span></label>}
       {next && !(next === 'DELIVERED' && cashConfirm) && <button className="portal-button portal-next" disabled={busy || (next === 'HANDED_OVER' && !order.courier) || (!isAdmin && !agreed)} onClick={() => { if (next === 'DELIVERED' && order.payment_status !== 'PAID') { setCashConfirm(true); setError(''); setNotice(''); } else void mutate('transition', { status: next }, 'Статус заказа обновлён.'); }}>{busy ? 'Сохраняем…' : nextLabels[next]}<ArrowRight size={17} aria-hidden="true" /></button>}
       {next === 'HANDED_OVER' && !order.courier && <p className="portal-help">Для передачи заказа сначала назначьте курьера.</p>}
-      {isAdmin && !terminal(order) && (cancel ? <form className="portal-form portal-cancel" onSubmit={event => { event.preventDefault(); if (reason.trim()) void mutate('transition', { status: 'CANCELLED', reason: reason.trim() }, 'Заказ отменён.'); }}><label>Причина отмены<textarea disabled={busy} value={reason} onChange={e => setReason(e.target.value)} required maxLength={2000} placeholder="Укажите причину — её увидит покупатель" /></label><div className="portal-form-actions"><button className="portal-button portal-button-danger" disabled={busy || !reason.trim()}>Подтвердить отмену</button><button className="portal-text-button" type="button" disabled={busy} onClick={() => setCancel(false)}>Не отменять</button></div></form> : <button className="portal-text-button portal-danger-text" disabled={busy} onClick={() => setCancel(true)}>Отменить заказ</button>)}
+      {kitchenEditable && (isAdmin || isPastry) && !cancel && (missingMode ? <form className="portal-kitchen-missing" onSubmit={event => { event.preventDefault(); if (missingIds.length) void mutate('missing', { item_ids: missingIds }, `Отмечено: нет в наличии. Новая сумма заказа пересчитана.`); }}>
+        <h3><PackageX size={19} aria-hidden="true" /> Каких товаров нет в наличии?</h3>
+        <p className="portal-help">Отмеченные товары уберутся из суммы заказа. Покупатель, администратор и курьер увидят, чего не будет. Если нет ничего — отмените заказ целиком.</p>
+        <ul>{order.items.filter(item => !item.is_missing).map(item => <li key={item.id}><label className={missingIds.includes(item.id) ? 'is-checked' : undefined}><input type="checkbox" disabled={busy} checked={missingIds.includes(item.id)} onChange={event => setMissingIds(current => event.target.checked ? [...current, item.id] : current.filter(value => value !== item.id))} /><span className="portal-kitchen-missing-thumb">{item.image && <LazyImage src={item.image} alt="" />}</span><span><strong>{item.name}</strong><small>{item.quantity} шт. · {money(Number(item.price) * item.quantity)}</small></span></label></li>)}</ul>
+        {missingIds.length > 0 && (() => { const left = order.items.filter(item => !item.is_missing && !missingIds.includes(item.id)); const subtotal = left.reduce((sum, item) => sum + Number(item.price) * item.quantity, 0); return left.length ? <p className="portal-kitchen-missing-total">Новая сумма заказа: <strong>{money(subtotal + Number(order.delivery_fee))}</strong> <s>{money(order.total)}</s></p> : <p className="portal-notice portal-error">Нельзя убрать все товары. Если нет ничего — отмените заказ.</p>; })()}
+        <div className="portal-form-actions"><button className="portal-button" disabled={busy || !missingIds.length || missingIds.length >= order.items.filter(item => !item.is_missing).length}>{busy ? 'Сохраняем…' : `Убрать из заказа${missingIds.length ? ` (${missingIds.length})` : ''}`}<PackageX size={17} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => { setMissingMode(false); setMissingIds([]); }}>Назад</button></div>
+      </form> : <div className="portal-kitchen-tools"><p><strong>Что-то не так с заказом?</strong><span>Свяжитесь с клиентом, отметьте, чего нет в наличии, или отмените заказ.</span></p>{(() => { const digits = order.phone.replace(/\D/g, '').replace(/^8(?=\d{10}$)/, '7'); const text = encodeURIComponent(`Здравствуйте! Это пекарня Anasym, по вашему заказу №${order.number}. `); return <div className="portal-kitchen-contact"><span className="portal-kitchen-contact-icon" aria-hidden="true"><UserRound size={18} /></span><div><small>{order.customer_company ? `Заведение «${order.customer_company}» · ` : ''}Клиент</small><strong>{order.recipient_name}</strong><a href={`tel:+${digits}`}>{order.phone}</a></div><div className="portal-kitchen-contact-actions"><a className="portal-button portal-kitchen-call" href={`tel:+${digits}`}><Phone size={16} aria-hidden="true" />Позвонить</a><a className="portal-button portal-button-outline portal-kitchen-whatsapp" href={`https://wa.me/${digits}?text=${text}`} target="_blank" rel="noopener noreferrer"><MessageCircle size={16} aria-hidden="true" />WhatsApp</a></div></div>; })()}<div className="portal-kitchen-buttons"><button type="button" className="portal-button portal-button-outline" disabled={busy || order.items.filter(item => !item.is_missing).length < 2} title={order.items.filter(item => !item.is_missing).length < 2 ? 'В заказе один товар — если его нет, отмените заказ' : undefined} onClick={() => { setMissingMode(true); setMissingIds([]); setError(''); setNotice(''); }}><PackageX size={17} aria-hidden="true" />Нет в наличии</button><button type="button" className="portal-button portal-button-outline portal-kitchen-cancel" disabled={busy} onClick={() => { setCancel(true); setError(''); setNotice(''); }}><X size={17} aria-hidden="true" />Отменить заказ</button></div></div>)}
+      {((isAdmin && !terminal(order)) || (isPastry && kitchenEditable)) && (cancel ? <form className="portal-form portal-cancel" onSubmit={event => { event.preventDefault(); if (reason.trim()) void mutate('transition', { status: 'CANCELLED', reason: reason.trim() }, 'Заказ отменён.'); }}><label>Причина отмены<textarea disabled={busy} value={reason} onChange={e => setReason(e.target.value)} required maxLength={2000} placeholder={isPastry ? "Например: закончились ингредиенты — причину увидят покупатель и администратор" : "Укажите причину — её увидит покупатель"} /></label><div className="portal-form-actions"><button className="portal-button portal-button-danger" disabled={busy || !reason.trim()}>Подтвердить отмену</button><button className="portal-text-button" type="button" disabled={busy} onClick={() => setCancel(false)}>Не отменять</button></div></form> : !kitchenEditable && <button className="portal-text-button portal-danger-text" disabled={busy} onClick={() => setCancel(true)}>Отменить заказ</button>)}
       {isCourier && !terminal(order) && <form className="portal-form portal-problem" onSubmit={event => { event.preventDefault(); if (problem.trim()) void mutate('problem', { message: problem.trim() }, 'Сообщение о проблеме отправлено администратору.'); }}><label>Возникла проблема?<textarea disabled={busy} value={problem} onChange={e => setProblem(e.target.value)} required maxLength={2000} placeholder="Например, получатель не отвечает на звонок" /></label><button className="portal-button portal-button-outline" disabled={busy || !problem.trim()}>Сообщить администратору</button></form>}
-      {!!order.problems.length && <section className="portal-problems"><h3>Сообщения о доставке</h3>{order.problems.map(item => <div className="portal-comment" key={item.id}><span>{dateTime(item.created_at)}{item.actor_name ? ` · ${item.actor_name}` : ''}</span><p>{item.message}</p></div>)}</section>}
+      {!!order.problems.length && <section className="portal-problems"><h3>Сообщения по заказу</h3>{order.problems.map(item => <div className="portal-comment" key={item.id}><span>{dateTime(item.created_at)}{item.actor_name ? ` · ${item.actor_name}` : ''}</span><p>{item.message}</p></div>)}</section>}
     </div>}
   </article>;
 }
 
-type ProductDraft = { name: string; name_en: string; name_kk: string; category: string; description: string; description_en: string; description_kk: string; image: string; price: string; wholesale_price: string; weight: string; pieces: string; ingredients: string; allergens: string; is_visible: boolean; is_available: boolean };
-const newProduct: ProductDraft = { name: '', name_en: '', name_kk: '', category: '', description: '', description_en: '', description_kk: '', image: '', price: '', wholesale_price: '', weight: '', pieces: '', ingredients: '', allergens: '', is_visible: true, is_available: true };
+type ProductDraft = { name: string; category: string; description: string; image: string; price: string; wholesale_price: string; wholesale_min_qty: string; weight: string; pieces: string; ingredients: string; allergens: string; is_visible: boolean; is_available: boolean };
+const newProduct: ProductDraft = { name: '', category: '', description: '', image: '', price: '', wholesale_price: '', wholesale_min_qty: '', weight: '', pieces: '', ingredients: '', allergens: '', is_visible: true, is_available: true };
 function ProductsPanel() {
   const remote = useRemote<Product[]>('/admin/products/');
   const categories = useRemote<Category[]>('/admin/categories/');
@@ -584,7 +590,7 @@ function ProductsPanel() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [confirming, setConfirming] = useState<number | null>(null);
-  const start = (product: Product | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(product); setError(''); setNotice(''); setDraft(product === 'new' ? { ...newProduct, category: String(categories.data?.[0]?.id || '') } : { ...product, name_en: product.name_en ?? '', name_kk: product.name_kk ?? '', description_en: product.description_en ?? '', description_kk: product.description_kk ?? '', category: String(product.category), price: String(product.price), wholesale_price: product.wholesale_price == null ? '' : String(product.wholesale_price), pieces: product.pieces == null ? '' : String(product.pieces) }); };
+  const start = (product: Product | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(product); setError(''); setNotice(''); setDraft(product === 'new' ? { ...newProduct, category: String(categories.data?.[0]?.id || '') } : { ...product, category: String(product.category), price: String(product.price), wholesale_price: product.wholesale_price == null ? '' : String(product.wholesale_price), pieces: product.pieces == null ? '' : String(product.pieces), wholesale_min_qty: product.wholesale_min_qty == null ? '' : String(product.wholesale_min_qty) }); };
   const field = (key: keyof ProductDraft, value: string | boolean) => setDraft(current => ({ ...current, [key]: value }));
   const choosePhoto = (file?: File) => {
     if (!file) return;
@@ -601,7 +607,7 @@ function ProductsPanel() {
   };
   const save = async (event: FormEvent) => {
     event.preventDefault(); setError(''); setBusy(true);
-    try { await api(`/admin/products/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), name_en: draft.name_en.trim(), name_kk: draft.name_kk.trim(), description_en: draft.description_en.trim(), description_kk: draft.description_kk.trim(), category: Number(draft.category), wholesale_price: draft.wholesale_price.trim() ? draft.wholesale_price.trim() : null, pieces: draft.pieces.trim() ? Number(draft.pieces) : null }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Товар сохранён.'); remote.retry(); }
+    try { await api(`/admin/products/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), category: Number(draft.category), wholesale_price: draft.wholesale_price.trim() ? draft.wholesale_price.trim() : null, pieces: draft.pieces.trim() ? Number(draft.pieces) : null, wholesale_min_qty: draft.wholesale_min_qty.trim() ? Number(draft.wholesale_min_qty) : null }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Товар сохранён.'); remote.retry(); }
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
@@ -623,13 +629,16 @@ function ProductsPanel() {
       <div className="product-editor-grid">
         <div className="product-editor-main">
           <section className="product-card"><h4><Package size={20} aria-hidden="true" />Основная информация</h4><div className="product-fields">
-            <label><span>Название <i>*</i></span><input value={draft.name} onChange={e => field('name', e.target.value)} required maxLength={160} /></label>
+            <label className="product-span"><span>Название <i>*</i></span><input value={draft.name} onChange={e => field('name', e.target.value)} required maxLength={160} /></label>
             <label><span>Категория <i>*</i></span><select value={draft.category} onChange={e => field('category', e.target.value)} required><option value="">Выберите категорию</option>{categories.data?.map(category => <option key={category.id} value={category.id}>{category.name}</option>)}</select></label>
             <label><span>Цена, ₸ <i>*</i></span><input type="number" min="0" step="0.01" value={draft.price} onChange={e => field('price', e.target.value)} required /></label>
-            <label><span>Оптовая цена для заведений, ₸ <small>(необязательно)</small></span><input type="number" min="0.01" step="0.01" value={draft.wholesale_price} onChange={e => field('wholesale_price', e.target.value)} /></label>
             <label>Вес или объём<input value={draft.weight} onChange={e => field('weight', e.target.value)} placeholder="120 г" maxLength={80} /></label>
             <label><span>Количество, шт. <small>(необязательно)</small></span><input type="number" min="1" max="1000" step="1" inputMode="numeric" value={draft.pieces} onChange={e => field('pieces', e.target.value)} placeholder="6" /></label>
           </div></section>
+          <section className="product-card product-wholesale-card"><h4><Store size={20} aria-hidden="true" />Оптовая цена для заведений <small>(необязательно)</small></h4><div className="product-fields">
+            <label><span>Оптовая цена, ₸</span><input type="number" min="0.01" step="0.01" value={draft.wholesale_price} onChange={e => field('wholesale_price', e.target.value)} placeholder="Не задана" /></label>
+            <label><span>Действует от, шт.</span><input type="number" min="1" max="10000" step="1" inputMode="numeric" value={draft.wholesale_min_qty} onChange={e => field('wholesale_min_qty', e.target.value)} placeholder="10" /></label>
+          </div><small className="product-wholesale-hint">{draft.wholesale_price.trim() ? `Одобренное заведение платит ${draft.wholesale_price} ₸ за штуку, когда берёт от ${draft.wholesale_min_qty.trim() || 10} шт. этого товара в одном заказе.` : 'Укажите оптовую цену, чтобы одобренные заведения видели её в каталоге.'}{!draft.wholesale_min_qty.trim() && ' Если количество не указано — от 10 шт.'}</small></section>
           <section className="product-card"><h4><FileText size={20} aria-hidden="true" />Описание</h4><label className="product-full"><span className="sr-only">Описание</span><textarea value={draft.description} onChange={e => field('description', e.target.value)} placeholder="Описание товара" maxLength={5000} /></label></section>
           <section className="product-card"><h4><FlaskConical size={20} aria-hidden="true" />Состав и аллергены</h4><div className="product-fields">
             <label>Состав<textarea value={draft.ingredients} onChange={e => field('ingredients', e.target.value)} maxLength={3000} /></label>
@@ -663,34 +672,43 @@ function ProductsPanel() {
   </section>;
 }
 
-type CategoryDraft = { name: string; name_en: string; name_kk: string; slug: string; description: string; description_en: string; description_kk: string; image: string; is_visible: boolean };
-const newCategory: CategoryDraft = { name: '', name_en: '', name_kk: '', slug: '', description: '', description_en: '', description_kk: '', image: '', is_visible: true };
+type CategoryDraft = { name: string; slug: string; description: string; image: string; is_visible: boolean };
+const newCategory: CategoryDraft = { name: '', slug: '', description: '', image: '', is_visible: true };
+const latin: Record<string, string> = { а: 'a', ә: 'a', б: 'b', в: 'v', г: 'g', ғ: 'g', д: 'd', е: 'e', ё: 'e', ж: 'zh', з: 'z', и: 'i', й: 'i', і: 'i', к: 'k', қ: 'k', л: 'l', м: 'm', н: 'n', ң: 'n', о: 'o', ө: 'o', п: 'p', р: 'r', с: 's', т: 't', у: 'u', ұ: 'u', ү: 'u', ф: 'f', х: 'h', һ: 'h', ц: 'ts', ч: 'ch', ш: 'sh', щ: 'sch', ъ: '', ы: 'y', ь: '', э: 'e', ю: 'yu', я: 'ya' };
+/** Category address from its name: "Торты и пироги" → "torty-i-pirogi". */
+const slugify = (value: string) => [...value.toLowerCase()].map(ch => latin[ch] ?? ch).join('').replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '').slice(0, 50);
+
 function CategoriesPanel() {
   const remote = useRemote<Category[]>('/admin/categories/');
   const [editing, setEditing] = useState<Category | 'new' | null>(null);
   const editor = useEditorReveal(editing === 'new' ? 'new' : editing?.id ?? null);
   const [draft, setDraft] = useState(newCategory);
+  const [slugTouched, setSlugTouched] = useState(false);
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [busy, setBusy] = useState(false);
   const [photoBusy, setPhotoBusy] = useState(false);
+  // As with products: a chosen file (or the current photo) opens in the cropper first; only the framed result is uploaded.
+  const [cropSource, setCropSource] = useState<File | string | null>(null);
   const [confirming, setConfirming] = useState<number | null>(null);
-  // Same upload as product photos: the photo is shrunk in the browser, stored by the server, and its URL saved here.
-  const chooseCategoryPhoto = async (file?: File) => {
-    if (!file) return;
+  const field = <K extends keyof CategoryDraft>(key: K, value: CategoryDraft[K]) => setDraft(current => ({ ...current, [key]: value }));
+  const changeName = (value: string) => setDraft(current => ({ ...current, name: value, slug: editing === 'new' && !slugTouched ? slugify(value) : current.slug }));
+  const choosePhoto = (file?: File) => { if (!file) return; setError(''); setCropSource(file); };
+  const uploadFramed = async (photo: Blob) => {
+    setCropSource(null);
     setPhotoBusy(true);
     setError('');
-    try { const url = await uploadProductPhoto(file); setDraft(current => ({ ...current, image: url })); }
+    try { field('image', await uploadProductPhoto(new File([photo], 'category.jpg', { type: 'image/jpeg' }))); }
     catch (err) { setError((err as Error).message); }
     finally { setPhotoBusy(false); }
   };
   const save = async (event: FormEvent) => {
     event.preventDefault(); setError(''); setBusy(true);
-    try { await api(`/admin/categories/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), name_en: draft.name_en.trim(), name_kk: draft.name_kk.trim(), slug: draft.slug.trim(), description_en: draft.description_en.trim(), description_kk: draft.description_kk.trim() }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Категория сохранена.'); remote.retry(); }
+    try { await api(`/admin/categories/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), slug: draft.slug.trim() }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Категория сохранена.'); remote.retry(); }
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
-  const start = (category: Category | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(category); setDraft(category === 'new' ? newCategory : { ...category, name_en: category.name_en || '', name_kk: category.name_kk || '', description_en: category.description_en || '', description_kk: category.description_kk || '' }); setError(''); setNotice(''); };
+  const start = (category: Category | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(category); setDraft(category === 'new' ? newCategory : { name: category.name, slug: category.slug, description: category.description || '', image: category.image || '', is_visible: category.is_visible }); setSlugTouched(category !== 'new'); setError(''); setNotice(''); };
   const toggle = async (category: Category) => {
     setError(''); setBusy(true);
     try { await api(`/admin/categories/${category.id}/`, json({ is_visible: !category.is_visible }, 'PATCH')); remote.retry(); }
@@ -703,13 +721,42 @@ function CategoriesPanel() {
     catch (err) { setError(failure(err)); setConfirming(null); }
     finally { setBusy(false); }
   };
-  return <section><div className="portal-section-title"><div><p className="portal-eyebrow">ПОРЯДОК НА ВИТРИНЕ</p><h2>Категории</h2></div><button className="portal-button" disabled={busy} onClick={event => start('new', event.currentTarget)}><Plus size={17} aria-hidden="true" /> Добавить категорию</button></div><ErrorNotice message={remote.error} retry={remote.retry} />{!editing && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
-    {editing && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{editing === 'new' ? 'Новая категория' : 'Редактировать категорию'}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть редактирование категории" onClick={() => setEditing(null)}><X size={20} aria-hidden="true" /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Название (русский)<input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} required maxLength={120} placeholder="Круассаны" /></label><label>Name (English)<input value={draft.name_en} onChange={e => setDraft({ ...draft, name_en: e.target.value })} maxLength={120} placeholder="Croissants" /></label><label>Атауы (қазақша)<input value={draft.name_kk} onChange={e => setDraft({ ...draft, name_kk: e.target.value })} maxLength={120} placeholder="Круассандар" /></label><label>Адрес категории<input value={draft.slug} onChange={e => setDraft({ ...draft, slug: e.target.value })} required pattern="[a-z0-9_\-]+" placeholder="croissants" maxLength={50} /><small>Латинские буквы, цифры, дефис или подчёркивание.</small></label><label className="portal-wide">Описание (русский)<textarea value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} maxLength={3000} /></label><label className="portal-wide">Description (English)<textarea value={draft.description_en} onChange={e => setDraft({ ...draft, description_en: e.target.value })} maxLength={3000} /></label><label className="portal-wide">Сипаттама (қазақша)<textarea value={draft.description_kk} onChange={e => setDraft({ ...draft, description_kk: e.target.value })} maxLength={3000} /></label><div className="portal-wide portal-photo"><span>Фотография категории</span>{draft.image && <img src={draft.image} alt="" className="portal-photo-preview" />}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy} onChange={e => { void chooseCategoryPhoto(e.target.files?.[0]); e.target.value = ''; }} /><small>{photoBusy ? 'Загружаем фото…' : 'JPEG, PNG или WebP с компьютера или телефона. Фото автоматически уменьшится.'}</small></div></div><div className="portal-checks"><label><input type="checkbox" checked={draft.is_visible} onChange={e => setDraft({ ...draft, is_visible: e.target.checked })} /> Показывать в каталоге</label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || photoBusy || !draft.name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить категорию'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setEditing(null)}>Отмена</button></div></fieldset></form></section>}
+  return <section><div className="portal-section-title"><div><p className="portal-eyebrow">ПОРЯДОК НА ВИТРИНЕ</p><h2>Категории <span className="portal-count">{remote.data?.length || 0}</span></h2></div><button className="portal-button" disabled={busy} onClick={event => start('new', event.currentTarget)}><Plus size={17} aria-hidden="true" /> Добавить категорию</button></div><ErrorNotice message={remote.error} retry={remote.retry} />{!editing && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
+    {editing && <section ref={editor.ref} tabIndex={-1} className="portal-editor product-editor category-editor"><div className="portal-section-title"><h3>{editing === 'new' ? 'Новая категория' : `Редактировать: ${editing.name}`}</h3></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}>
+      <div className="product-editor-grid">
+        <div className="product-editor-main">
+          <section className="product-card"><h4><LayoutGrid size={20} aria-hidden="true" />Основная информация</h4><div className="product-fields">
+            <label><span>Название <i>*</i></span><input value={draft.name} onChange={e => changeName(e.target.value)} required maxLength={120} placeholder="Круассаны" /></label>
+            <label><span>Адрес категории <i>*</i></span><input value={draft.slug} onChange={e => { setSlugTouched(true); field('slug', e.target.value.toLowerCase()); }} required pattern="[a-z0-9_\-]+" placeholder="croissants" maxLength={50} /><small>{editing === 'new' && !slugTouched ? 'Заполняется сам из названия. Можно изменить.' : 'Латинские буквы, цифры, дефис или подчёркивание.'}</small></label>
+          </div></section>
+          <section className="product-card"><h4><FileText size={20} aria-hidden="true" />Описание</h4><label className="product-full"><span className="sr-only">Описание</span><textarea value={draft.description} onChange={e => field('description', e.target.value)} placeholder="Пара слов о том, что в этой категории" maxLength={3000} /></label></section>
+          <section className="product-card"><h4><Settings size={20} aria-hidden="true" />Настройки</h4><div className="product-switches">
+            <label><input type="checkbox" checked={draft.is_visible} onChange={e => field('is_visible', e.target.checked)} />Показывать в каталоге и на главной</label>
+          </div>{!draft.is_visible && <p className="product-hint">Скрытая категория и её товары не видны покупателям.</p>}</section>
+        </div>
+        <div className="product-editor-side">
+          <section className="product-card"><h4><ImageIcon size={20} aria-hidden="true" />Фотография категории</h4>
+            <div className="product-photo-preview category-photo-preview">{draft.image ? <img src={draft.image} alt="" /> : <span><ImageIcon size={34} strokeWidth={1.3} aria-hidden="true" />Фото ещё не выбрано</span>}</div>{draft.image && <p className="product-photo-note">Так фото выглядит на карточке категории на главной.</p>}
+            <label className={`product-dropzone${photoBusy ? ' is-busy' : ''}`} onDragOver={event => event.preventDefault()} onDrop={event => { event.preventDefault(); choosePhoto(event.dataTransfer.files?.[0]); }}>
+              <Upload size={22} aria-hidden="true" />
+              <span className="product-dropzone-button">{photoBusy ? 'Загружаем фото…' : draft.image ? 'Заменить фото' : 'Выбрать файл'}</span>
+              <small>или перетащите фото сюда</small>
+              <input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy} onChange={e => { choosePhoto(e.target.files?.[0]); e.target.value = ''; }} />
+            </label>
+            {draft.image && <div className="category-photo-actions"><button type="button" className="product-secondary product-reframe" disabled={photoBusy} onClick={() => setCropSource(draft.image)}><Crop size={16} aria-hidden="true" />Изменить кадр</button><button type="button" className="product-secondary" disabled={photoBusy} onClick={() => field('image', '')}><Trash2 size={16} aria-hidden="true" />Убрать фото</button></div>}
+            <p className="product-hint">JPEG, PNG или WebP. После выбора можно подвинуть, приблизить и повернуть фото.</p>
+          </section>
+        </div>
+      </div>
+      <ErrorNotice message={error} />
+      {cropSource && <PhotoCropper source={cropSource} aspect={CATEGORY_PHOTO_ASPECT} hint="Рамка — это ровно то, что покупатели увидят на карточке категории на главной." onCancel={() => setCropSource(null)} onDone={photo => void uploadFramed(photo)} />}
+      <div className="product-actions"><button className="portal-button product-save" disabled={busy || photoBusy || !draft.name.trim()}><Check size={18} aria-hidden="true" />{busy ? 'Сохраняем…' : 'Сохранить категорию'}</button><button type="button" className="product-secondary" disabled={busy} onClick={() => setEditing(null)}>Отмена</button><button type="button" className="product-secondary product-close" disabled={busy} onClick={() => setEditing(null)} aria-label="Закрыть редактирование категории"><X size={17} aria-hidden="true" />Закрыть</button></div>
+    </fieldset></form></section>}
     {remote.loading ? <p className="portal-loading" role="status">Загружаем категории…</p> : remote.data && <div className="portal-manage-list">{remote.data?.length ? remote.data.map(category => <article className="portal-manage-row" key={category.id}><div className="portal-category-image">{category.image ? <LazyImage src={category.image} alt="" /> : <LayoutGrid size={23} aria-hidden="true" />}</div><div className="portal-manage-main"><h3>{category.name}</h3><p>{category.description || `/${category.slug}`}</p><span className="portal-help">{category.is_visible ? 'Видна в каталоге' : 'Скрыта из каталога'}</span>{confirming === category.id && <div className="portal-product-confirm portal-category-confirm"><p>Удалить категорию «{category.name}» навсегда? Это действие нельзя отменить. Категорию с товарами удалить нельзя — сначала перенесите или удалите товары.</p><div><button className="portal-button portal-button-danger" disabled={busy} onClick={() => void remove(category)}>{busy ? 'Удаляем…' : 'Удалить'}<Trash2 size={16} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setConfirming(null)}>Отмена</button></div></div>}</div><div className="portal-row-actions"><button className="portal-icon-button" disabled={busy} aria-label={`Изменить категорию «${category.name}»`} onClick={event => start(category, event.currentTarget)}><Pencil size={18} aria-hidden="true" /></button><button className="portal-icon-button" disabled={busy} aria-label={`${category.is_visible ? 'Скрыть' : 'Показать'} категорию «${category.name}»`} onClick={() => void toggle(category)}>{category.is_visible ? <Eye size={18} aria-hidden="true" /> : <EyeOff size={18} aria-hidden="true" />}</button><button className="portal-icon-button portal-delete" disabled={busy} aria-label={`Удалить категорию «${category.name}»`} title="Удалить категорию" onClick={() => { setConfirming(category.id); setError(''); setNotice(''); }}><Trash2 size={18} aria-hidden="true" /></button></div></article>) : <EmptyState icon={<LayoutGrid size={30} aria-hidden="true" />} title="Первая категория ждёт">Добавьте категории, чтобы покупателям было проще найти любимую выпечку.</EmptyState>}</div>}
   </section>;
 }
 
-type BusinessAccount = { id: number; name: string; email: string; phone: string; company_name: string; business_approved: boolean; date_joined?: string; orders_count?: number | null; delivered_total?: string | null; last_order_at?: string | null };
+type BusinessAccount = { id: number; name: string; email: string; phone: string; company_name: string; business_approved: boolean; credit_allowed?: boolean; date_joined?: string; orders_count?: number | null; delivered_total?: string | null; last_order_at?: string | null };
 type NakladnayaRow = { date: string; number: string; name: string; quantity: number; price: string; total: string; status: string; paid: boolean };
 type NakladnayaData = { recipient: string; date_from: string | null; date_to: string | null; rows: NakladnayaRow[] };
 
@@ -760,7 +807,6 @@ function NakladnayaPrint({ data, onClose }: { data: NakladnayaData; onClose: () 
   );
 }
 
-/** Administrator's list of business accounts. Wholesale prices open only after approval here. */
 function InvoiceDownload({ accountId }: { accountId: number }) {
   const [open, setOpen] = useState(false);
   const [from, setFrom] = useState('');
@@ -796,6 +842,7 @@ function InvoiceDownload({ accountId }: { accountId: number }) {
   </div>;
 }
 
+/** Administrator's list of business accounts. Wholesale prices open only after approval here. */
 function BusinessPanel() {
   const remote = useRemote<BusinessAccount[]>('/admin/businesses/');
   const [busy, setBusy] = useState<number | null>(null);
@@ -804,16 +851,21 @@ function BusinessPanel() {
   const [notice, setNotice] = useState('');
   const [show, setShow] = useState<'all' | 'retail' | 'wholesale'>('all');
   const [search, setSearch] = useState('');
-  const setApproved = async (account: BusinessAccount, approved: boolean) => {
+  const [creditBusy, setCreditBusy] = useState<number | null>(null);
+  const update = async (account: BusinessAccount, patch: Partial<Pick<BusinessAccount, 'business_approved' | 'credit_allowed'>>, message: string) => {
     if (lock.current) return;
-    lock.current = true; setError(''); setBusy(account.id); setNotice('');
+    lock.current = true; setError(''); setNotice('');
+    const credit = 'credit_allowed' in patch;
+    (credit ? setCreditBusy : setBusy)(account.id);
     try {
-      const updated = await api<BusinessAccount>(`/admin/businesses/${account.id}/`, json({ business_approved: approved }, 'PATCH'));
-      remote.replace((remote.data || []).map(item => item.id === updated.id ? { ...item, business_approved: updated.business_approved } : item));
-      setNotice(approved ? `«${account.company_name || account.name}»: открыты оптовые цены.` : `«${account.company_name || account.name}»: снова розничные цены.`);
+      const updated = await api<BusinessAccount>(`/admin/businesses/${account.id}/`, json(patch, 'PATCH'));
+      remote.replace((remote.data || []).map(item => item.id === updated.id ? { ...item, business_approved: updated.business_approved, credit_allowed: updated.credit_allowed } : item));
+      setNotice(`«${account.company_name || account.name}»: ${message}`);
     } catch (err) { setError(failure(err)); }
-    finally { lock.current = false; setBusy(null); }
+    finally { lock.current = false; setBusy(null); setCreditBusy(null); }
   };
+  const setApproved = (account: BusinessAccount, approved: boolean) => update(account, { business_approved: approved }, approved ? 'открыты оптовые цены.' : 'снова розничные цены.');
+  const setCredit = (account: BusinessAccount, allowed: boolean) => update(account, { credit_allowed: allowed }, allowed ? 'курьеры смогут отдавать заказы в долг.' : 'заказы в долг больше недоступны.');
   const accounts = remote.data || [];
   const wholesale = accounts.filter(item => item.business_approved).length;
   const query = search.trim().toLowerCase();
@@ -843,11 +895,15 @@ function BusinessPanel() {
         <div><span>Доставлено на сумму</span><strong>{money(account.delivered_total || 0)}</strong></div>
         <div><span>Последний заказ</span><strong>{account.last_order_at ? day(account.last_order_at) : 'Ещё не заказывали'}</strong></div>
       </div>
+      <div className={`business-credit${account.credit_allowed ? ' is-on' : ''}`}>
+        <span className="business-credit-icon" aria-hidden="true"><HandCoins size={19} /></span>
+        <div><strong>Заказы в долг</strong><small>{account.credit_allowed ? 'Разрешено — курьер может отдать заказ без оплаты.' : 'Запрещено — заведение платит при получении.'}</small></div>
+        <button type="button" role="switch" aria-checked={!!account.credit_allowed} aria-label={`Заказы в долг для «${account.company_name || account.name}»`} className="business-switch" disabled={busy !== null || creditBusy !== null} onClick={() => void setCredit(account, !account.credit_allowed)}><span /></button>
+      </div>
       <div className="business-actions">{account.business_approved
         ? <button type="button" className="product-secondary" disabled={busy !== null} onClick={() => void setApproved(account, false)}>{busy === account.id ? 'Сохраняем…' : 'Вернуть розничные цены'}</button>
         : <button type="button" className="portal-button" disabled={busy !== null} onClick={() => void setApproved(account, true)}>{busy === account.id ? 'Сохраняем…' : 'Открыть оптовые цены'}<Check size={16} aria-hidden="true" /></button>}
-        {(account.orders_count ?? 0) > 0 && <InvoiceDownload accountId={account.id} />}
-      </div>
+        {(account.orders_count ?? 0) > 0 && <InvoiceDownload accountId={account.id} />}</div>
     </article>)}</div>}
   </section>;
 }
@@ -893,9 +949,11 @@ function StaffPanel({ kind }: { kind: keyof typeof staffText }) {
     if (lock.current) return;
     lock.current = true; setError(''); setBusy(true); setNotice('');
     try {
-      await api(`${endpoint}${person.id}/`, { method: 'DELETE' });
+      const result = await api<{ moved_orders: number; waiting_orders: number }>(`${endpoint}${person.id}/`, { method: 'DELETE' });
       remote.replace((remote.data || []).filter(item => item.id !== person.id));
-      setRemoving(null); setNotice(`${person.name} удалён(а) из команды.`); remote.retry();
+      const moved = result?.moved_orders ? ` Незавершённые заказы переданы другим курьерам: ${result.moved_orders}.` : '';
+      const waiting = result?.waiting_orders ? ` Ждут свободного курьера: ${result.waiting_orders}.` : '';
+      setRemoving(null); setNotice(`${person.name} удалён(а) из команды. В истории заказов и чеках имя сохранено.${moved}${waiting}`); remote.retry();
     } catch (err) { setRemoving(null); setError(failure(err)); }
     finally { lock.current = false; setBusy(false); }
   };
@@ -927,7 +985,7 @@ function StaffPanel({ kind }: { kind: keyof typeof staffText }) {
         <div className="staff-actions"><button type="button" className="product-secondary" disabled={busy} onClick={() => setAdding(false)}>Отмена</button><button className="portal-button" disabled={busy || !draft.name.trim() || mismatch}>{busy ? 'Добавляем…' : addLabel}<Plus size={17} aria-hidden="true" /></button></div>
       </fieldset></form>
     </section>}
-    {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><button type="button" className="staff-open" onClick={() => setProfileId(person.id)} aria-label={`Открыть профиль: ${person.name}`}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><p>{person.phone}</p><span className="staff-open-hint">Открыть профиль<ChevronRight size={14} aria-hidden="true" /></span></div></button><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button>{removing?.id !== person.id && <button type="button" className="portal-text-button portal-danger-text" disabled={busy} onClick={() => { setRemoving({ id: person.id, step: 1 }); setError(''); setNotice(''); }}>Удалить</button>}</div>{removing?.id === person.id && <div className="portal-staff-delete" role="alertdialog" aria-label={`Удаление сотрудника ${person.name}`}>{removing.step === 1 ? <><p>Удалить сотрудника <strong>{person.name}</strong> ({person.email})?</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => setRemoving({ id: person.id, step: 2 })}>Да, удалить</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Отмена</button></div></> : <><p><strong>Точно удалить {person.name}?</strong> Сотрудник больше не сможет войти и пропадёт из списка, восстановить аккаунт будет нельзя. В истории заказов и чеках его имя останется.{kind === 'couriers' ? ' Если у курьера есть активные заказы, сначала переназначьте их.' : ''}</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => void remove(person)}>{busy ? 'Удаляем…' : 'Удалить навсегда'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Не удалять</button></div></>}</div>}</article>) : <EmptyState icon={kind === 'cashiers' ? <Banknote size={30} aria-hidden="true" /> : kind === 'pastry-chefs' ? <ChefHat size={30} aria-hidden="true" /> : <Truck size={30} aria-hidden="true" />} title={text.empty}>{text.emptyText}</EmptyState>}</div>}
+    {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><button type="button" className="staff-open" onClick={() => setProfileId(person.id)} aria-label={`Открыть профиль: ${person.name}`}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><p>{person.phone}</p><span className="staff-open-hint">Открыть профиль<ChevronRight size={14} aria-hidden="true" /></span></div></button><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button>{removing?.id !== person.id && <button type="button" className="portal-text-button portal-danger-text" disabled={busy} onClick={() => { setRemoving({ id: person.id, step: 1 }); setError(''); setNotice(''); }}>Удалить</button>}</div>{removing?.id === person.id && <div className="portal-staff-delete" role="alertdialog" aria-label={`Удаление сотрудника ${person.name}`}>{removing.step === 1 ? <><p>Удалить сотрудника <strong>{person.name}</strong> ({person.email})?</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => setRemoving({ id: person.id, step: 2 })}>Да, удалить</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Отмена</button></div></> : <><p><strong>Точно удалить {person.name}?</strong> Сотрудник больше не сможет войти и пропадёт из списка, восстановить аккаунт будет нельзя. В истории заказов и чеках его имя останется.{kind === 'couriers' ? ' Заказы, которые он сейчас везёт или ещё не забрал, сразу перейдут другим свободным курьерам.' : ''}</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => void remove(person)}>{busy ? 'Удаляем…' : 'Удалить навсегда'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Не удалять</button></div></>}</div>}</article>) : <EmptyState icon={kind === 'cashiers' ? <Banknote size={30} aria-hidden="true" /> : kind === 'pastry-chefs' ? <ChefHat size={30} aria-hidden="true" /> : <Truck size={30} aria-hidden="true" />} title={text.empty}>{text.emptyText}</EmptyState>}</div>}
     {profileId !== null && <StaffProfile kind={kind} id={profileId} onClose={() => setProfileId(null)} />}
   </section>;
 }
