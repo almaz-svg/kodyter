@@ -48,6 +48,7 @@ urlpatterns = [
     path('orders/<int:pk>/assign/', orders.Assign.as_view()),
     path('orders/<int:pk>/cancel/', orders.CustomerCancel.as_view()),
     path('orders/<int:pk>/problem/', orders.ReportProblem.as_view()),
+    path('orders/<int:pk>/missing/', orders.MarkMissing.as_view()),
     path('orders/<int:pk>/claim/', staff.ClaimOrder.as_view()),
     path('orders/<int:pk>/transfer/', staff.TransferOrder.as_view()),
     path('orders/<int:pk>/payment/', staff.ReceivePayment.as_view()),

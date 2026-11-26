@@ -48,7 +48,7 @@ class UserSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSeria
         return normalize_kz_phone(value)
 
 class BusinessAccountSerializer(serializers.ModelSerializer):
-    """Admin view of business accounts. Only `business_approved` can be written."""
+    """Admin view of business accounts. Only `business_approved` and `credit_allowed` can be written."""
     # Filled from list annotations (see AdminBusinesses); absent after a single update.
     orders_count = serializers.SerializerMethodField()
     delivered_total = serializers.SerializerMethodField()
@@ -67,7 +67,7 @@ class BusinessAccountSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = User
-        fields = ['id', 'name', 'email', 'phone', 'company_name', 'business_approved', 'date_joined', 'orders_count', 'delivered_total', 'last_order_at']
+        fields = ['id', 'name', 'email', 'phone', 'company_name', 'business_approved', 'credit_allowed', 'date_joined', 'orders_count', 'delivered_total', 'last_order_at']
         read_only_fields = ['id', 'name', 'email', 'phone', 'company_name', 'date_joined']
 
 PHONE_FORMAT_ERROR = 'Укажите телефон в международном формате, например +7 701 123 45 67.'
@@ -136,10 +136,11 @@ class ProductSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSe
     price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'))
     wholesale_price = serializers.DecimalField(max_digits=10, decimal_places=2, min_value=Decimal('0.01'), required=False, allow_null=True)
     pieces = serializers.IntegerField(min_value=1, max_value=1000, required=False, allow_null=True)
+    wholesale_min_qty = serializers.IntegerField(min_value=1, max_value=10000, required=False, allow_null=True)
 
     class Meta:
         model = Product
-        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'weight', 'pieces', 'ingredients', 'allergens', 'is_available', 'is_visible']
+        fields = ['id', 'category', 'name', 'description', 'image', 'price', 'wholesale_price', 'wholesale_min_qty', 'weight', 'pieces', 'ingredients', 'allergens', 'is_available', 'is_visible']
         extra_kwargs = {'image': {'validators': [validate_image_reference]}}
 
     def validate(self, attrs):
@@ -171,7 +172,7 @@ class PublicProductSerializer(serializers.ModelSerializer):
         approved = getattr(user, 'account_type', None) == User.AccountType.BUSINESS and getattr(user, 'business_approved', False)
         if approved and product.wholesale_price is not None:
             data['wholesale_price'] = format(product.wholesale_price, '.2f')
-            data['wholesale_min_qty'] = settings.WHOLESALE_MIN_QTY
+            data['wholesale_min_qty'] = product.wholesale_threshold
         return data
 
 class CourierUpdateSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.ModelSerializer):
@@ -183,9 +184,14 @@ class CourierUpdateSerializer(MarkupFreeMixin, PartialUpdateMixin, serializers.M
         return normalize_kz_phone(value) if value.strip() else ''
 
 class OrderItemSerializer(serializers.ModelSerializer):
+    is_wholesale = serializers.SerializerMethodField()
+
+    def get_is_wholesale(self, item):
+        return item.retail_price is not None and item.price < item.retail_price
+
     class Meta:
         model = OrderItem
-        fields = ['id', 'product_id', 'name', 'price', 'quantity', 'image', 'is_prepared']
+        fields = ['id', 'product_id', 'name', 'price', 'retail_price', 'is_wholesale', 'quantity', 'image', 'is_prepared', 'is_missing']
         read_only_fields = fields
 
 class StatusHistorySerializer(serializers.ModelSerializer):
@@ -218,16 +224,20 @@ class OrderSerializer(serializers.ModelSerializer):
     paid_by_name = serializers.CharField(source='payment.paid_by_name', default=None, read_only=True)
     customer_name = serializers.CharField(source='customer.name', read_only=True)
     customer_company = serializers.SerializerMethodField()
+    credit_allowed = serializers.SerializerMethodField()
 
     def get_customer_company(self, order):
         return business_name(order)
+
+    def get_credit_allowed(self, order):
+        return credit_allowed(order)
 
     def get_payment_status(self, order):
         return payment_status(order)
 
     class Meta:
         model = Order
-        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'courier_is_active', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name', 'on_credit', 'credit_at', 'credit_by_name', 'customer_id', 'customer_name', 'customer_company']
+        fields = ['id', 'number', 'created_at', 'status', 'recipient_name', 'phone', 'address', 'comment', 'subtotal', 'delivery_fee', 'total', 'courier', 'courier_name', 'courier_is_active', 'items', 'status_history', 'problems', 'cancellation_reason', 'payment_status', 'paid_at', 'paid_by', 'paid_by_name', 'on_credit', 'credit_at', 'credit_by_name', 'customer_id', 'customer_name', 'customer_company', 'credit_allowed']
         read_only_fields = fields
 
 class CustomerStatusHistorySerializer(serializers.ModelSerializer):
@@ -266,6 +276,10 @@ class AvailableItemSerializer(serializers.ModelSerializer):
         model = OrderItem
         fields = ['name', 'quantity']
         read_only_fields = fields
+
+def credit_allowed(order):
+    """Only a business that the administrator allowed may receive an order on credit."""
+    return order.customer.account_type == 'BUSINESS' and order.customer.credit_allowed
 
 def business_name(order):
     """The ordering business ('заведение'), so staff see at once who the order is for; empty for individuals."""

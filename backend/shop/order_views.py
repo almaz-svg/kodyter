@@ -16,7 +16,7 @@ from rest_framework.response import Response
 from rest_framework.views import APIView
 from .security import reject_markup
 from .models import Order, OrderItem, Payment, Product, User, StatusHistory, Problem
-from .serializers import CheckoutSerializer, CustomerOrderSerializer, OrderSerializer
+from .serializers import CheckoutSerializer, CustomerOrderSerializer, OrderSerializer, credit_allowed
 from .security import lock_active_actor
 from .dispatch import dispatch_waiting_orders
 
@@ -120,7 +120,7 @@ class Orders(APIView):
             if product.price <= 0:
                 raise Conflict(f'У товара «{product.name}» ещё не указана цена, поэтому его пока нельзя заказать. Уберите его из корзины.')
             # Server prices are authoritative. The unit price depends on the buyer's account and on this line's quantity:
-            # wholesale only for an approved business and only from WHOLESALE_MIN_QTY units of this product.
+            # wholesale only for an approved business and only from this product's wholesale threshold.
             # A zero or negative price is never orderable.
             unit = product.price_for(actor, item['quantity'])
             if unit <= 0 or unit != item['expected_price']:
@@ -130,7 +130,7 @@ class Orders(APIView):
         # Money is Decimal end to end; the sum is fixed to kopecks so storage never has to round it.
         subtotal = subtotal.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
         order = Order.objects.create(customer=actor, recipient_name=data['recipient_name'], phone=data['phone'], address=data['address'], comment=data['comment'], subtotal=subtotal, delivery_fee=settings.DELIVERY_FEE, total=subtotal + settings.DELIVERY_FEE, idempotency_key=data['idempotency_key'], request_fingerprint=fingerprint)
-        OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=unit_prices[item['product_id']], image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
+        OrderItem.objects.bulk_create([OrderItem(order=order, product=products[item['product_id']], name=products[item['product_id']].name, price=unit_prices[item['product_id']], retail_price=products[item['product_id']].price, image=products[item['product_id']].image, quantity=item['quantity']) for item in items])
         StatusHistory.objects.create(order=order, from_status='', to_status='NEW', actor=actor, actor_name=actor.name)
         if dispatch_waiting_orders():
             order.refresh_from_db(fields=['courier'])
@@ -154,8 +154,12 @@ class Transition(APIView):
         if order.status in ('CANCELLED', 'DELIVERED'):
             raise Conflict('Заказ завершён. Его статус больше нельзя изменить.')
         if target == 'CANCELLED':
-            if actor.role != 'ADMIN':
-                raise PermissionDenied('Отмена доступна только администратору.')
+            # The pastry kitchen may cancel too, but only before the order is ready (e.g. nothing can be baked).
+            if actor.role == 'PASTRY':
+                if order.status not in KITCHEN_EDITABLE:
+                    raise Conflict('Готовый заказ повар отменить не может. Обратитесь к администратору.')
+            elif actor.role != 'ADMIN':
+                raise PermissionDenied('Отмена доступна только администратору и повару.')
             reason = serializers.CharField(max_length=2000).run_validation(request.data.get('reason'))
             order.cancellation_reason = reason
         else:
@@ -169,6 +173,8 @@ class Transition(APIView):
         on_credit = request.data.get('on_credit') is True
         if cash_received and on_credit:
             raise serializers.ValidationError({'on_credit': 'Выберите что-то одно: деньги получены или заказ записан в долг.'})
+        if on_credit and not credit_allowed(order):
+            raise serializers.ValidationError({'on_credit': 'В долг можно отдать только заведению, которому это разрешил администратор.'})
         old = order.status
         order.status = target
         fields = ['status', 'cancellation_reason']
@@ -208,6 +214,40 @@ class CustomerCancel(APIView):
         return order_response(order, request.user)
 
 KITCHEN_STATUSES = ('CONFIRMED', 'PREPARING')
+# While the kitchen can still change the order: out-of-stock lines and cancelling by the cook.
+KITCHEN_EDITABLE = ('NEW', 'CONFIRMED', 'PREPARING')
+
+class MarkMissing(APIView):
+    """The kitchen marks lines that are out of stock. They leave the order total; the delivery fee stays."""
+    @transaction.atomic
+    def post(self, request, pk):
+        if request.user.role not in ('PASTRY', 'ADMIN'):
+            raise PermissionDenied('Отмечать отсутствующие товары может повар или администратор.')
+        order = locked_order(request.user, pk)
+        actor = lock_active_actor(request.user, ('PASTRY', 'ADMIN'))
+        if order.status not in KITCHEN_EDITABLE:
+            raise Conflict('Заказ уже готов или завершён — состав больше нельзя изменить.')
+        if Payment.objects.filter(order=order).exists():
+            raise Conflict('Заказ уже оплачен — состав нельзя изменить.')
+        ids = set(serializers.ListField(child=serializers.IntegerField(min_value=1), min_length=1, max_length=200).run_validation(request.data.get('item_ids')))
+        items = list(OrderItem.objects.select_for_update().filter(order=order))
+        chosen = [item for item in items if item.pk in ids and not item.is_missing]
+        if len([item for item in items if item.pk in ids]) != len(ids):
+            raise serializers.ValidationError({'item_ids': 'Эти товары не из этого заказа.'})
+        if not chosen:
+            raise Conflict('Эти товары уже отмечены как отсутствующие.')
+        if all(item.is_missing or item in chosen for item in items):
+            raise Conflict('Нельзя убрать все товары — отмените заказ целиком.')
+        for item in chosen:
+            item.is_missing = True
+        OrderItem.objects.bulk_update(chosen, ['is_missing'])
+        subtotal = sum((item.price * item.quantity for item in items if not item.is_missing), Decimal('0')).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+        order.subtotal = subtotal
+        order.total = subtotal + order.delivery_fee
+        order.save(update_fields=['subtotal', 'total'])
+        names = ', '.join(f'{item.name} ({item.quantity} шт.)' for item in chosen)
+        Problem.objects.create(order=order, message=f'Нет в наличии: {names}. Сумма заказа пересчитана: {format(order.total, ".2f")} ₸.', actor=actor, actor_name=actor.name)
+        return order_response(order, request.user)
 
 class KitchenPrepared(APIView):
     """The pastry kitchen ticks order lines as cooked (or unticks them). Only confirmed or preparing orders can change."""
