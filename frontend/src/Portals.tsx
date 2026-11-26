@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
 import { createPortal } from 'react-dom';
-import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Copy, Eye, EyeOff, KeyRound, Mail, Sparkles, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
-import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview, type Debts, type DebtOrder, type MyDebt } from './lib';
+import { ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, Download, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Copy, Eye, EyeOff, KeyRound, Mail, Sparkles, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
+import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview, type Debts, type DebtOrder, type MyDebt, type Shift } from './lib';
 import { LazyImage, PhoneInput, phoneDigits, formatPhone } from './ui';
 import { uploadProductPhoto } from './imageUpload';
 import { PhotoCropper } from './photoCropper';
@@ -143,7 +143,7 @@ export default function Portals({ user, onUserChange }: Props) {
     <nav className={`portal-tabs ${isAdmin ? 'portal-admin-tabs' : ''}`} aria-label="Разделы личного кабинета">{tabs.map(item => <button type="button" key={item.value} className={tab === item.value ? 'active' : ''} aria-current={tab === item.value ? 'page' : undefined} onClick={() => setTab(item.value)}>{item.icon}{item.name}</button>)}</nav>
     {tab === 'orders' && <OrdersPanel user={user} />}
     {tab === 'kitchen' && (isAdmin || isPastry) && <KitchenPanel user={user} />}
-    {tab === 'profile' && <Profile user={user} onUserChange={onUserChange} />}
+    {tab === 'profile' && <>{(isCashier || isCourier) && <ShiftBlock />}<Profile user={user} onUserChange={onUserChange} /></>}
     {isAdmin && tab === 'products' && <ProductsPanel />}
     {isAdmin && tab === 'categories' && <CategoriesPanel />}
     {isAdmin && tab === 'couriers' && <StaffPanel key="couriers" kind="couriers" />}
@@ -154,6 +154,58 @@ export default function Portals({ user, onUserChange }: Props) {
     {(isAdmin || isCourier) && tab === 'debts' && <DebtsPanel user={user} />}
   </main>;
 }
+function formatDuration(seconds: number) {
+  const h = Math.floor(seconds / 3600);
+  const m = Math.floor((seconds % 3600) / 60);
+  return h > 0 ? `${h} ч ${m} мин` : `${m} мин`;
+}
+
+function formatShiftTime(iso: string) {
+  const d = new Date(iso);
+  return d.toLocaleString('ru-RU', { timeZone: 'Asia/Qyzylorda', day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' });
+}
+
+function ShiftBlock() {
+  const [shifts, setShifts] = useState<Shift[]>([]);
+  const [busy, setBusy] = useState(false);
+  const [error, setError] = useState('');
+  const [confirm, setConfirm] = useState(false);
+  const load = useCallback(async () => { try { setShifts(await api<Shift[]>('/shifts/')); } catch {} }, []);
+  useEffect(() => { load(); }, [load]);
+  const open = shifts.find(s => !s.ended_at);
+  const start = async () => {
+    setBusy(true); setError('');
+    try { await api<Shift>('/shifts/start/', json({}, 'POST')); await load(); }
+    catch (e) { setError(failure(e)); }
+    finally { setBusy(false); }
+  };
+  const end = async () => {
+    setBusy(true); setError(''); setConfirm(false);
+    try { await api<Shift>('/shifts/end/', json({}, 'POST')); await load(); }
+    catch (e) { setError(failure(e)); }
+    finally { setBusy(false); }
+  };
+  return <section className="portal-card portal-shift">
+    <div className="portal-section-title"><div><p className="portal-eyebrow">МОЯ СМЕНА</p><h2>{open ? 'На смене' : 'Вне смены'}</h2></div><Clock3 size={27} aria-hidden="true" /></div>
+    {open && <p className="portal-shift-since">С {formatShiftTime(open.started_at)}</p>}
+    <ErrorNotice message={error} />
+    {confirm
+      ? <div className="portal-shift-confirm"><p>Завершить смену?</p><div className="portal-shift-confirm-buttons"><button type="button" className="portal-button" disabled={busy} onClick={end}>{busy ? 'Завершаем…' : 'Да, завершить'}</button><button type="button" className="portal-button portal-button-outline" onClick={() => setConfirm(false)}>Отмена</button></div></div>
+      : open
+        ? <button type="button" className="portal-button portal-button-outline" disabled={busy} onClick={() => setConfirm(true)}><Clock3 size={16} aria-hidden="true" />Завершить смену</button>
+        : <button type="button" className="portal-button" disabled={busy} onClick={start}>{busy ? 'Начинаем…' : 'Начать смену'}<ArrowRight size={16} aria-hidden="true" /></button>}
+    {shifts.length > 0 && <>
+      <h3 className="portal-shift-history-title">История смен</h3>
+      <div className="portal-shift-list">{shifts.map(s => <div key={s.id} className="portal-shift-row">
+        <span className="portal-shift-date">{formatShiftTime(s.started_at)}</span>
+        <span className="portal-shift-arrow">→</span>
+        <span className="portal-shift-date">{s.ended_at ? formatShiftTime(s.ended_at) : 'В процессе'}</span>
+        <span className="portal-shift-dur">{s.duration != null ? formatDuration(s.duration) : '—'}</span>
+      </div>)}</div>
+    </>}
+  </section>;
+}
+
 function Profile({ user, onUserChange }: Props) {
   const [name, setName] = useState(user.name);
   const [phone, setPhone] = useState(phoneDigits(user.phone));
@@ -417,7 +469,7 @@ function OrdersPanel({ user }: { user: User }) {
       <ErrorNotice message={remote.error} retry={remote.retry} />{isAdmin && <ErrorNotice message={couriers.error} retry={couriers.retry} />}
       {remote.loading ? <div className="portal-loading" role="status"><RefreshCw size={22} aria-hidden="true" /> Загружаем заказы…</div> : remote.data && <div className={`portal-orders-layout ${selected ? 'has-selection' : ''} ${!orders.length && !selected ? 'portal-empty-layout' : ''}`}>
         <div className="portal-order-list portal-order-list-fancy">{orders.length ? orders.map(order => <button type="button" key={order.id} className={`portal-order-card ${selected === order.id ? 'selected' : ''}`} aria-pressed={selected === order.id} onClick={() => setSelected(order.id)}>
-          <div className="portal-order-card-top"><span className="portal-order-icon" aria-hidden="true"><Package size={20} strokeWidth={1.6} /></span><strong>Заказ №{order.number}</strong><ChevronRight size={19} aria-hidden="true" /></div><div className="portal-order-date">{dateTime(order.created_at)}</div>
+          <div className="portal-order-card-top"><span className="portal-order-icon" aria-hidden="true"><Package size={20} strokeWidth={1.6} /></span><strong>Заказ №{order.number}</strong><ChevronRight size={19} aria-hidden="true" /></div><div className="portal-order-date">{dateTime(order.created_at)}{order.scheduled_at && <span className="portal-scheduled-badge"> · 📅 {dateTime(order.scheduled_at)}</span>}</div>
           <div className="portal-order-badges"><Status status={order.status} customer={!isStaff} /><PaymentStatusLabel order={order} /></div>
           {isStaff && <BusinessBadge name={order.customer_company} />}
           {isStaff && <p className="portal-order-recipient">{order.recipient_name}<span>{order.address}</span></p>}
@@ -444,6 +496,7 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   const [creditConfirm, setCreditConfirm] = useState(false);
   const [creditAgreed, setCreditAgreed] = useState(false);
   const [agreed, setAgreed] = useState(false);
+  const [nakladnaya, setNakladnaya] = useState<NakladnayaData | null>(null);
   useEffect(() => { setAgreed(false); setCreditConfirm(false); setCreditAgreed(false); }, [remote.data?.status]);
   const paymentKey = useRef<string | null>(null);
   const mutationLock = useRef(false);
@@ -484,7 +537,8 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   const nextStatuses: Record<string, string> = isAdmin ? { NEW: 'CONFIRMED', CONFIRMED: 'PREPARING', PREPARING: 'READY' } : isPastry ? { NEW: 'CONFIRMED', CONFIRMED: 'PREPARING', PREPARING: 'READY' } : isCourier ? { READY: 'HANDED_OVER', HANDED_OVER: 'IN_TRANSIT', IN_TRANSIT: 'DELIVERED' } : {};
   const next = nextStatuses[order.status];
   const nextLabels: Record<string, string> = { CONFIRMED: 'Подтвердить заказ', PREPARING: 'Начать приготовление', READY: 'Заказ готов', HANDED_OVER: 'Забрать заказ из пекарни', IN_TRANSIT: 'Начать доставку', DELIVERED: 'Подтвердить доставку' };
-  return <article ref={detailRef} className="portal-card portal-order-detail portal-detail-fancy"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2>{user.role !== 'CUSTOMER' && <BusinessBadge name={order.customer_company} />}</div><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div>{order.status !== 'CANCELLED' ? <OrderProgress order={order} role={user.role} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
+  const openNakladnaya = () => setNakladnaya({ recipient: order.recipient_name + (order.customer_company ? ` (${order.customer_company})` : ''), date_from: order.created_at.slice(0, 10), date_to: null, rows: order.items.map(item => ({ date: dateTime(order.created_at), number: order.number, name: item.name, quantity: item.quantity, price: String(item.price), total: String(order.total), status: statusLabel[order.status] || order.status, paid: order.payment_status === 'PAID' })) });
+  return <article ref={detailRef} className="portal-card portal-order-detail portal-detail-fancy"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}{order.scheduled_at && <strong className="portal-scheduled-badge"> · Доставка: {dateTime(order.scheduled_at)}</strong>}</p><h2>Заказ №{order.number}</h2>{user.role !== 'CUSTOMER' && <BusinessBadge name={order.customer_company} />}</div><div style={{display:'flex',gap:'4px'}}><button type="button" className="portal-icon-button" aria-label="Накладная по заказу" title="Накладная" onClick={openNakladnaya}><FileText size={20} aria-hidden="true" /></button><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div></div>{nakladnaya && <NakladnayaPrint data={nakladnaya} onClose={() => setNakladnaya(null)} />}{order.status !== 'CANCELLED' ? <OrderProgress order={order} role={user.role} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
     <section className="portal-detail-section"><h3><ShoppingBag size={17} aria-hidden="true" /> Состав заказа<span className="portal-items-count">{positions(order.items.length)}</span></h3><ul className="portal-order-items">{order.items.map(item => <li key={item.id}><div className="portal-item-thumb">{item.image && <LazyImage src={item.image} alt="" />}<em aria-hidden="true">×{item.quantity}</em></div><div><strong>{item.name}</strong><span><mark>{item.quantity} шт.</mark> по {money(item.price)}</span></div><b>{money(Number(item.price) * item.quantity)}</b></li>)}</ul><dl className="portal-totals"><div><dt>Выпечка</dt><dd>{money(order.subtotal)}</dd></div><div><dt>Доставка</dt><dd>{Number(order.delivery_fee) ? money(order.delivery_fee) : 'Бесплатно'}</dd></div><div className="portal-total"><dt>Итого</dt><dd>{money(order.total)}</dd></div></dl></section>
     {order.cancellation_reason && <div className="portal-notice portal-error"><div><strong>Причина отмены</strong><p>{order.cancellation_reason}</p></div></div>}
     <div className="portal-detail-grid">
@@ -514,8 +568,8 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   </article>;
 }
 
-type ProductDraft = { name: string; category: string; description: string; image: string; price: string; wholesale_price: string; weight: string; pieces: string; ingredients: string; allergens: string; is_visible: boolean; is_available: boolean };
-const newProduct: ProductDraft = { name: '', category: '', description: '', image: '', price: '', wholesale_price: '', weight: '', pieces: '', ingredients: '', allergens: '', is_visible: true, is_available: true };
+type ProductDraft = { name: string; name_en: string; name_kk: string; category: string; description: string; description_en: string; description_kk: string; image: string; price: string; wholesale_price: string; weight: string; pieces: string; ingredients: string; allergens: string; is_visible: boolean; is_available: boolean };
+const newProduct: ProductDraft = { name: '', name_en: '', name_kk: '', category: '', description: '', description_en: '', description_kk: '', image: '', price: '', wholesale_price: '', weight: '', pieces: '', ingredients: '', allergens: '', is_visible: true, is_available: true };
 function ProductsPanel() {
   const remote = useRemote<Product[]>('/admin/products/');
   const categories = useRemote<Category[]>('/admin/categories/');
@@ -530,7 +584,7 @@ function ProductsPanel() {
   const [error, setError] = useState('');
   const [notice, setNotice] = useState('');
   const [confirming, setConfirming] = useState<number | null>(null);
-  const start = (product: Product | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(product); setError(''); setNotice(''); setDraft(product === 'new' ? { ...newProduct, category: String(categories.data?.[0]?.id || '') } : { ...product, category: String(product.category), price: String(product.price), wholesale_price: product.wholesale_price == null ? '' : String(product.wholesale_price), pieces: product.pieces == null ? '' : String(product.pieces) }); };
+  const start = (product: Product | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(product); setError(''); setNotice(''); setDraft(product === 'new' ? { ...newProduct, category: String(categories.data?.[0]?.id || '') } : { ...product, name_en: product.name_en ?? '', name_kk: product.name_kk ?? '', description_en: product.description_en ?? '', description_kk: product.description_kk ?? '', category: String(product.category), price: String(product.price), wholesale_price: product.wholesale_price == null ? '' : String(product.wholesale_price), pieces: product.pieces == null ? '' : String(product.pieces) }); };
   const field = (key: keyof ProductDraft, value: string | boolean) => setDraft(current => ({ ...current, [key]: value }));
   const choosePhoto = (file?: File) => {
     if (!file) return;
@@ -547,7 +601,7 @@ function ProductsPanel() {
   };
   const save = async (event: FormEvent) => {
     event.preventDefault(); setError(''); setBusy(true);
-    try { await api(`/admin/products/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), category: Number(draft.category), wholesale_price: draft.wholesale_price.trim() ? draft.wholesale_price.trim() : null, pieces: draft.pieces.trim() ? Number(draft.pieces) : null }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Товар сохранён.'); remote.retry(); }
+    try { await api(`/admin/products/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), name_en: draft.name_en.trim(), name_kk: draft.name_kk.trim(), description_en: draft.description_en.trim(), description_kk: draft.description_kk.trim(), category: Number(draft.category), wholesale_price: draft.wholesale_price.trim() ? draft.wholesale_price.trim() : null, pieces: draft.pieces.trim() ? Number(draft.pieces) : null }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Товар сохранён.'); remote.retry(); }
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
@@ -609,8 +663,8 @@ function ProductsPanel() {
   </section>;
 }
 
-type CategoryDraft = { name: string; slug: string; description: string; image: string; is_visible: boolean };
-const newCategory: CategoryDraft = { name: '', slug: '', description: '', image: '', is_visible: true };
+type CategoryDraft = { name: string; name_en: string; name_kk: string; slug: string; description: string; description_en: string; description_kk: string; image: string; is_visible: boolean };
+const newCategory: CategoryDraft = { name: '', name_en: '', name_kk: '', slug: '', description: '', description_en: '', description_kk: '', image: '', is_visible: true };
 function CategoriesPanel() {
   const remote = useRemote<Category[]>('/admin/categories/');
   const [editing, setEditing] = useState<Category | 'new' | null>(null);
@@ -632,11 +686,11 @@ function CategoriesPanel() {
   };
   const save = async (event: FormEvent) => {
     event.preventDefault(); setError(''); setBusy(true);
-    try { await api(`/admin/categories/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), slug: draft.slug.trim() }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Категория сохранена.'); remote.retry(); }
+    try { await api(`/admin/categories/${editing !== 'new' && editing ? `${editing.id}/` : ''}`, json({ ...draft, name: draft.name.trim(), name_en: draft.name_en.trim(), name_kk: draft.name_kk.trim(), slug: draft.slug.trim(), description_en: draft.description_en.trim(), description_kk: draft.description_kk.trim() }, editing === 'new' ? 'POST' : 'PATCH')); setEditing(null); setNotice('Категория сохранена.'); remote.retry(); }
     catch (err) { setError(failure(err)); }
     finally { setBusy(false); }
   };
-  const start = (category: Category | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(category); setDraft(category === 'new' ? newCategory : category); setError(''); setNotice(''); };
+  const start = (category: Category | 'new', trigger: HTMLElement) => { editor.rememberTrigger(trigger); setEditing(category); setDraft(category === 'new' ? newCategory : { ...category, name_en: category.name_en || '', name_kk: category.name_kk || '', description_en: category.description_en || '', description_kk: category.description_kk || '' }); setError(''); setNotice(''); };
   const toggle = async (category: Category) => {
     setError(''); setBusy(true);
     try { await api(`/admin/categories/${category.id}/`, json({ is_visible: !category.is_visible }, 'PATCH')); remote.retry(); }
@@ -650,14 +704,98 @@ function CategoriesPanel() {
     finally { setBusy(false); }
   };
   return <section><div className="portal-section-title"><div><p className="portal-eyebrow">ПОРЯДОК НА ВИТРИНЕ</p><h2>Категории</h2></div><button className="portal-button" disabled={busy} onClick={event => start('new', event.currentTarget)}><Plus size={17} aria-hidden="true" /> Добавить категорию</button></div><ErrorNotice message={remote.error} retry={remote.retry} />{!editing && <ErrorNotice message={error} />}{notice && <p className="portal-success" role="status"><Check size={17} aria-hidden="true" />{notice}</p>}
-    {editing && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{editing === 'new' ? 'Новая категория' : 'Редактировать категорию'}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть редактирование категории" onClick={() => setEditing(null)}><X size={20} aria-hidden="true" /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Название<input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} required maxLength={120} /></label><label>Адрес категории<input value={draft.slug} onChange={e => setDraft({ ...draft, slug: e.target.value })} required pattern="[a-z0-9_\-]+" placeholder="croissants" maxLength={50} /><small>Латинские буквы, цифры, дефис или подчёркивание.</small></label><label className="portal-wide">Описание<textarea value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} maxLength={3000} /></label><div className="portal-wide portal-photo"><span>Фотография категории</span>{draft.image && <img src={draft.image} alt="" className="portal-photo-preview" />}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy} onChange={e => { void chooseCategoryPhoto(e.target.files?.[0]); e.target.value = ''; }} /><small>{photoBusy ? 'Загружаем фото…' : 'JPEG, PNG или WebP с компьютера или телефона. Фото автоматически уменьшится.'}</small></div></div><div className="portal-checks"><label><input type="checkbox" checked={draft.is_visible} onChange={e => setDraft({ ...draft, is_visible: e.target.checked })} /> Показывать в каталоге</label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || photoBusy || !draft.name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить категорию'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setEditing(null)}>Отмена</button></div></fieldset></form></section>}
+    {editing && <section ref={editor.ref} tabIndex={-1} className="portal-card portal-editor"><div className="portal-section-title"><h3>{editing === 'new' ? 'Новая категория' : 'Редактировать категорию'}</h3><button className="portal-icon-button" disabled={busy} aria-label="Закрыть редактирование категории" onClick={() => setEditing(null)}><X size={20} aria-hidden="true" /></button></div><form className="portal-form" onSubmit={save}><fieldset className="portal-form-fields" disabled={busy}><div className="portal-form-grid"><label>Название (русский)<input value={draft.name} onChange={e => setDraft({ ...draft, name: e.target.value })} required maxLength={120} placeholder="Круассаны" /></label><label>Name (English)<input value={draft.name_en} onChange={e => setDraft({ ...draft, name_en: e.target.value })} maxLength={120} placeholder="Croissants" /></label><label>Атауы (қазақша)<input value={draft.name_kk} onChange={e => setDraft({ ...draft, name_kk: e.target.value })} maxLength={120} placeholder="Круассандар" /></label><label>Адрес категории<input value={draft.slug} onChange={e => setDraft({ ...draft, slug: e.target.value })} required pattern="[a-z0-9_\-]+" placeholder="croissants" maxLength={50} /><small>Латинские буквы, цифры, дефис или подчёркивание.</small></label><label className="portal-wide">Описание (русский)<textarea value={draft.description} onChange={e => setDraft({ ...draft, description: e.target.value })} maxLength={3000} /></label><label className="portal-wide">Description (English)<textarea value={draft.description_en} onChange={e => setDraft({ ...draft, description_en: e.target.value })} maxLength={3000} /></label><label className="portal-wide">Сипаттама (қазақша)<textarea value={draft.description_kk} onChange={e => setDraft({ ...draft, description_kk: e.target.value })} maxLength={3000} /></label><div className="portal-wide portal-photo"><span>Фотография категории</span>{draft.image && <img src={draft.image} alt="" className="portal-photo-preview" />}<input type="file" accept="image/jpeg,image/png,image/webp" disabled={photoBusy} onChange={e => { void chooseCategoryPhoto(e.target.files?.[0]); e.target.value = ''; }} /><small>{photoBusy ? 'Загружаем фото…' : 'JPEG, PNG или WebP с компьютера или телефона. Фото автоматически уменьшится.'}</small></div></div><div className="portal-checks"><label><input type="checkbox" checked={draft.is_visible} onChange={e => setDraft({ ...draft, is_visible: e.target.checked })} /> Показывать в каталоге</label></div><ErrorNotice message={error} /><div className="portal-form-actions"><button className="portal-button" disabled={busy || photoBusy || !draft.name.trim()}>{busy ? 'Сохраняем…' : 'Сохранить категорию'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setEditing(null)}>Отмена</button></div></fieldset></form></section>}
     {remote.loading ? <p className="portal-loading" role="status">Загружаем категории…</p> : remote.data && <div className="portal-manage-list">{remote.data?.length ? remote.data.map(category => <article className="portal-manage-row" key={category.id}><div className="portal-category-image">{category.image ? <LazyImage src={category.image} alt="" /> : <LayoutGrid size={23} aria-hidden="true" />}</div><div className="portal-manage-main"><h3>{category.name}</h3><p>{category.description || `/${category.slug}`}</p><span className="portal-help">{category.is_visible ? 'Видна в каталоге' : 'Скрыта из каталога'}</span>{confirming === category.id && <div className="portal-product-confirm portal-category-confirm"><p>Удалить категорию «{category.name}» навсегда? Это действие нельзя отменить. Категорию с товарами удалить нельзя — сначала перенесите или удалите товары.</p><div><button className="portal-button portal-button-danger" disabled={busy} onClick={() => void remove(category)}>{busy ? 'Удаляем…' : 'Удалить'}<Trash2 size={16} aria-hidden="true" /></button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setConfirming(null)}>Отмена</button></div></div>}</div><div className="portal-row-actions"><button className="portal-icon-button" disabled={busy} aria-label={`Изменить категорию «${category.name}»`} onClick={event => start(category, event.currentTarget)}><Pencil size={18} aria-hidden="true" /></button><button className="portal-icon-button" disabled={busy} aria-label={`${category.is_visible ? 'Скрыть' : 'Показать'} категорию «${category.name}»`} onClick={() => void toggle(category)}>{category.is_visible ? <Eye size={18} aria-hidden="true" /> : <EyeOff size={18} aria-hidden="true" />}</button><button className="portal-icon-button portal-delete" disabled={busy} aria-label={`Удалить категорию «${category.name}»`} title="Удалить категорию" onClick={() => { setConfirming(category.id); setError(''); setNotice(''); }}><Trash2 size={18} aria-hidden="true" /></button></div></article>) : <EmptyState icon={<LayoutGrid size={30} aria-hidden="true" />} title="Первая категория ждёт">Добавьте категории, чтобы покупателям было проще найти любимую выпечку.</EmptyState>}</div>}
   </section>;
 }
 
 type BusinessAccount = { id: number; name: string; email: string; phone: string; company_name: string; business_approved: boolean; date_joined?: string; orders_count?: number | null; delivered_total?: string | null; last_order_at?: string | null };
+type NakladnayaRow = { date: string; number: string; name: string; quantity: number; price: string; total: string; status: string; paid: boolean };
+type NakladnayaData = { recipient: string; date_from: string | null; date_to: string | null; rows: NakladnayaRow[] };
+
+function NakladnayaPrint({ data, onClose }: { data: NakladnayaData; onClose: () => void }) {
+  const seenOrder = new Set<string>();
+  return createPortal(
+    <div className="nakladnaya-overlay">
+      <div className="nakladnaya-toolbar no-print">
+        <button type="button" className="portal-button" onClick={() => window.print()}><FileText size={16} aria-hidden="true" />Печать / PDF</button>
+        <button type="button" className="product-secondary" onClick={onClose}><X size={16} aria-hidden="true" />Закрыть</button>
+      </div>
+      <div className="nakladnaya-doc">
+        <div className="nakladnaya-header">
+          <h1>Товарная накладная</h1>
+          <div className="nakladnaya-num">
+            <span>№ <span className="nakladnaya-line" /></span>
+            <span>Дата оформления <span className="nakladnaya-line">{[data.date_from, data.date_to].filter(Boolean).join(' — ')}</span></span>
+          </div>
+        </div>
+        <div className="nakladnaya-meta">
+          <p>Поставщик <strong>ANAŞIM</strong></p>
+          <p>Получатель <strong>{data.recipient}</strong></p>
+        </div>
+        <table className="nakladnaya-table">
+          <thead><tr><th>№</th><th>Дата</th><th>Товар</th><th>Кол-во, шт.</th><th>Цена, ₸</th><th>Сумма, ₸</th><th>Итого, ₸</th><th>Статус</th><th>Оплата</th></tr></thead>
+          <tbody>
+            {data.rows.length ? data.rows.map((row, i) => {
+              const first = !seenOrder.has(row.number);
+              if (first) seenOrder.add(row.number);
+              return <tr key={i}>
+                <td>{i + 1}</td><td>{first ? row.date : ''}</td><td className="nakladnaya-name">{row.name}</td>
+                <td>{row.quantity}</td><td>{money(row.price)}</td><td>{money(Number(row.price) * row.quantity)}</td>
+                <td>{first ? money(row.total) : ''}</td><td>{first ? row.status : ''}</td><td>{first ? (row.paid ? 'Оплачен' : 'Не оплачен') : ''}</td>
+              </tr>;
+            }) : <tr><td colSpan={9} className="nakladnaya-empty">Нет заказов за выбранный период</td></tr>}
+          </tbody>
+        </table>
+        <div className="nakladnaya-sigs">
+          {(['Отпустил', 'Принял'] as const).map(label => <div key={label}>
+            <p><strong>{label}</strong></p>
+            <div className="nakladnaya-sig-line"><span /><span /></div>
+            <div className="nakladnaya-sig-labels"><small>Подпись</small><small>Ф. И. О.</small></div>
+          </div>)}
+        </div>
+      </div>
+    </div>,
+    document.body,
+  );
+}
 
 /** Administrator's list of business accounts. Wholesale prices open only after approval here. */
+function InvoiceDownload({ accountId }: { accountId: number }) {
+  const [open, setOpen] = useState(false);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [preview, setPreview] = useState<NakladnayaData | null>(null);
+  const [loading, setLoading] = useState(false);
+  const close = () => { setOpen(false); setFrom(''); setTo(''); setPreview(null); };
+  const fetchNakladnaya = async () => {
+    setLoading(true);
+    try {
+      const params = new URLSearchParams();
+      if (from) params.set('date_from', from);
+      if (to) params.set('date_to', to);
+      const qs = params.toString();
+      setPreview(await api<NakladnayaData>(`/admin/businesses/${accountId}/orders-nakladnaya/${qs ? '?' + qs : ''}`));
+    } catch { /* fall through — user can retry */ }
+    finally { setLoading(false); }
+  };
+  if (preview) return <NakladnayaPrint data={preview} onClose={close} />;
+  if (!open) return <button type="button" className="product-secondary" onClick={() => setOpen(true)}><Download size={16} aria-hidden="true" />Скачать накладную</button>;
+  const params = new URLSearchParams();
+  if (from) params.set('date_from', from);
+  if (to) params.set('date_to', to);
+  const qs = params.toString();
+  const datesReversed = !!(from && to && from > to);
+  return <div className="invoice-download">
+    <label>С <input type="date" value={from} onChange={e => setFrom(e.target.value)} max={to || undefined} /></label>
+    <label>По <input type="date" value={to} onChange={e => setTo(e.target.value)} min={from || undefined} /></label>
+    {datesReversed && <p className="invoice-date-error">Дата «С» позже даты «По»</p>}
+    <button type="button" className="portal-button" disabled={loading || datesReversed} onClick={() => void fetchNakladnaya()}><FileText size={16} aria-hidden="true" />{loading ? 'Загружаем…' : 'Накладная'}</button>
+    <a href={`/api/admin/businesses/${accountId}/orders-csv/${qs ? '?' + qs : ''}`} className="product-secondary" download aria-disabled={datesReversed} style={datesReversed ? {pointerEvents:'none',opacity:.4} : undefined}><Download size={16} aria-hidden="true" />CSV</a>
+    <button type="button" className="invoice-close" onClick={close} aria-label="Закрыть"><X size={14} /></button>
+  </div>;
+}
+
 function BusinessPanel() {
   const remote = useRemote<BusinessAccount[]>('/admin/businesses/');
   const [busy, setBusy] = useState<number | null>(null);
@@ -707,7 +845,9 @@ function BusinessPanel() {
       </div>
       <div className="business-actions">{account.business_approved
         ? <button type="button" className="product-secondary" disabled={busy !== null} onClick={() => void setApproved(account, false)}>{busy === account.id ? 'Сохраняем…' : 'Вернуть розничные цены'}</button>
-        : <button type="button" className="portal-button" disabled={busy !== null} onClick={() => void setApproved(account, true)}>{busy === account.id ? 'Сохраняем…' : 'Открыть оптовые цены'}<Check size={16} aria-hidden="true" /></button>}</div>
+        : <button type="button" className="portal-button" disabled={busy !== null} onClick={() => void setApproved(account, true)}>{busy === account.id ? 'Сохраняем…' : 'Открыть оптовые цены'}<Check size={16} aria-hidden="true" /></button>}
+        {(account.orders_count ?? 0) > 0 && <InvoiceDownload accountId={account.id} />}
+      </div>
     </article>)}</div>}
   </section>;
 }
@@ -753,11 +893,9 @@ function StaffPanel({ kind }: { kind: keyof typeof staffText }) {
     if (lock.current) return;
     lock.current = true; setError(''); setBusy(true); setNotice('');
     try {
-      const result = await api<{ moved_orders: number; waiting_orders: number }>(`${endpoint}${person.id}/`, { method: 'DELETE' });
+      await api(`${endpoint}${person.id}/`, { method: 'DELETE' });
       remote.replace((remote.data || []).filter(item => item.id !== person.id));
-      const moved = result?.moved_orders ? ` Незавершённые заказы переданы другим курьерам: ${result.moved_orders}.` : '';
-      const waiting = result?.waiting_orders ? ` Ждут свободного курьера: ${result.waiting_orders}.` : '';
-      setRemoving(null); setNotice(`${person.name} удалён(а) из команды. В истории заказов и чеках имя сохранено.${moved}${waiting}`); remote.retry();
+      setRemoving(null); setNotice(`${person.name} удалён(а) из команды.`); remote.retry();
     } catch (err) { setRemoving(null); setError(failure(err)); }
     finally { lock.current = false; setBusy(false); }
   };
@@ -789,7 +927,7 @@ function StaffPanel({ kind }: { kind: keyof typeof staffText }) {
         <div className="staff-actions"><button type="button" className="product-secondary" disabled={busy} onClick={() => setAdding(false)}>Отмена</button><button className="portal-button" disabled={busy || !draft.name.trim() || mismatch}>{busy ? 'Добавляем…' : addLabel}<Plus size={17} aria-hidden="true" /></button></div>
       </fieldset></form>
     </section>}
-    {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><button type="button" className="staff-open" onClick={() => setProfileId(person.id)} aria-label={`Открыть профиль: ${person.name}`}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><p>{person.phone}</p><span className="staff-open-hint">Открыть профиль<ChevronRight size={14} aria-hidden="true" /></span></div></button><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button>{removing?.id !== person.id && <button type="button" className="portal-text-button portal-danger-text" disabled={busy} onClick={() => { setRemoving({ id: person.id, step: 1 }); setError(''); setNotice(''); }}>Удалить</button>}</div>{removing?.id === person.id && <div className="portal-staff-delete" role="alertdialog" aria-label={`Удаление сотрудника ${person.name}`}>{removing.step === 1 ? <><p>Удалить сотрудника <strong>{person.name}</strong> ({person.email})?</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => setRemoving({ id: person.id, step: 2 })}>Да, удалить</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Отмена</button></div></> : <><p><strong>Точно удалить {person.name}?</strong> Сотрудник больше не сможет войти и пропадёт из списка, восстановить аккаунт будет нельзя. В истории заказов и чеках его имя останется.{kind === 'couriers' ? ' Заказы, которые он сейчас везёт или ещё не забрал, сразу перейдут другим свободным курьерам.' : ''}</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => void remove(person)}>{busy ? 'Удаляем…' : 'Удалить навсегда'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Не удалять</button></div></>}</div>}</article>) : <EmptyState icon={kind === 'cashiers' ? <Banknote size={30} aria-hidden="true" /> : kind === 'pastry-chefs' ? <ChefHat size={30} aria-hidden="true" /> : <Truck size={30} aria-hidden="true" />} title={text.empty}>{text.emptyText}</EmptyState>}</div>}
+    {remote.loading ? <p className="portal-loading" role="status">Загружаем команду…</p> : remote.data && <div className="portal-manage-list">{remote.data.length ? remote.data.map(person => <article className="portal-manage-row" key={person.id}><button type="button" className="staff-open" onClick={() => setProfileId(person.id)} aria-label={`Открыть профиль: ${person.name}`}><div className="portal-avatar">{person.name.charAt(0).toUpperCase()}</div><div className="portal-manage-main"><h3>{person.name}</h3><p>{person.email}</p><p>{person.phone}</p><span className="staff-open-hint">Открыть профиль<ChevronRight size={14} aria-hidden="true" /></span></div></button><div className="portal-courier-controls"><span className={`portal-status ${person.is_active ? 'status-delivered' : 'status-cancelled'}`}><i />{person.is_active ? 'Активен' : 'Заблокирован'}</span><button className="portal-text-button" disabled={busy} onClick={() => void toggle(person)}>{person.is_active ? 'Заблокировать' : 'Восстановить доступ'}</button>{removing?.id !== person.id && <button type="button" className="portal-text-button portal-danger-text" disabled={busy} onClick={() => { setRemoving({ id: person.id, step: 1 }); setError(''); setNotice(''); }}>Удалить</button>}</div>{removing?.id === person.id && <div className="portal-staff-delete" role="alertdialog" aria-label={`Удаление сотрудника ${person.name}`}>{removing.step === 1 ? <><p>Удалить сотрудника <strong>{person.name}</strong> ({person.email})?</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => setRemoving({ id: person.id, step: 2 })}>Да, удалить</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Отмена</button></div></> : <><p><strong>Точно удалить {person.name}?</strong> Сотрудник больше не сможет войти и пропадёт из списка, восстановить аккаунт будет нельзя. В истории заказов и чеках его имя останется.{kind === 'couriers' ? ' Если у курьера есть активные заказы, сначала переназначьте их.' : ''}</p><div className="portal-form-actions"><button type="button" className="portal-button portal-button-small portal-button-danger" disabled={busy} onClick={() => void remove(person)}>{busy ? 'Удаляем…' : 'Удалить навсегда'}</button><button type="button" className="portal-text-button" disabled={busy} onClick={() => setRemoving(null)}>Не удалять</button></div></>}</div>}</article>) : <EmptyState icon={kind === 'cashiers' ? <Banknote size={30} aria-hidden="true" /> : kind === 'pastry-chefs' ? <ChefHat size={30} aria-hidden="true" /> : <Truck size={30} aria-hidden="true" />} title={text.empty}>{text.emptyText}</EmptyState>}</div>}
     {profileId !== null && <StaffProfile kind={kind} id={profileId} onClose={() => setProfileId(null)} />}
   </section>;
 }
