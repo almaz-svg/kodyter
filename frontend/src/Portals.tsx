@@ -539,8 +539,8 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   const openNakladnaya = () => setNakladnaya({
     number: order.number,
     date: new Date(order.created_at).toLocaleDateString('ru-RU'),
-    recipient: order.customer_company ? `«${order.customer_company}»` : order.recipient_name,
-    recipientNote: [order.customer_company ? order.recipient_name : '', order.phone].filter(Boolean).join(', '),
+    recipient: order.customer_company ? `«${order.customer_company}», ${order.recipient_name}` : order.recipient_name,
+    recipientNote: order.phone,
     lines: [...order.items.filter(item => !item.is_missing).map(item => ({ name: item.name, quantity: item.quantity, price: Number(item.price) })), ...(Number(order.delivery_fee) > 0 ? [{ name: 'Доставка', quantity: 1, price: Number(order.delivery_fee) }] : [])],
   });
   return <article ref={detailRef} className="portal-card portal-order-detail portal-detail-fancy"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2>{user.role !== 'CUSTOMER' && <BusinessBadge name={order.customer_company} />}</div><div style={{display:'flex',gap:'4px'}}><button type="button" className="portal-icon-button" aria-label="Накладная по заказу" title="Накладная" onClick={openNakladnaya}><FileText size={20} aria-hidden="true" /></button><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div></div>{nakladnaya && <NakladnayaPrint doc={nakladnaya} onClose={() => setNakladnaya(null)} />}{order.status !== 'CANCELLED' ? <OrderProgress order={order} role={user.role} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
@@ -817,7 +817,7 @@ function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => 
         <div className="nakladnaya-meta">
           <p><span className="nakladnaya-label">Поставщик</span><strong>ANAŞIM</strong></p>
           <p><span className="nakladnaya-label">Получатель</span><span className="nakladnaya-line nakladnaya-line-wide">{doc.recipient}</span></p>
-          <p className="nakladnaya-recipient-note"><span>(</span><span className="nakladnaya-line">{doc.recipientNote}</span><span>)</span></p>
+          <p className="nakladnaya-recipient-phone"><span className="nakladnaya-label">Номер тел. получателя</span><span className="nakladnaya-line">{doc.recipientNote}</span></p>
         </div>
         <table className="nakladnaya-table">
           <thead><tr><th>№</th><th>Наименование товара</th><th>Кол-во, шт.</th><th>Цена, ₸</th><th>Сумма, ₸</th></tr></thead>
