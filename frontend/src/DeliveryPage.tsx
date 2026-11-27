@@ -1,15 +1,13 @@
-import {useEffect, useState} from 'react';
 import {Link} from 'react-router-dom';
 import {ArrowRight, Truck, Wallet, ShoppingBag, ClipboardCheck, ChefHat, PackageCheck, HandCoins, BadgeCheck, LayoutDashboard} from 'lucide-react';
 import {Branch, Ornament} from './ui';
-import {api, money} from './lib';
 import {useI18n} from './i18n';
 import './about-page.css';
 import './delivery-page.css';
 
 type Content = {
   intro: string;
-  deliveryTitle: string; deliverySub: string; deliveryP1: string; feeLabel: string; feeNote: string; deliveryP2: string;
+  deliveryTitle: string; deliverySub: string; deliveryP1: string; feeLabel: string; feeValue: string; feeFacts: string[]; deliveryP2: string;
   paymentTitle: string; paymentSub: string; paymentP1: string; paymentP2: string; paymentP3: string;
   stepsEyebrow: string; stepsTitle: string;
   steps: {title: string; text: string}[];
@@ -22,8 +20,9 @@ const CONTENT: Record<'ru' | 'kz' | 'en', Content> = {
     intro: 'В Anasym мы заботимся не только о вкусе наших изделий, но и о том, чтобы процесс заказа был для вас максимально простым и удобным. Выбирайте любимую выпечку и десерты, а мы позаботимся об остальном.',
     deliveryTitle: 'Доставка', deliverySub: 'Любимые вкусы становятся ближе.',
     deliveryP1: 'Необязательно выходить из дома, чтобы порадовать себя свежей и ароматной выпечкой. Мы с удовольствием доставим ваши любимые изделия прямо к вашему порогу, чтобы вы могли уделить больше времени себе и близким.',
-    feeLabel: 'Стоимость доставки', feeNote: 'указывается до подтверждения заказа',
-    deliveryP2: 'После оформления наш оператор уточнит с вами удобное время, адрес и все необходимые детали. Мы бережно относимся к каждому заказу, чтобы ваши десерты приехали в надлежащем виде.',
+    feeLabel: 'Стоимость доставки', feeValue: 'по тарифу Яндекса',
+    feeFacts: ['Зависит от адреса, расстояния и времени', 'Ориентировочно — около 1 500 ₸', 'Оплачивается отдельно от заказа'],
+    deliveryP2: 'После оформления наш оператор уточнит с вами удобное время, адрес и все необходимые детали, а затем передаст заказ курьеру Яндекс Доставки. Мы бережно относимся к каждому заказу, чтобы ваши десерты приехали в надлежащем виде.',
     paymentTitle: 'Оплата', paymentSub: 'Всё просто, удобно и прозрачно.',
     paymentP1: 'Мы хотим, чтобы покупка любимых десертов приносила только приятные эмоции. Поэтому в Anasym вы можете оформить заказ заранее, а оплатить его непосредственно при получении.',
     paymentP2: 'Все цены на сайте указаны в тенге, без скрытых доплат.',
@@ -33,7 +32,7 @@ const CONTENT: Record<'ru' | 'kz' | 'en', Content> = {
       {title: 'Выберите изделия', text: 'Добавьте любимую выпечку и десерты из каталога в корзину.'},
       {title: 'Оформите заказ', text: 'Укажите адрес и контакты — заказ сразу появится в личном кабинете.'},
       {title: 'Подтверждение и подготовка', text: 'Оператор уточнит детали, администратор подтвердит заказ и передаст его на подготовку.'},
-      {title: 'Доставка и оплата', text: 'Курьер привезёт заказ к вашей двери, а оплатить его можно при получении.'},
+      {title: 'Доставка и оплата', text: 'Курьер Яндекс Доставки привезёт заказ к вашей двери. Заказ оплачивается при получении, доставка — по тарифу Яндекса.'},
     ],
     facts: ['Оплата при получении', 'Цены в тенге без доплат', 'Статус заказа в кабинете'],
     closingA: 'Anasym — мы заботимся о деталях,', closingB: 'чтобы вам оставалось наслаждаться вкусом.',
@@ -43,8 +42,9 @@ const CONTENT: Record<'ru' | 'kz' | 'en', Content> = {
     intro: 'Anasym-да біз бұйымдарымыздың дәмі туралы ғана емес, тапсырыс беру сіз үшін барынша қарапайым әрі ыңғайлы болуы туралы да қамқорлық жасаймыз. Сүйікті тоқаштар мен десерттерді таңдаңыз, қалғанын біз өз мойнымызға аламыз.',
     deliveryTitle: 'Жеткізу', deliverySub: 'Сүйікті дәмдер жақындай түседі.',
     deliveryP1: 'Жаңа піскен хош иісті тоқашпен өзіңізді қуанту үшін үйден шығудың қажеті жоқ. Сүйікті бұйымдарыңызды есігіңізге дейін қуана жеткіземіз — өзіңізге және жақындарыңызға көбірек уақыт бөлуіңіз үшін.',
-    feeLabel: 'Жеткізу құны', feeNote: 'тапсырыс расталғанға дейін көрсетіледі',
-    deliveryP2: 'Тапсырыс бергеннен кейін операторымыз сізбен ыңғайлы уақытты, мекенжайды және барлық қажетті мәліметтерді нақтылайды. Десерттеріңіз тиісті күйде жетуі үшін әр тапсырысқа ұқыпты қараймыз.',
+    feeLabel: 'Жеткізу құны', feeValue: 'Яндекс тарифі бойынша',
+    feeFacts: ['Мекенжайға, қашықтыққа және уақытқа байланысты', 'Шамамен — 1 500 ₸ шамасында', 'Тапсырыстан бөлек төленеді'],
+    deliveryP2: 'Тапсырыс бергеннен кейін операторымыз сізбен ыңғайлы уақытты, мекенжайды және барлық қажетті мәліметтерді нақтылап, тапсырысты Яндекс Жеткізу курьеріне береді. Десерттеріңіз тиісті күйде жетуі үшін әр тапсырысқа ұқыпты қараймыз.',
     paymentTitle: 'Төлем', paymentSub: 'Бәрі қарапайым, ыңғайлы әрі ашық.',
     paymentP1: 'Сүйікті десерттерді сатып алу тек жағымды әсер сыйлағанын қалаймыз. Сондықтан Anasym-да тапсырысты алдын ала рәсімдеп, төлемін алған кезде жасай аласыз.',
     paymentP2: 'Сайттағы барлық баға теңгемен көрсетілген, жасырын үстемақысыз.',
@@ -54,7 +54,7 @@ const CONTENT: Record<'ru' | 'kz' | 'en', Content> = {
       {title: 'Бұйымдарды таңдаңыз', text: 'Каталогтан сүйікті тоқаштар мен десерттерді себетке қосыңыз.'},
       {title: 'Тапсырысты рәсімдеңіз', text: 'Мекенжай мен байланыс деректерін көрсетіңіз — тапсырыс бірден кабинетте пайда болады.'},
       {title: 'Растау және дайындау', text: 'Оператор мәліметтерді нақтылайды, әкімші тапсырысты растап, дайындауға береді.'},
-      {title: 'Жеткізу және төлем', text: 'Курьер тапсырысты есігіңізге дейін әкеледі, ал төлемді алған кезде жасауға болады.'},
+      {title: 'Жеткізу және төлем', text: 'Яндекс Жеткізу курьері тапсырысты есігіңізге дейін әкеледі. Тапсырыс алған кезде төленеді, жеткізу — Яндекс тарифі бойынша.'},
     ],
     facts: ['Алған кезде төлеу', 'Теңгедегі баға, үстемақысыз', 'Тапсырыс мәртебесі кабинетте'],
     closingA: 'Anasym — біз әр бөлшекке қамқорлық жасаймыз,', closingB: 'сізге тек дәмнен ләззат алу қалсын.',
@@ -64,8 +64,9 @@ const CONTENT: Record<'ru' | 'kz' | 'en', Content> = {
     intro: 'At Anasym we care not only about how our treats taste, but also about making ordering as simple and convenient as possible. Choose your favourite pastries and desserts — we will take care of the rest.',
     deliveryTitle: 'Delivery', deliverySub: 'Your favourite flavours, closer than ever.',
     deliveryP1: 'You do not have to leave home to treat yourself to fresh, fragrant pastries. We will gladly bring your favourite treats right to your door, so you can spend more time on yourself and your loved ones.',
-    feeLabel: 'Delivery fee', feeNote: 'shown before your order is confirmed',
-    deliveryP2: 'Once you place an order, our operator will confirm a convenient time, the address and every detail with you. We handle each order with care so your desserts arrive just as they should.',
+    feeLabel: 'Delivery fee', feeValue: 'at the Yandex tariff',
+    feeFacts: ['Depends on the address, distance and time', 'Roughly about 1 500 ₸', 'Paid separately from the order'],
+    deliveryP2: 'Once you place an order, our operator will confirm a convenient time, the address and every detail with you, then hand the order to a Yandex Delivery courier. We handle each order with care so your desserts arrive just as they should.',
     paymentTitle: 'Payment', paymentSub: 'Simple, convenient and transparent.',
     paymentP1: 'We want buying your favourite desserts to bring nothing but joy. That is why at Anasym you can place your order in advance and pay for it on delivery.',
     paymentP2: 'All prices on the site are in tenge, with no hidden extras.',
@@ -75,7 +76,7 @@ const CONTENT: Record<'ru' | 'kz' | 'en', Content> = {
       {title: 'Choose your treats', text: 'Add your favourite pastries and desserts from the catalog to the cart.'},
       {title: 'Place the order', text: 'Enter your address and contacts — the order appears in your account right away.'},
       {title: 'Confirmation and preparation', text: 'The operator confirms the details; the administrator approves the order and sends it for preparation.'},
-      {title: 'Delivery and payment', text: 'A courier brings the order to your door, and you pay on delivery.'},
+      {title: 'Delivery and payment', text: 'A Yandex Delivery courier brings the order to your door. You pay for the order on delivery; delivery is charged at the Yandex tariff.'},
     ],
     facts: ['Pay on delivery', 'Prices in tenge, no extras', 'Order status in your account'],
     closingA: 'Anasym — we take care of the details,', closingB: 'so all that is left for you is to enjoy the flavour.',
@@ -89,15 +90,8 @@ const FACT_ICONS = [HandCoins, BadgeCheck, LayoutDashboard];
 export default function DeliveryPage() {
   const {t, lang} = useI18n();
   const c = CONTENT[lang];
-  const [fee, setFee] = useState<string | number>(1500);
   const [titleLead, titleAccent] = t.infoDeliveryTitle.split(/\s*—\s*/);
 
-  // The fee comes from the store settings so the page never disagrees with checkout.
-  useEffect(() => {
-    let alive = true;
-    api<{delivery_fee: string}>('/settings/').then(s => { if (alive && s?.delivery_fee) setFee(s.delivery_fee); }).catch(() => {});
-    return () => { alive = false; };
-  }, []);
 
   return (
     <main className="about-page delivery-page">
@@ -118,9 +112,9 @@ export default function DeliveryPage() {
           <p className="dp-sub">{c.deliverySub}</p>
           <p>{c.deliveryP1}</p>
           <div className="dp-fee">
-            <span>{c.feeLabel}</span>
-            <strong>{money(fee)}</strong>
-            <small>{c.feeNote}</small>
+            <div className="dp-fee-head"><span>{c.feeLabel}</span><b className="dp-fee-badge">{lang === 'en' ? 'Yandex Delivery' : lang === 'kz' ? 'Яндекс Жеткізу' : 'Яндекс Доставка'}</b></div>
+            <strong>{c.feeValue}</strong>
+            <ul>{c.feeFacts.map(fact => <li key={fact}>{fact}</li>)}</ul>
           </div>
           <p>{c.deliveryP2}</p>
         </article>

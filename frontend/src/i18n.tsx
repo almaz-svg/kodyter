@@ -214,6 +214,7 @@ export interface Translations {
   checkoutCommentPl: string;
   checkoutDeliveryNote: string;
   checkoutDeliveryDemo: string;
+  deliverySeparate: string;
   checkoutOrderTitle: string;
   checkoutRefreshBtn: string;
   checkoutRefreshing: string;
@@ -367,7 +368,7 @@ const kz: Translations = {
   infoAboutButton:'Бұйымдармен танысу',
   infoDeliveryTitle:'Біздің асханадан — сіздің дастарқаныңызға',
   infoDeliveryH2:'Жеткізу',
-  infoDeliveryP1:'Бекітілген <strong>1 500 ₸</strong> құны қолданылады. Тапсырысты растамас бұрын көрсетіледі.',
+  infoDeliveryP1:'Жеткізуді <strong>Яндекс Жеткізу</strong> жүзеге асырады, құны оның тарифі бойынша бөлек төленеді.',
   infoDeliveryP2:'Жеткізу уақыты мен нақты мекен-жай тапсырыс расталғанда нақтыланады.',
   infoPaymentH2:'Төлем',
   infoPaymentP1:'Алу кезінде төлем. Барлық бағалар теңгемен берілген.',
@@ -441,7 +442,7 @@ const kz: Translations = {
   checkoutAddress:'Жеткізу мекен-жайы', checkoutAddressPl:'Қала, көше, үй, пәтер',
   checkoutComment:'Пікір',
   checkoutCommentPl:'Кіреберіс, қабат, домофон немесе тапсырысқа тілектер',
-  checkoutDeliveryNote:'Жеткізу — ', checkoutDeliveryDemo:'Мерзім мен жеткізу мүмкіндігі растау кезінде нақтыланады.',
+  checkoutDeliveryNote:'Жеткізу Яндекс Жеткізу арқылы — бөлек төленеді', checkoutDeliveryDemo:'Құны мекенжай мен уақытқа байланысты, шамамен 1 500 ₸. Нақты соманы оператор тапсырысты растау кезінде айтады.', deliverySeparate:'Яндекс Жеткізу — бөлек',
   checkoutOrderTitle:'Тапсырысыңыз',
   checkoutRefreshBtn:'Бағалар мен қолжетімділікті жаңарту',
   checkoutRefreshing:'Бағалар мен қолжетімділікті тексеруде…',
@@ -569,7 +570,7 @@ const ru: Translations = {
   infoAboutButton:'Познакомиться с изделиями',
   infoDeliveryTitle:'От нашей кухни — к вашему столу',
   infoDeliveryH2:'Доставка',
-  infoDeliveryP1:'Действует фиксированная стоимость доставки <strong>1 500 ₸</strong>. Она показывается до подтверждения заказа.',
+  infoDeliveryP1:'Доставку выполняет <strong>Яндекс Доставка</strong>, её стоимость оплачивается отдельно по тарифу Яндекса.',
   infoDeliveryP2:'Сроки и детали доставки уточняются оператором при подтверждении заказа.',
   infoPaymentH2:'Оплата',
   infoPaymentP1:'Оплата при получении. Все цены представлены в тенге.',
@@ -643,7 +644,7 @@ const ru: Translations = {
   checkoutAddress:'Адрес доставки', checkoutAddressPl:'Город, улица, дом, квартира',
   checkoutComment:'Комментарий',
   checkoutCommentPl:'Подъезд, этаж, домофон или пожелания к заказу',
-  checkoutDeliveryNote:'Доставка — ', checkoutDeliveryDemo:'Срок и возможность доставки уточняются при подтверждении.',
+  checkoutDeliveryNote:'Доставка через Яндекс Доставку — оплачивается отдельно', checkoutDeliveryDemo:'Стоимость зависит от адреса и времени, ориентировочно около 1 500 ₸. Точную сумму оператор назовёт при подтверждении заказа.', deliverySeparate:'Яндекс Доставка — отдельно',
   checkoutOrderTitle:'Ваш заказ',
   checkoutRefreshBtn:'Обновить цены и наличие',
   checkoutRefreshing:'Проверяем цены и наличие…',
@@ -771,7 +772,7 @@ const en: Translations = {
   infoAboutButton:'Explore Products',
   infoDeliveryTitle:'From our kitchen to your table',
   infoDeliveryH2:'Delivery',
-  infoDeliveryP1:'A fixed delivery fee of <strong>1 500 ₸</strong> applies. Shown before order confirmation.',
+  infoDeliveryP1:'Orders are delivered by <strong>Yandex Delivery</strong>; its fee is paid separately at the Yandex tariff.',
   infoDeliveryP2:'Delivery details and timing are confirmed with our operator upon order confirmation.',
   infoPaymentH2:'Payment',
   infoPaymentP1:'Payment on delivery. All prices in tenge.',
@@ -845,7 +846,7 @@ const en: Translations = {
   checkoutAddress:'Delivery address', checkoutAddressPl:'City, street, house, apt',
   checkoutComment:'Comment',
   checkoutCommentPl:'Entrance, floor, intercom or order notes',
-  checkoutDeliveryNote:'Delivery — ', checkoutDeliveryDemo:'Timing and availability confirmed on approval.',
+  checkoutDeliveryNote:'Delivered by Yandex Delivery — paid separately', checkoutDeliveryDemo:'The price depends on the address and time, roughly 1 500 ₸. The operator will tell you the exact amount when confirming the order.', deliverySeparate:'Yandex Delivery — separate',
   checkoutOrderTitle:'Your Order',
   checkoutRefreshBtn:'Refresh prices & availability',
   checkoutRefreshing:'Checking prices & availability…',

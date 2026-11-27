@@ -194,3 +194,19 @@ class ConfigGuardTests(TestCase):
     def test_placeholder_secret_is_refused_outside_debug(self):
         result = self.load_settings(DEBUG='false', DJANGO_SECRET_KEY='test-only-' + 'x' * 60, USE_SQLITE='true')
         self.assertNotEqual(result.returncode, 0)
+
+
+@override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'], DELIVERY_FEE=Decimal('0.00'))
+class NoDeliveryFeeTests(TestCase):
+    """Yandex Delivery is paid separately: with DELIVERY_FEE=0 the order total is just the goods."""
+
+    def test_total_equals_goods_without_delivery_fee(self):
+        self.client = APIClient()
+        buyer = User.objects.create_user(email='nofee@check.test', password='Nofee-password-123!', name='Buyer')
+        category = Category.objects.create(name='Bakery', slug='bakery-nofee')
+        product = Product.objects.create(category=category, name='Bun', price='500.00')
+        self.client.force_login(buyer)
+        self.assertEqual(self.client.get('/api/settings/').json()['delivery_fee'], '0.00')
+        response = self.client.post('/api/orders/', {'recipient_name': 'Buyer', 'phone': '+77011234567', 'address': 'Almaty Abai 1', 'comment': '', 'items': [{'product_id': product.pk, 'quantity': 3, 'expected_price': '500.00'}], 'expected_delivery_fee': '0.00', 'idempotency_key': str(uuid.uuid4())}, format='json')
+        self.assertEqual(response.status_code, 201, response.content)
+        self.assertEqual((Decimal(response.json()['delivery_fee']), Decimal(response.json()['total'])), (Decimal('0'), Decimal('1500.00')))

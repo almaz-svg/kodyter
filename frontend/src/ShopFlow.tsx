@@ -47,7 +47,7 @@ export function Cart() {
             <h2>{t.checkoutOrderTitle}</h2>
             {settingsError && <ErrorBox message={settingsError} retry={() => {refreshSettings().catch(()=>{})}}/>}
             <div className="summary-line"><span>{t.cartItems}</span><span>{money(total)}</span></div>
-            <div className="summary-line"><span>{t.cartDelivery}</span><span>{settings ? money(settings.delivery_fee) : t.cartPending}</span></div>
+            <div className="summary-line"><span>{t.cartDelivery}</span><span>{settings && Number(settings.delivery_fee) > 0 ? money(settings.delivery_fee) : t.deliverySeparate}</span></div>
             <div className="summary-total"><span>{t.cartTotal}</span><strong>{settings ? money(total+Number(settings.delivery_fee)) : '—'}</strong></div>
             <Link className="button button-gold full-width" to="/checkout">{t.cartOrder} <ArrowRight size={18} aria-hidden="true" /></Link>
             <p className="summary-note"><ShieldCheck size={17} aria-hidden="true" />{t.cartPayNote}</p>
@@ -435,7 +435,7 @@ export function Checkout() {
             <div className="delivery-note">
               <Truck size={22} aria-hidden="true" />
               <div>
-                <strong>{t.checkoutDeliveryNote}{settings ? money(settings.delivery_fee) : '…'}</strong>
+                <strong>{t.checkoutDeliveryNote}</strong>
                 <p>{t.checkoutDeliveryDemo}</p>
               </div>
             </div>
@@ -463,7 +463,7 @@ export function Checkout() {
               </div>
             ))}
             <div className="summary-line"><span>{t.checkoutItems}</span><span>{money(total)}</span></div>
-            <div className="summary-line"><span>{t.checkoutDelivery}</span><span>{settings ? money(settings.delivery_fee) : '—'}</span></div>
+            <div className="summary-line"><span>{t.checkoutDelivery}</span><span>{settings && Number(settings.delivery_fee) > 0 ? money(settings.delivery_fee) : t.deliverySeparate}</span></div>
             <div className="summary-total"><span>{t.checkoutTotal}</span><strong>{settings ? money(total+Number(settings.delivery_fee)) : '—'}</strong></div>
             {refreshNotice && <p className="summary-note" role="status">{refreshNotice}</p>}
             {changed && (

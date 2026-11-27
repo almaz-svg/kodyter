@@ -62,3 +62,14 @@
   .dp-facts li{justify-content:flex-start;padding:12px 0}
   .dp-facts li+li{border-left:0;border-top:1px solid #d3c19a}
 }
+
+/* Delivery fee: Yandex Delivery tariff, not a fixed price */
+.dp-fee{grid-template-columns:1fr;row-gap:6px}
+.dp-fee-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.dp-fee-head span{font-size:12px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#6b5124}
+.dp-fee-badge{display:inline-flex;align-items:center;gap:6px;padding:4px 11px;border-radius:999px;background:#173b2e;color:#f3e3bf;font-size:12px;font-weight:600;letter-spacing:.2px}
+.dp-fee-badge::before{content:'';width:7px;height:7px;border-radius:50%;background:#f5c542}
+.dp-fee strong{font-size:clamp(24px,2.1vw,32px)}
+.dp-fee ul{list-style:none;margin:4px 0 0;padding:0;display:grid;gap:5px}
+.dp-fee li{position:relative;padding-left:16px;font-size:13.5px;line-height:1.45;color:#4f4123}
+.dp-fee li::before{content:'';position:absolute;left:2px;top:.6em;width:6px;height:6px;border-radius:50%;background:#8a6418}

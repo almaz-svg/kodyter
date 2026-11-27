@@ -120,7 +120,7 @@ export function ProductPage() {
               {product.allergens && <div><h3>Аллергены</h3><p>{product.allergens}</p></div>}
               <div className="product-promises">
                 <span><Leaf size={18} aria-hidden="true" />{t.benefit4a} {t.benefit4b}</span>
-                <span><Truck size={18} aria-hidden="true" />{t.cartDelivery} 1 500 ₸</span>
+                <span><Truck size={18} aria-hidden="true" />{t.deliverySeparate}</span>
               </div>
             </div>
             <Link to="/cart" className="text-link">{t.toCartBtn} <ArrowRight size={17} aria-hidden="true" /></Link>

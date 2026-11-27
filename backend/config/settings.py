@@ -141,7 +141,9 @@ EMAIL_TIMEOUT = 10
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'Anasym <noreply@example.invalid>')
 PASSWORD_RESET_TIMEOUT = 3600
 PASSWORD_RESET_ENABLED = os.getenv('PASSWORD_RESET_ENABLED', 'true').lower() == 'true'
-DELIVERY_FEE = Decimal(os.getenv('DELIVERY_FEE', '1500.00'))
+# Delivery goes through Yandex Delivery and is paid separately at its own tariff, so orders carry no delivery fee.
+DELIVERY_FEE = Decimal(os.getenv('DELIVERY_FEE', '0.00'))
+TEST_RUNNER = 'config.test_runner.FixedFeeRunner'
 # Upper bound for one order line; the server enforces it, the client value is only a hint.
 MAX_ORDER_ITEM_QUANTITY = int(os.getenv('MAX_ORDER_ITEM_QUANTITY', '200'))
 # A wholesale price applies to a product only from this many units of that product in one order.
