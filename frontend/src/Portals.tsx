@@ -799,27 +799,25 @@ function amountInWords(value: number): string {
   return tiyn ? `${text} ${String(tiyn).padStart(2, '0')} тиын` : text;
 }
 
-function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => void }) {
-  const sections = doc.sections ?? [{ title: '', total: 0, lines: doc.lines }];
-  const total = sections.reduce((sum, section) => sum + section.lines.reduce((part, line) => part + line.price * line.quantity, 0), 0);
+/** The print overlay shared by every waybill: Закрыть, Скачать (PDF drawn in the browser) and Печать. */
+function PrintShell({ fileName, onClose, children }: { fileName: string; onClose: () => void; children: ReactNode }) {
   const docRef = useRef<HTMLDivElement>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
-  // The PDF is drawn in the browser from the page itself, so it looks exactly like the waybill on screen.
+  // The PDF is drawn in the browser from the page itself, so it looks exactly like the document on screen.
   const download = async () => {
     if (!docRef.current || saving) return;
     setSaving(true); setSaveError('');
     try {
       const html2pdf = (await import('html2pdf.js')).default;
-      const name = `Накладная ${doc.number || doc.period || doc.date}`.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+      const name = fileName.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
       // `pagebreak` keeps table rows whole across pages; the library supports it but its type file leaves it out.
-      const options = { margin: [10, 10, 12, 10] as [number, number, number, number], filename: `${name}.pdf`, image: { type: 'jpeg' as const, quality: 0.96 }, html2canvas: { scale: 2, backgroundColor: '#ffffff', windowWidth: 1000 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }, pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.nakladnaya-summary', '.nakladnaya-sigs'] } };
+      const options = { margin: [10, 10, 12, 10] as [number, number, number, number], filename: `${name}.pdf`, image: { type: 'jpeg' as const, quality: 0.96 }, html2canvas: { scale: 2, backgroundColor: '#ffffff', windowWidth: 1000 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }, pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.nakladnaya-summary', '.nakladnaya-sigs', '.report-stats'] } };
       const worker = html2pdf();
       await worker.set(options as Parameters<typeof worker.set>[0]).from(docRef.current).save();
     } catch { setSaveError('Не удалось сохранить PDF. Попробуйте «Печать / PDF».'); }
     finally { setSaving(false); }
   };
-  let lineNumber = 0;
   return createPortal(
     <div className="nakladnaya-overlay">
       <div className="nakladnaya-toolbar no-print">
@@ -829,6 +827,18 @@ function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => 
         <button type="button" className="product-secondary" onClick={() => window.print()}><FileText size={16} aria-hidden="true" />Печать / PDF</button>
       </div>
       <div ref={docRef} className="nakladnaya-doc">
+        {children}
+      </div>
+    </div>,
+    document.body,
+  );
+}
+
+function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => void }) {
+  const sections = doc.sections ?? [{ title: '', total: 0, lines: doc.lines }];
+  const total = sections.reduce((sum, section) => sum + section.lines.reduce((part, line) => part + line.price * line.quantity, 0), 0);
+  let lineNumber = 0;
+  return <PrintShell fileName={`Накладная ${doc.number || doc.period || doc.date}`} onClose={onClose}>
         <div className="nakladnaya-header">
           <h1>Товарная накладная</h1>
           <div className="nakladnaya-num">
@@ -863,13 +873,76 @@ function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => 
             <p><span>Ф.И.О.</span><span className="nakladnaya-line" /></p>
           </div>)}
         </div>
-      </div>
-    </div>,
-    document.body,
-  );
+  </PrintShell>;
 }
 
 const paymentWord = (order: PeriodWaybill['orders'][number]) => order.paid ? 'оплачен' : order.on_credit ? 'в долг' : 'не оплачен';
+
+/** The bakery's own document for a period: totals, goods sold and the list of orders. Not meant for customers. */
+function SalesReportPrint({ data, onClose }: { data: PeriodWaybill; onClose: () => void }) {
+  const period = data.date_from === data.date_to ? ruDate(data.date_from) : `${ruDate(data.date_from)} — ${ruDate(data.date_to)}`;
+  const goods = new Map<string, { name: string; quantity: number; sum: number }>();
+  let pieces = 0;
+  for (const order of data.orders) {
+    for (const item of order.items) {
+      const line = goods.get(item.name) || { name: item.name, quantity: 0, sum: 0 };
+      line.quantity += item.quantity; line.sum += Number(item.price) * item.quantity; pieces += item.quantity;
+      goods.set(item.name, line);
+    }
+    if (Number(order.delivery_fee) > 0) {
+      const line = goods.get('Доставка') || { name: 'Доставка', quantity: 0, sum: 0 };
+      line.quantity += 1; line.sum += Number(order.delivery_fee);
+      goods.set('Доставка', line);
+    }
+  }
+  const goodsRows = [...goods.values()].sort((a, b) => (a.name === 'Доставка' ? 1 : 0) - (b.name === 'Доставка' ? 1 : 0) || b.quantity - a.quantity || a.name.localeCompare(b.name, 'ru'));
+  const sumOf = (orders: PeriodWaybill['orders']) => orders.reduce((sum, order) => sum + Number(order.total), 0);
+  const paid = data.orders.filter(order => order.paid);
+  const debt = data.orders.filter(order => !order.paid && order.on_credit);
+  const unpaid = data.orders.filter(order => !order.paid && !order.on_credit);
+  const total = sumOf(data.orders);
+  const stats: [string, string, string?][] = [
+    ['Заказов', String(data.orders.length)],
+    ['Продано товаров', `${pieces} шт.`],
+    ['Сумма заказов', money(total)],
+    ['Оплачено', money(sumOf(paid)), `заказов: ${paid.length}`],
+    ['Не оплачено', money(sumOf(unpaid)), `заказов: ${unpaid.length}`],
+    ['В долг', money(sumOf(debt)), `заказов: ${debt.length}`],
+  ];
+  return <PrintShell fileName={`Сводная накладная ${period}`} onClose={onClose}>
+    <div className="nakladnaya-header">
+      <div><h1>Сводная накладная</h1><p className="report-subtitle">Внутренний документ кондитерской ANAŞIM · продажи за период</p></div>
+      <div className="nakladnaya-num">
+        <p><span>Дата составления</span><span className="nakladnaya-line">{new Date().toLocaleDateString('ru-RU')}</span></p>
+        <p><span>Период</span><span className="nakladnaya-line">{period}</span></p>
+      </div>
+    </div>
+    <div className="report-stats">{stats.map(([label, value, note]) => <div key={label}><span>{label}</span><strong>{value}</strong>{note && <small>{note}</small>}</div>)}</div>
+    <h2 className="report-heading">1. Товары за период</h2>
+    <table className="nakladnaya-table">
+      <thead><tr><th>№</th><th>Наименование товара</th><th>Кол-во, шт.</th><th>Сумма, ₸</th></tr></thead>
+      <tbody>{goodsRows.length ? goodsRows.map((line, index) => <tr key={line.name}><td>{index + 1}</td><td className="nakladnaya-name">{line.name === 'Доставка' ? `Доставка (заказов: ${line.quantity})` : line.name}</td><td>{line.name === 'Доставка' ? '—' : line.quantity}</td><td>{money(line.sum)}</td></tr>) : <tr><td colSpan={4} className="nakladnaya-empty">За выбранный период продаж нет</td></tr>}</tbody>
+      <tfoot><tr><td colSpan={2}>Итого</td><td>{pieces}</td><td>{money(total)}</td></tr></tfoot>
+    </table>
+    <h2 className="report-heading">2. Заказы за период</h2>
+    <table className="nakladnaya-table report-orders">
+      <thead><tr><th>№</th><th>Заказ</th><th>Дата</th><th>Клиент</th><th>Статус</th><th>Оплата</th><th>Сумма, ₸</th></tr></thead>
+      <tbody>{data.orders.length ? data.orders.map((order, index) => <tr key={order.number}><td>{index + 1}</td><td>{order.number}</td><td>{ruDate(order.created_at)}</td><td className="nakladnaya-name">{order.company ? `«${order.company}», ` : ''}{order.recipient_name}<small>{order.phone}</small></td><td>{statusLabel[order.status] || order.status}</td><td>{paymentWord(order)}</td><td>{money(order.total)}</td></tr>) : <tr><td colSpan={7} className="nakladnaya-empty">За выбранный период заказов нет</td></tr>}</tbody>
+      <tfoot><tr><td colSpan={6}>Итого</td><td>{money(total)}</td></tr></tfoot>
+    </table>
+    <div className="nakladnaya-summary">
+      <p><strong>Итого за период: {money(total)}</strong></p>
+      <p><strong>Сумма прописью:</strong> {amountInWords(total)}</p>
+    </div>
+    <div className="nakladnaya-sigs">
+      {(['Составил', 'Проверил'] as const).map(label => <div key={label}>
+        <p className="nakladnaya-sig-title">{label}</p>
+        <p><span>Подпись</span><span className="nakladnaya-line" /></p>
+        <p><span>Ф.И.О.</span><span className="nakladnaya-line" /></p>
+      </div>)}
+    </div>
+  </PrintShell>;
+}
 function waybillFromPeriod(data: PeriodWaybill, recipientFallback: string): NakladnayaDoc {
   return {
     number: '',
@@ -886,7 +959,7 @@ function waybillFromPeriod(data: PeriodWaybill, recipientFallback: string): Nakl
   };
 }
 
-/** Admin and cashier: a waybill with every order of a period, optionally only one customer's (e.g. one business). */
+/** Admin and cashier: the bakery's summary for a period, or — with `customerId` — that customer's waybill for it. */
 function PeriodWaybillPicker({ customerId, label = 'Накладная за период', period }: { customerId?: number; label?: string; period?: { from: string; to: string } }) {
   const today = new Date();
   const iso = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
@@ -894,6 +967,7 @@ function PeriodWaybillPicker({ customerId, label = 'Накладная за пе
   const [from, setFrom] = useState(iso(new Date(today.getFullYear(), today.getMonth(), 1)));
   const [to, setTo] = useState(iso(today));
   const [doc, setDoc] = useState<NakladnayaDoc | null>(null);
+  const [report, setReport] = useState<PeriodWaybill | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const reversed = !!(from && to && from > to);
@@ -903,16 +977,17 @@ function PeriodWaybillPicker({ customerId, label = 'Накладная за пе
       const params = new URLSearchParams({ date_from: dates.from, date_to: dates.to });
       if (customerId) params.set('customer', String(customerId));
       const data = await api<PeriodWaybill>(`/waybill/?${params.toString()}`);
-      setDoc(waybillFromPeriod(data, customerId ? '' : 'Все клиенты'));
+      if (customerId) setDoc(waybillFromPeriod(data, '')); else setReport(data);
     } catch (err) { setError(failure(err)); }
     finally { setLoading(false); }
   };
   if (doc) return <NakladnayaPrint doc={doc} onClose={() => setDoc(null)} />;
+  if (report) return <SalesReportPrint data={report} onClose={() => setReport(null)} />;
   // With a period already chosen elsewhere (the cash panel), one click opens the waybill for it.
   if (period) return <span className="waybill-inline"><button type="button" className="portal-button waybill-open" disabled={loading || !period.from || !period.to || period.from > period.to} onClick={() => void show(period)}><FileText size={16} aria-hidden="true" />{loading ? 'Собираем…' : label}</button>{error && <small className="invoice-date-error" role="alert">{error}</small>}</span>;
   if (!open) return <button type="button" className="product-secondary waybill-open" onClick={() => setOpen(true)}><FileText size={16} aria-hidden="true" />{label}</button>;
   return <div className="waybill-picker">
-    <p className="waybill-picker-title"><FileText size={16} aria-hidden="true" />{customerId ? 'Накладная по клиенту' : 'Накладная за период'}<button type="button" className="portal-icon-button" onClick={() => { setOpen(false); setError(''); }} aria-label="Закрыть"><X size={16} aria-hidden="true" /></button></p>
+    <p className="waybill-picker-title"><FileText size={16} aria-hidden="true" />{customerId ? 'Накладная по клиенту' : 'Сводная накладная за период'}<button type="button" className="portal-icon-button" onClick={() => { setOpen(false); setError(''); }} aria-label="Закрыть"><X size={16} aria-hidden="true" /></button></p>
     <div className="waybill-picker-dates">
       <label>С<input type="date" value={from} max={to || undefined} onChange={e => setFrom(e.target.value)} /></label>
       <label>По<input type="date" value={to} min={from || undefined} onChange={e => setTo(e.target.value)} /></label>
