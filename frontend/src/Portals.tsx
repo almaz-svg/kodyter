@@ -831,7 +831,7 @@ function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => 
           <p><strong>Сумма прописью:</strong> {amountInWords(total)}</p>
         </div>
         <div className="nakladnaya-sigs">
-          {(['Отпустил', 'Принял'] as const).map(label => <div key={label}>
+          {(['Доставил', 'Принял'] as const).map(label => <div key={label}>
             <p className="nakladnaya-sig-title">{label}</p>
             <p><span>Подпись</span><span className="nakladnaya-line" /></p>
             <p><span>Ф.И.О.</span><span className="nakladnaya-line" /></p>
