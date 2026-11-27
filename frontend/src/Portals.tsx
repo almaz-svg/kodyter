@@ -887,7 +887,7 @@ function waybillFromPeriod(data: PeriodWaybill, recipientFallback: string): Nakl
 }
 
 /** Admin and cashier: a waybill with every order of a period, optionally only one customer's (e.g. one business). */
-function PeriodWaybillPicker({ customerId, label = 'Накладная за период' }: { customerId?: number; label?: string }) {
+function PeriodWaybillPicker({ customerId, label = 'Накладная за период', period }: { customerId?: number; label?: string; period?: { from: string; to: string } }) {
   const today = new Date();
   const iso = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
   const [open, setOpen] = useState(false);
@@ -897,10 +897,10 @@ function PeriodWaybillPicker({ customerId, label = 'Накладная за пе
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const reversed = !!(from && to && from > to);
-  const show = async () => {
+  const show = async (dates = { from, to }) => {
     setLoading(true); setError('');
     try {
-      const params = new URLSearchParams({ date_from: from, date_to: to });
+      const params = new URLSearchParams({ date_from: dates.from, date_to: dates.to });
       if (customerId) params.set('customer', String(customerId));
       const data = await api<PeriodWaybill>(`/waybill/?${params.toString()}`);
       setDoc(waybillFromPeriod(data, customerId ? '' : 'Все клиенты'));
@@ -908,6 +908,8 @@ function PeriodWaybillPicker({ customerId, label = 'Накладная за пе
     finally { setLoading(false); }
   };
   if (doc) return <NakladnayaPrint doc={doc} onClose={() => setDoc(null)} />;
+  // With a period already chosen elsewhere (the cash panel), one click opens the waybill for it.
+  if (period) return <span className="waybill-inline"><button type="button" className="portal-button waybill-open" disabled={loading || !period.from || !period.to || period.from > period.to} onClick={() => void show(period)}><FileText size={16} aria-hidden="true" />{loading ? 'Собираем…' : label}</button>{error && <small className="invoice-date-error" role="alert">{error}</small>}</span>;
   if (!open) return <button type="button" className="product-secondary waybill-open" onClick={() => setOpen(true)}><FileText size={16} aria-hidden="true" />{label}</button>;
   return <div className="waybill-picker">
     <p className="waybill-picker-title"><FileText size={16} aria-hidden="true" />{customerId ? 'Накладная по клиенту' : 'Накладная за период'}<button type="button" className="portal-icon-button" onClick={() => { setOpen(false); setError(''); }} aria-label="Закрыть"><X size={16} aria-hidden="true" /></button></p>
@@ -1160,7 +1162,7 @@ function CashPanel() {
   const title = range.from === range.to ? periodDay(range.from) : `с ${periodDay(range.from)} по ${periodDay(range.to)}`;
   const data = summary.data;
   return <section aria-label="Касса">
-    <div className="portal-section-title"><div><p className="portal-eyebrow">ПРОДАЖИ И НАЛИЧНЫЕ</p><h2>Касса</h2></div></div>
+    <div className="portal-section-title"><div><p className="portal-eyebrow">ПРОДАЖИ И НАЛИЧНЫЕ</p><h2>Касса</h2></div>{valid && <PeriodWaybillPicker period={range} label="Накладная за этот период" />}</div>
     <div className="portal-cash-period">
       <div className="portal-date-range" role="group" aria-label="Период кассы"><span>Период</span><div><input type="date" aria-label="С даты" max={range.to || today} value={range.from} onChange={e => setRange(value => ({ ...value, from: e.target.value }))} /><span aria-hidden="true">—</span><input type="date" aria-label="По дату" min={range.from} value={range.to} onChange={e => setRange(value => ({ ...value, to: e.target.value }))} /></div></div>
       <div className="portal-cash-presets">{presets.map(([label, from]) => { const active = range.from === from && range.to === (label === 'Вчера' ? from : today); return <button type="button" key={label} className={active ? 'active' : ''} aria-pressed={active} onClick={() => choose(label, from)}>{label}</button>; })}</div>
