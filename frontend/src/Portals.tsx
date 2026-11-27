@@ -489,7 +489,7 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   const [creditConfirm, setCreditConfirm] = useState(false);
   const [creditAgreed, setCreditAgreed] = useState(false);
   const [agreed, setAgreed] = useState(false);
-  const [nakladnaya, setNakladnaya] = useState<NakladnayaData | null>(null);
+  const [nakladnaya, setNakladnaya] = useState<NakladnayaDoc | null>(null);
   // The kitchen picks out-of-stock lines here before removing them from the order.
   const [missingMode, setMissingMode] = useState(false);
   const [missingIds, setMissingIds] = useState<number[]>([]);
@@ -536,8 +536,14 @@ function OrderDetail({ id, user, couriers, onChange, onClose }: { id: number; us
   // Before the order is ready and paid, the kitchen (or an admin) can still drop out-of-stock lines or cancel it.
   const kitchenEditable = ['NEW', 'CONFIRMED', 'PREPARING'].includes(order.status) && order.payment_status !== 'PAID';
   const nextLabels: Record<string, string> = { CONFIRMED: 'Подтвердить заказ', PREPARING: 'Начать приготовление', READY: 'Заказ готов', HANDED_OVER: 'Забрать заказ из пекарни', IN_TRANSIT: 'Начать доставку', DELIVERED: 'Подтвердить доставку' };
-  const openNakladnaya = () => setNakladnaya({ recipient: order.recipient_name + (order.customer_company ? ` (${order.customer_company})` : ''), date_from: order.created_at.slice(0, 10), date_to: null, rows: order.items.map(item => ({ date: dateTime(order.created_at), number: order.number, name: item.name, quantity: item.quantity, price: String(item.price), total: String(order.total), status: statusLabel[order.status] || order.status, paid: order.payment_status === 'PAID' })) });
-  return <article ref={detailRef} className="portal-card portal-order-detail portal-detail-fancy"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2>{user.role !== 'CUSTOMER' && <BusinessBadge name={order.customer_company} />}</div><div style={{display:'flex',gap:'4px'}}><button type="button" className="portal-icon-button" aria-label="Накладная по заказу" title="Накладная" onClick={openNakladnaya}><FileText size={20} aria-hidden="true" /></button><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div></div>{nakladnaya && <NakladnayaPrint data={nakladnaya} onClose={() => setNakladnaya(null)} />}{order.status !== 'CANCELLED' ? <OrderProgress order={order} role={user.role} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
+  const openNakladnaya = () => setNakladnaya({
+    number: order.number,
+    date: new Date(order.created_at).toLocaleDateString('ru-RU'),
+    recipient: order.customer_company ? `«${order.customer_company}»` : order.recipient_name,
+    recipientNote: [order.customer_company ? order.recipient_name : '', order.phone].filter(Boolean).join(', '),
+    lines: [...order.items.filter(item => !item.is_missing).map(item => ({ name: item.name, quantity: item.quantity, price: Number(item.price) })), ...(Number(order.delivery_fee) > 0 ? [{ name: 'Доставка', quantity: 1, price: Number(order.delivery_fee) }] : [])],
+  });
+  return <article ref={detailRef} className="portal-card portal-order-detail portal-detail-fancy"><div className="portal-section-title"><div><p className="portal-eyebrow">{dateTime(order.created_at)}</p><h2>Заказ №{order.number}</h2>{user.role !== 'CUSTOMER' && <BusinessBadge name={order.customer_company} />}</div><div style={{display:'flex',gap:'4px'}}><button type="button" className="portal-icon-button" aria-label="Накладная по заказу" title="Накладная" onClick={openNakladnaya}><FileText size={20} aria-hidden="true" /></button><button type="button" className="portal-icon-button" onClick={onClose} aria-label="Закрыть детали заказа"><X size={20} aria-hidden="true" /></button></div></div>{nakladnaya && <NakladnayaPrint doc={nakladnaya} onClose={() => setNakladnaya(null)} />}{order.status !== 'CANCELLED' ? <OrderProgress order={order} role={user.role} /> : <Status status={order.status} customer={user.role === 'CUSTOMER'} />}<ErrorNotice message={remote.error} retry={remote.retry} />
     <section className="portal-detail-section"><h3><ShoppingBag size={17} aria-hidden="true" /> Состав заказа<span className="portal-items-count">{positions(order.items.length)}</span></h3><ul className="portal-order-items">{order.items.map(item => <li key={item.id} className={item.is_missing ? 'is-missing' : undefined}><div className="portal-item-thumb">{item.image && <LazyImage src={item.image} alt="" />}<em aria-hidden="true">×{item.quantity}</em></div><div><strong>{item.name}</strong><span><mark>{item.quantity} шт.</mark> по {item.is_wholesale && <s className="portal-item-retail">{money(item.retail_price ?? 0)}</s>}{money(item.price)}</span>{item.is_wholesale && <span className="portal-item-wholesale"><Sparkles size={12} aria-hidden="true" />Оптовая цена</span>}{item.is_missing && <span className="portal-item-missing"><PackageX size={12} aria-hidden="true" />Нет в наличии — не входит в сумму</span>}</div><b className={item.is_wholesale ? 'is-wholesale' : undefined}>{item.is_wholesale && <s>{money(Number(item.retail_price) * item.quantity)}</s>}{money(Number(item.price) * item.quantity)}</b></li>)}</ul><dl className="portal-totals"><div><dt>Выпечка</dt><dd>{money(order.subtotal)}</dd></div>{(() => { const saved = order.items.reduce((sum, item) => sum + (item.is_wholesale ? (Number(item.retail_price) - Number(item.price)) * item.quantity : 0), 0); return saved > 0 ? <div className="portal-totals-saving"><dt><Sparkles size={13} aria-hidden="true" />Сэкономлено на опте</dt><dd>{money(saved)}</dd></div> : null; })()}<div><dt>Доставка</dt><dd>{Number(order.delivery_fee) ? money(order.delivery_fee) : 'Бесплатно'}</dd></div><div className="portal-total"><dt>Итого</dt><dd>{money(order.total)}</dd></div></dl></section>
     {order.cancellation_reason && <div className="portal-notice portal-error"><div><strong>Причина отмены</strong><p>{order.cancellation_reason}</p></div></div>}
     <div className="portal-detail-grid">
@@ -759,9 +765,41 @@ function CategoriesPanel() {
 type BusinessAccount = { id: number; name: string; email: string; phone: string; company_name: string; business_approved: boolean; credit_allowed?: boolean; date_joined?: string; orders_count?: number | null; delivered_total?: string | null; last_order_at?: string | null };
 type NakladnayaRow = { date: string; number: string; name: string; quantity: number; price: string; total: string; status: string; paid: boolean };
 type NakladnayaData = { recipient: string; date_from: string | null; date_to: string | null; rows: NakladnayaRow[] };
+/** What the printed waybill shows: one table of goods, the total and the amount in words. */
+type NakladnayaDoc = { number: string; date: string; recipient: string; recipientNote: string; lines: { name: string; quantity: number; price: number }[] };
 
-function NakladnayaPrint({ data, onClose }: { data: NakladnayaData; onClose: () => void }) {
-  const seenOrder = new Set<string>();
+const wordUnits = [['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'], ['', 'одна', 'две', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять']];
+const wordTeens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
+const wordTens = ['', '', 'двадцать', 'тридцать', 'сорок', 'пятьдесят', 'шестьдесят', 'семьдесят', 'восемьдесят', 'девяносто'];
+const wordHundreds = ['', 'сто', 'двести', 'триста', 'четыреста', 'пятьсот', 'шестьсот', 'семьсот', 'восемьсот', 'девятьсот'];
+const plural = (n: number, forms: [string, string, string]) => { const d = n % 100; if (d >= 11 && d <= 14) return forms[2]; return [forms[2], forms[0], forms[1], forms[1], forms[1], forms[2], forms[2], forms[2], forms[2], forms[2]][n % 10]; };
+function triadWords(n: number, feminine: boolean): string[] {
+  const words = [wordHundreds[Math.floor(n / 100)]];
+  const rest = n % 100;
+  if (rest >= 10 && rest < 20) words.push(wordTeens[rest - 10]);
+  else words.push(wordTens[Math.floor(rest / 10)], wordUnits[feminine ? 1 : 0][rest % 10]);
+  return words.filter(Boolean);
+}
+/** 6037 → «шесть тысяч тридцать семь тенге»; tiyn are added when the sum is not whole. */
+function amountInWords(value: number): string {
+  const tenge = Math.floor(Math.round(value * 100) / 100);
+  const tiyn = Math.round(value * 100) % 100;
+  const scales: { size: number; feminine: boolean; forms: [string, string, string] | null }[] = [{ size: 1e9, feminine: false, forms: ['миллиард', 'миллиарда', 'миллиардов'] }, { size: 1e6, feminine: false, forms: ['миллион', 'миллиона', 'миллионов'] }, { size: 1e3, feminine: true, forms: ['тысяча', 'тысячи', 'тысяч'] }, { size: 1, feminine: false, forms: null }];
+  const words: string[] = [];
+  let rest = tenge;
+  for (const scale of scales) {
+    const part = Math.floor(rest / scale.size);
+    rest %= scale.size;
+    if (!part) continue;
+    words.push(...triadWords(part, scale.feminine));
+    if (scale.forms) words.push(plural(part, scale.forms));
+  }
+  const text = `${words.length ? words.join(' ') : 'ноль'} тенге`;
+  return tiyn ? `${text} ${String(tiyn).padStart(2, '0')} тиын` : text;
+}
+
+function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => void }) {
+  const total = doc.lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
   return createPortal(
     <div className="nakladnaya-overlay">
       <div className="nakladnaya-toolbar no-print">
@@ -772,33 +810,31 @@ function NakladnayaPrint({ data, onClose }: { data: NakladnayaData; onClose: () 
         <div className="nakladnaya-header">
           <h1>Товарная накладная</h1>
           <div className="nakladnaya-num">
-            <span>№ <span className="nakladnaya-line" /></span>
-            <span>Дата оформления <span className="nakladnaya-line">{[data.date_from, data.date_to].filter(Boolean).join(' — ')}</span></span>
+            <p><span>№</span><span className="nakladnaya-line">{doc.number}</span></p>
+            <p><span>Дата составления</span><span className="nakladnaya-line">{doc.date}</span></p>
           </div>
         </div>
         <div className="nakladnaya-meta">
-          <p>Поставщик <strong>ANAŞIM</strong></p>
-          <p>Получатель <strong>{data.recipient}</strong></p>
+          <p><span className="nakladnaya-label">Поставщик</span><strong>ANAŞIM</strong></p>
+          <p><span className="nakladnaya-label">Получатель</span><span className="nakladnaya-line nakladnaya-line-wide">{doc.recipient}</span></p>
+          <p className="nakladnaya-recipient-note"><span>(</span><span className="nakladnaya-line">{doc.recipientNote}</span><span>)</span></p>
         </div>
         <table className="nakladnaya-table">
-          <thead><tr><th>№</th><th>Дата</th><th>Товар</th><th>Кол-во, шт.</th><th>Цена, ₸</th><th>Сумма, ₸</th><th>Итого, ₸</th><th>Статус</th><th>Оплата</th></tr></thead>
+          <thead><tr><th>№</th><th>Наименование товара</th><th>Кол-во, шт.</th><th>Цена, ₸</th><th>Сумма, ₸</th></tr></thead>
           <tbody>
-            {data.rows.length ? data.rows.map((row, i) => {
-              const first = !seenOrder.has(row.number);
-              if (first) seenOrder.add(row.number);
-              return <tr key={i}>
-                <td>{i + 1}</td><td>{first ? row.date : ''}</td><td className="nakladnaya-name">{row.name}</td>
-                <td>{row.quantity}</td><td>{money(row.price)}</td><td>{money(Number(row.price) * row.quantity)}</td>
-                <td>{first ? money(row.total) : ''}</td><td>{first ? row.status : ''}</td><td>{first ? (row.paid ? 'Оплачен' : 'Не оплачен') : ''}</td>
-              </tr>;
-            }) : <tr><td colSpan={9} className="nakladnaya-empty">Нет заказов за выбранный период</td></tr>}
+            {doc.lines.length ? doc.lines.map((line, index) => <tr key={index}><td>{index + 1}</td><td className="nakladnaya-name">{line.name}</td><td>{line.quantity}</td><td>{money(line.price)}</td><td>{money(line.price * line.quantity)}</td></tr>) : <tr><td colSpan={5} className="nakladnaya-empty">Нет товаров за выбранный период</td></tr>}
           </tbody>
+          <tfoot><tr><td colSpan={4}>Итого</td><td>{money(total)}</td></tr></tfoot>
         </table>
+        <div className="nakladnaya-summary">
+          <p><strong>Итого к оплате: {money(total)}</strong></p>
+          <p><strong>Сумма прописью:</strong> {amountInWords(total)}</p>
+        </div>
         <div className="nakladnaya-sigs">
           {(['Отпустил', 'Принял'] as const).map(label => <div key={label}>
-            <p><strong>{label}</strong></p>
-            <div className="nakladnaya-sig-line"><span /><span /></div>
-            <div className="nakladnaya-sig-labels"><small>Подпись</small><small>Ф. И. О.</small></div>
+            <p className="nakladnaya-sig-title">{label}</p>
+            <p><span>Подпись</span><span className="nakladnaya-line" /></p>
+            <p><span>Ф.И.О.</span><span className="nakladnaya-line" /></p>
           </div>)}
         </div>
       </div>
@@ -825,7 +861,7 @@ function InvoiceDownload({ accountId }: { accountId: number }) {
     } catch { /* fall through — user can retry */ }
     finally { setLoading(false); }
   };
-  if (preview) return <NakladnayaPrint data={preview} onClose={close} />;
+  if (preview) return <NakladnayaPrint doc={{ number: '', date: [preview.date_from, preview.date_to].filter(Boolean).join(' — '), recipient: preview.recipient, recipientNote: '', lines: preview.rows.map(row => ({ name: `${row.name} (№${row.number})`, quantity: row.quantity, price: Number(row.price) })) }} onClose={close} />;
   if (!open) return <button type="button" className="product-secondary" onClick={() => setOpen(true)}><Download size={16} aria-hidden="true" />Скачать накладную</button>;
   const params = new URLSearchParams();
   if (from) params.set('date_from', from);
