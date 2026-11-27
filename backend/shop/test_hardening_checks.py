@@ -198,7 +198,7 @@ class ConfigGuardTests(TestCase):
 
 @override_settings(PASSWORD_HASHERS=['django.contrib.auth.hashers.MD5PasswordHasher'], DELIVERY_FEE=Decimal('0.00'))
 class NoDeliveryFeeTests(TestCase):
-    """Yandex Delivery is paid separately: with DELIVERY_FEE=0 the order total is just the goods."""
+    """Delivery is paid separately: with DELIVERY_FEE=0 the order total is just the goods."""
 
     def test_total_equals_goods_without_delivery_fee(self):
         self.client = APIClient()

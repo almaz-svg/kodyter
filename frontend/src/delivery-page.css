@@ -63,7 +63,7 @@
   .dp-facts li+li{border-left:0;border-top:1px solid #d3c19a}
 }
 
-/* Delivery fee: Yandex Delivery tariff, not a fixed price */
+/* Delivery fee: not a fixed price, paid separately */
 .dp-fee{grid-template-columns:1fr;row-gap:6px}
 .dp-fee-head{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap}
 .dp-fee-head span{font-size:12px;font-weight:600;letter-spacing:1.6px;text-transform:uppercase;color:#6b5124}
