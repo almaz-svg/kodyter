@@ -1051,3 +1051,4 @@
 .waybill-picker .portal-button { justify-content: center; }
 .waybill-open { display: inline-flex; align-items: center; gap: 8px; }
 @media (max-width: 560px) { .waybill-picker { min-width: 0; width: 100%; } }
+.nakladnaya-header h1, .nakladnaya-num p > span:first-child, .nakladnaya-label { white-space: nowrap; }
