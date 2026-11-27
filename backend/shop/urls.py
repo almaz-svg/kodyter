@@ -42,6 +42,7 @@ urlpatterns = [
     path('kitchen/prepared/', orders.KitchenPrepared.as_view()),
     path('admin/overview/', staff.AdminOverview.as_view()),
     path('cashier/summary/', staff.CashierSummary.as_view()),
+    path('waybill/', staff.PeriodWaybill.as_view()),
     path('orders/', orders.Orders.as_view()),
     path('orders/<int:pk>/', orders.OrderDetail.as_view()),
     path('orders/<int:pk>/transition/', orders.Transition.as_view()),

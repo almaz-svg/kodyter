@@ -141,3 +141,53 @@ class CashierSummary(APIView):
         placed = Order.objects.filter(created_at__date__gte=start, created_at__date__lte=end)
         pending = placed.exclude(status__in=('DELIVERED', 'CANCELLED')).aggregate(total=Sum('total'), count=Count('id'))
         return Response({'date': start.isoformat(), 'date_from': start.isoformat(), 'date_to': end.isoformat(), 'currency': 'KZT', 'cash_received': format(cash['total'] or Decimal('0'), '.2f'), 'paid_count': cash['count'], 'unpaid_delivered_total': format(unpaid['total'] or Decimal('0'), '.2f'), 'unpaid_delivered_count': unpaid['count'], 'debt_total': format(debt['total'] or Decimal('0'), '.2f'), 'debt_count': debt['count'], 'in_delivery_total': format(in_delivery['total'] or Decimal('0'), '.2f'), 'in_delivery_count': in_delivery['count'], 'in_delivery_orders': in_delivery_orders, 'orders_total': format(sales['total'] or Decimal('0'), '.2f'), 'orders_count': sales['count'], 'items_count': items['count'] or 0, 'cancelled_count': placed.filter(status='CANCELLED').count(), 'pending_total': format(pending['total'] or Decimal('0'), '.2f'), 'pending_count': pending['count'], 'debt_paid_total': format(debt_paid['total'] or Decimal('0'), '.2f'), 'debt_paid_count': debt_paid['count']})
+
+
+MAX_WAYBILL_DAYS = 366
+MAX_WAYBILL_ORDERS = 1000
+
+
+class PeriodWaybill(APIView):
+    """Waybill for every order placed in a period (admin and cashier). Cancelled orders and out-of-stock lines are left out.
+    `customer` narrows it to one account, e.g. one business."""
+    permission_classes = [IsCashierOrAdmin]
+
+    def get(self, request):
+        params = request.query_params
+        start = serializers.DateField().run_validation(params.get('date_from') or timezone.localdate().isoformat())
+        end = serializers.DateField().run_validation(params.get('date_to') or start.isoformat())
+        if end < start:
+            raise serializers.ValidationError({'date_to': 'Дата «по» не может быть раньше даты «с».'})
+        if (end - start).days >= MAX_WAYBILL_DAYS:
+            raise serializers.ValidationError({'date_to': 'Период не может быть больше года.'})
+        orders = (Order.objects.exclude(status='CANCELLED')
+                  .filter(created_at__date__gte=start, created_at__date__lte=end)
+                  .select_related('customer', 'payment').prefetch_related('items').order_by('created_at', 'id'))
+        recipient = ''
+        customer_id = params.get('customer')
+        if customer_id:
+            if not customer_id.isdecimal():
+                raise serializers.ValidationError({'customer': 'Некорректный клиент.'})
+            customer = get_object_or_404(User, pk=customer_id, role='CUSTOMER')
+            orders = orders.filter(customer=customer)
+            recipient = customer.company_name if customer.account_type == 'BUSINESS' and customer.company_name else customer.name
+        count = orders.count()
+        if count > MAX_WAYBILL_ORDERS:
+            raise serializers.ValidationError({'date_to': f'За этот период {count} заказов — выберите период короче (не больше {MAX_WAYBILL_ORDERS}).'})
+        rows = []
+        for order in orders:
+            items = [{'name': item.name, 'quantity': item.quantity, 'price': format(item.price, '.2f')} for item in order.items.all() if not item.is_missing]
+            rows.append({
+                'number': order.number,
+                'created_at': order.created_at.isoformat(),
+                'recipient_name': order.recipient_name,
+                'phone': order.phone,
+                'company': order.customer.company_name if order.customer.account_type == 'BUSINESS' else '',
+                'status': order.status,
+                'paid': hasattr(order, 'payment'),
+                'on_credit': order.on_credit,
+                'delivery_fee': format(order.delivery_fee, '.2f'),
+                'total': format(order.total, '.2f'),
+                'items': items,
+            })
+        return Response({'date_from': start.isoformat(), 'date_to': end.isoformat(), 'recipient': recipient, 'orders': rows})

@@ -1034,3 +1034,20 @@
 @media print { @page { size: A4; margin: 15mm; } }
 .nakladnaya-recipient-phone .nakladnaya-label { min-width: 0; }
 .nakladnaya-recipient-phone .nakladnaya-line { min-width: 200px; }
+
+/* Waybill: toolbar, order blocks, period picker */
+.nakladnaya-toolbar { align-items: center; flex-wrap: wrap; }
+.nakladnaya-toolbar .portal-button, .nakladnaya-toolbar .product-secondary { display: inline-flex; align-items: center; gap: 8px; }
+.nakladnaya-save-error { margin: 0 auto 0 0; color: #a8432c; font-size: 13px; }
+.nakladnaya-order-row td { background: #f2f2f2; font-weight: bold; text-align: left !important; font-size: 10.5pt; }
+.nakladnaya-order-row td:last-child { text-align: center !important; }
+.nakladnaya-table tr { page-break-inside: avoid; break-inside: avoid; }
+.waybill-picker { position: relative; display: grid; gap: 10px; min-width: 260px; padding: 14px 16px; border-radius: 12px; border: 1px solid #e3d6b8; background: #fffdf7; box-shadow: 0 10px 24px #2a1f0a14; }
+.waybill-picker-title { display: flex; align-items: center; gap: 8px; margin: 0; font-weight: 600; font-size: 14px; }
+.waybill-picker-title .portal-icon-button { margin-left: auto; width: 30px; height: 30px; min-height: 0; padding: 0; }
+.waybill-picker-dates { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.waybill-picker-dates label { display: grid; gap: 4px; margin: 0; font-size: 12px; font-weight: 500; }
+.waybill-picker-dates input { margin: 0; min-height: 40px; padding: 8px 10px; font-size: 13px; }
+.waybill-picker .portal-button { justify-content: center; }
+.waybill-open { display: inline-flex; align-items: center; gap: 8px; }
+@media (max-width: 560px) { .waybill-picker { min-width: 0; width: 100%; } }

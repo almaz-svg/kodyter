@@ -1,4 +1,4 @@
-﻿import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode } from 'react';
+﻿import { useCallback, useEffect, useRef, useState, type ChangeEvent, type FormEvent, type ReactNode, Fragment } from 'react';
 import { createPortal } from 'react-dom';
 import { MessageCircle, PackageX, ArrowRight, Banknote, Check, ChefHat, ChevronRight, CircleCheck, Crop, Download, FileText, FlaskConical, Image as ImageIcon, Settings, Upload, Clock3, HandCoins, Copy, Eye, EyeOff, KeyRound, Mail, Sparkles, LayoutGrid, LockKeyhole, MapPin, Package, Pencil, Phone, Plus, RefreshCw, Search, ShoppingBag, Store, Trash2, Truck, UserRound, Wallet, X } from 'lucide-react';
 import { api, ApiError, money, statusLabel, statusSteps, type User, type Product, type Category, type Order, type AvailableOrder, type TeamOrders, type CashierSummary, type AdminOverview, type Debts, type DebtOrder, type MyDebt } from './lib';
@@ -426,7 +426,7 @@ function OrdersPanel({ user }: { user: User }) {
       </div>}
       <p className="portal-help">В кассе отражаются только подтверждённые наличные. Для сводки за другой день выберите дату ниже.</p>
     </section>}
-    <div className="portal-section-title"><div><p className="portal-eyebrow">{isCourier ? 'ДОСТАВКА ANASYM' : 'СВЕЖЕЕ И ВОВРЕМЯ'}</p><h2>{isCourier ? showAvailable ? 'Доступные заказы' : view === 'team' ? 'Заказы курьеров' : view === 'history' ? 'История доставок' : 'Мои активные доставки' : isPastry ? 'Заказы на кухне' : isAdmin || isCashier ? 'Все заказы' : 'Ваши заказы'}<span className="portal-count">{showAvailable ? available.data?.length || 0 : view === 'team' ? team.data?.orders.length || 0 : orders.length}</span></h2></div><div className="portal-refresh"><span><i />Обновляем каждые 5 секунд</span><button className="portal-icon-button" type="button" onClick={refresh} aria-label="Обновить заказы"><RefreshCw size={18} aria-hidden="true" /></button></div></div>
+    <div className="portal-section-title"><div><p className="portal-eyebrow">{isCourier ? 'ДОСТАВКА ANASYM' : 'СВЕЖЕЕ И ВОВРЕМЯ'}</p><h2>{isCourier ? showAvailable ? 'Доступные заказы' : view === 'team' ? 'Заказы курьеров' : view === 'history' ? 'История доставок' : 'Мои активные доставки' : isPastry ? 'Заказы на кухне' : isAdmin || isCashier ? 'Все заказы' : 'Ваши заказы'}<span className="portal-count">{showAvailable ? available.data?.length || 0 : view === 'team' ? team.data?.orders.length || 0 : orders.length}</span></h2></div>{(isAdmin || isCashier) && <PeriodWaybillPicker />}<div className="portal-refresh"><span><i />Обновляем каждые 5 секунд</span><button className="portal-icon-button" type="button" onClick={refresh} aria-label="Обновить заказы"><RefreshCw size={18} aria-hidden="true" /></button></div></div>
     {isCourier && <div className="portal-segment portal-courier-tabs" aria-label="Разделы доставок">
       <button type="button" className={view === 'available' ? 'active' : ''} aria-pressed={view === 'available'} onClick={() => chooseView('available')}>Доступные <span>{available.data?.length || 0}</span></button>
       <button type="button" className={view === 'active' ? 'active' : ''} aria-pressed={view === 'active'} onClick={() => chooseView('active')}>Мои активные <span>{active}</span></button>
@@ -763,10 +763,11 @@ function CategoriesPanel() {
 }
 
 type BusinessAccount = { id: number; name: string; email: string; phone: string; company_name: string; business_approved: boolean; credit_allowed?: boolean; date_joined?: string; orders_count?: number | null; delivered_total?: string | null; last_order_at?: string | null };
-type NakladnayaRow = { date: string; number: string; name: string; quantity: number; price: string; total: string; status: string; paid: boolean };
-type NakladnayaData = { recipient: string; date_from: string | null; date_to: string | null; rows: NakladnayaRow[] };
-/** What the printed waybill shows: one table of goods, the total and the amount in words. */
-type NakladnayaDoc = { number: string; date: string; recipient: string; recipientNote: string; lines: { name: string; quantity: number; price: number }[] };
+type NakladnayaLine = { name: string; quantity: number; price: number };
+/** What the printed waybill shows: a table of goods (for a period, one block per order), the total and the amount in words. */
+type NakladnayaDoc = { number: string; date: string; period?: string; recipient: string; recipientNote: string; lines: NakladnayaLine[]; sections?: { title: string; total: number; lines: NakladnayaLine[] }[] };
+type PeriodWaybill = { date_from: string; date_to: string; recipient: string; orders: { number: string; created_at: string; recipient_name: string; phone: string; company: string; status: string; paid: boolean; on_credit: boolean; delivery_fee: string; total: string; items: { name: string; quantity: number; price: string }[] }[] };
+const ruDate = (iso: string) => new Date(iso.length === 10 ? `${iso}T00:00:00` : iso).toLocaleDateString('ru-RU');
 
 const wordUnits = [['', 'один', 'два', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять'], ['', 'одна', 'две', 'три', 'четыре', 'пять', 'шесть', 'семь', 'восемь', 'девять']];
 const wordTeens = ['десять', 'одиннадцать', 'двенадцать', 'тринадцать', 'четырнадцать', 'пятнадцать', 'шестнадцать', 'семнадцать', 'восемнадцать', 'девятнадцать'];
@@ -799,30 +800,55 @@ function amountInWords(value: number): string {
 }
 
 function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => void }) {
-  const total = doc.lines.reduce((sum, line) => sum + line.price * line.quantity, 0);
+  const sections = doc.sections ?? [{ title: '', total: 0, lines: doc.lines }];
+  const total = sections.reduce((sum, section) => sum + section.lines.reduce((part, line) => part + line.price * line.quantity, 0), 0);
+  const docRef = useRef<HTMLDivElement>(null);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState('');
+  // The PDF is drawn in the browser from the page itself, so it looks exactly like the waybill on screen.
+  const download = async () => {
+    if (!docRef.current || saving) return;
+    setSaving(true); setSaveError('');
+    try {
+      const html2pdf = (await import('html2pdf.js')).default;
+      const name = `Накладная ${doc.number || doc.period || doc.date}`.replace(/[\\/:*?"<>|]+/g, '-').replace(/\s+/g, ' ').trim();
+      // `pagebreak` keeps table rows whole across pages; the library supports it but its type file leaves it out.
+      const options = { margin: [10, 10, 12, 10] as [number, number, number, number], filename: `${name}.pdf`, image: { type: 'jpeg' as const, quality: 0.96 }, html2canvas: { scale: 2, backgroundColor: '#ffffff', windowWidth: 1000 }, jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' as const }, pagebreak: { mode: ['css', 'legacy'], avoid: ['tr', '.nakladnaya-summary', '.nakladnaya-sigs'] } };
+      const worker = html2pdf();
+      await worker.set(options as Parameters<typeof worker.set>[0]).from(docRef.current).save();
+    } catch { setSaveError('Не удалось сохранить PDF. Попробуйте «Печать / PDF».'); }
+    finally { setSaving(false); }
+  };
+  let lineNumber = 0;
   return createPortal(
     <div className="nakladnaya-overlay">
       <div className="nakladnaya-toolbar no-print">
-        <button type="button" className="portal-button" onClick={() => window.print()}><FileText size={16} aria-hidden="true" />Печать / PDF</button>
+        {saveError && <p className="nakladnaya-save-error" role="alert">{saveError}</p>}
         <button type="button" className="product-secondary" onClick={onClose}><X size={16} aria-hidden="true" />Закрыть</button>
+        <button type="button" className="portal-button" disabled={saving} onClick={() => void download()}><Download size={16} aria-hidden="true" />{saving ? 'Готовим PDF…' : 'Скачать'}</button>
+        <button type="button" className="product-secondary" onClick={() => window.print()}><FileText size={16} aria-hidden="true" />Печать / PDF</button>
       </div>
-      <div className="nakladnaya-doc">
+      <div ref={docRef} className="nakladnaya-doc">
         <div className="nakladnaya-header">
           <h1>Товарная накладная</h1>
           <div className="nakladnaya-num">
             <p><span>№</span><span className="nakladnaya-line">{doc.number}</span></p>
             <p><span>Дата составления</span><span className="nakladnaya-line">{doc.date}</span></p>
+            {doc.period && <p><span>Период</span><span className="nakladnaya-line">{doc.period}</span></p>}
           </div>
         </div>
         <div className="nakladnaya-meta">
           <p><span className="nakladnaya-label">Поставщик</span><strong>ANAŞIM</strong></p>
           <p><span className="nakladnaya-label">Получатель</span><span className="nakladnaya-line nakladnaya-line-wide">{doc.recipient}</span></p>
-          <p className="nakladnaya-recipient-phone"><span className="nakladnaya-label">Номер тел. получателя</span><span className="nakladnaya-line">{doc.recipientNote}</span></p>
+          {!doc.sections && <p className="nakladnaya-recipient-phone"><span className="nakladnaya-label">Номер тел. получателя</span><span className="nakladnaya-line">{doc.recipientNote}</span></p>}
         </div>
         <table className="nakladnaya-table">
           <thead><tr><th>№</th><th>Наименование товара</th><th>Кол-во, шт.</th><th>Цена, ₸</th><th>Сумма, ₸</th></tr></thead>
           <tbody>
-            {doc.lines.length ? doc.lines.map((line, index) => <tr key={index}><td>{index + 1}</td><td className="nakladnaya-name">{line.name}</td><td>{line.quantity}</td><td>{money(line.price)}</td><td>{money(line.price * line.quantity)}</td></tr>) : <tr><td colSpan={5} className="nakladnaya-empty">Нет товаров за выбранный период</td></tr>}
+            {sections.some(section => section.lines.length) ? sections.map((section, sectionIndex) => <Fragment key={sectionIndex}>
+              {section.title && <tr className="nakladnaya-order-row"><td colSpan={4}>{section.title}</td><td>{money(section.total)}</td></tr>}
+              {section.lines.map((line, index) => { lineNumber += 1; return <tr key={index}><td>{lineNumber}</td><td className="nakladnaya-name">{line.name}</td><td>{line.quantity}</td><td>{money(line.price)}</td><td>{money(line.price * line.quantity)}</td></tr>; })}
+            </Fragment>) : <tr><td colSpan={5} className="nakladnaya-empty">За выбранный период заказов нет</td></tr>}
           </tbody>
           <tfoot><tr><td colSpan={4}>Итого</td><td>{money(total)}</td></tr></tfoot>
         </table>
@@ -843,38 +869,55 @@ function NakladnayaPrint({ doc, onClose }: { doc: NakladnayaDoc; onClose: () => 
   );
 }
 
-function InvoiceDownload({ accountId }: { accountId: number }) {
+const paymentWord = (order: PeriodWaybill['orders'][number]) => order.paid ? 'оплачен' : order.on_credit ? 'в долг' : 'не оплачен';
+function waybillFromPeriod(data: PeriodWaybill, recipientFallback: string): NakladnayaDoc {
+  return {
+    number: '',
+    date: new Date().toLocaleDateString('ru-RU'),
+    period: data.date_from === data.date_to ? ruDate(data.date_from) : `${ruDate(data.date_from)} — ${ruDate(data.date_to)}`,
+    recipient: data.recipient || recipientFallback,
+    recipientNote: '',
+    lines: [],
+    sections: data.orders.map(order => ({
+      title: `Заказ №${order.number} от ${ruDate(order.created_at)} — ${order.company ? `«${order.company}», ` : ''}${order.recipient_name}, ${order.phone} · ${statusLabel[order.status] || order.status}, ${paymentWord(order)}`,
+      total: Number(order.total),
+      lines: [...order.items.map(item => ({ name: item.name, quantity: item.quantity, price: Number(item.price) })), ...(Number(order.delivery_fee) > 0 ? [{ name: 'Доставка', quantity: 1, price: Number(order.delivery_fee) }] : [])],
+    })),
+  };
+}
+
+/** Admin and cashier: a waybill with every order of a period, optionally only one customer's (e.g. one business). */
+function PeriodWaybillPicker({ customerId, label = 'Накладная за период' }: { customerId?: number; label?: string }) {
+  const today = new Date();
+  const iso = (value: Date) => `${value.getFullYear()}-${String(value.getMonth() + 1).padStart(2, '0')}-${String(value.getDate()).padStart(2, '0')}`;
   const [open, setOpen] = useState(false);
-  const [from, setFrom] = useState('');
-  const [to, setTo] = useState('');
-  const [preview, setPreview] = useState<NakladnayaData | null>(null);
+  const [from, setFrom] = useState(iso(new Date(today.getFullYear(), today.getMonth(), 1)));
+  const [to, setTo] = useState(iso(today));
+  const [doc, setDoc] = useState<NakladnayaDoc | null>(null);
   const [loading, setLoading] = useState(false);
-  const close = () => { setOpen(false); setFrom(''); setTo(''); setPreview(null); };
-  const fetchNakladnaya = async () => {
-    setLoading(true);
+  const [error, setError] = useState('');
+  const reversed = !!(from && to && from > to);
+  const show = async () => {
+    setLoading(true); setError('');
     try {
-      const params = new URLSearchParams();
-      if (from) params.set('date_from', from);
-      if (to) params.set('date_to', to);
-      const qs = params.toString();
-      setPreview(await api<NakladnayaData>(`/admin/businesses/${accountId}/orders-nakladnaya/${qs ? '?' + qs : ''}`));
-    } catch { /* fall through — user can retry */ }
+      const params = new URLSearchParams({ date_from: from, date_to: to });
+      if (customerId) params.set('customer', String(customerId));
+      const data = await api<PeriodWaybill>(`/waybill/?${params.toString()}`);
+      setDoc(waybillFromPeriod(data, customerId ? '' : 'Все клиенты'));
+    } catch (err) { setError(failure(err)); }
     finally { setLoading(false); }
   };
-  if (preview) return <NakladnayaPrint doc={{ number: '', date: [preview.date_from, preview.date_to].filter(Boolean).join(' — '), recipient: preview.recipient, recipientNote: '', lines: preview.rows.map(row => ({ name: `${row.name} (№${row.number})`, quantity: row.quantity, price: Number(row.price) })) }} onClose={close} />;
-  if (!open) return <button type="button" className="product-secondary" onClick={() => setOpen(true)}><Download size={16} aria-hidden="true" />Скачать накладную</button>;
-  const params = new URLSearchParams();
-  if (from) params.set('date_from', from);
-  if (to) params.set('date_to', to);
-  const qs = params.toString();
-  const datesReversed = !!(from && to && from > to);
-  return <div className="invoice-download">
-    <label>С <input type="date" value={from} onChange={e => setFrom(e.target.value)} max={to || undefined} /></label>
-    <label>По <input type="date" value={to} onChange={e => setTo(e.target.value)} min={from || undefined} /></label>
-    {datesReversed && <p className="invoice-date-error">Дата «С» позже даты «По»</p>}
-    <button type="button" className="portal-button" disabled={loading || datesReversed} onClick={() => void fetchNakladnaya()}><FileText size={16} aria-hidden="true" />{loading ? 'Загружаем…' : 'Накладная'}</button>
-    <a href={`/api/admin/businesses/${accountId}/orders-csv/${qs ? '?' + qs : ''}`} className="product-secondary" download aria-disabled={datesReversed} style={datesReversed ? {pointerEvents:'none',opacity:.4} : undefined}><Download size={16} aria-hidden="true" />CSV</a>
-    <button type="button" className="invoice-close" onClick={close} aria-label="Закрыть"><X size={14} /></button>
+  if (doc) return <NakladnayaPrint doc={doc} onClose={() => setDoc(null)} />;
+  if (!open) return <button type="button" className="product-secondary waybill-open" onClick={() => setOpen(true)}><FileText size={16} aria-hidden="true" />{label}</button>;
+  return <div className="waybill-picker">
+    <p className="waybill-picker-title"><FileText size={16} aria-hidden="true" />{customerId ? 'Накладная по клиенту' : 'Накладная за период'}<button type="button" className="portal-icon-button" onClick={() => { setOpen(false); setError(''); }} aria-label="Закрыть"><X size={16} aria-hidden="true" /></button></p>
+    <div className="waybill-picker-dates">
+      <label>С<input type="date" value={from} max={to || undefined} onChange={e => setFrom(e.target.value)} /></label>
+      <label>По<input type="date" value={to} min={from || undefined} onChange={e => setTo(e.target.value)} /></label>
+    </div>
+    {reversed && <p className="invoice-date-error">Дата «С» позже даты «По».</p>}
+    {error && <p className="invoice-date-error" role="alert">{error}</p>}
+    <button type="button" className="portal-button" disabled={loading || reversed || !from || !to} onClick={() => void show()}>{loading ? 'Собираем…' : 'Показать накладную'}<ArrowRight size={16} aria-hidden="true" /></button>
   </div>;
 }
 
@@ -939,7 +982,7 @@ function BusinessPanel() {
       <div className="business-actions">{account.business_approved
         ? <button type="button" className="product-secondary" disabled={busy !== null} onClick={() => void setApproved(account, false)}>{busy === account.id ? 'Сохраняем…' : 'Вернуть розничные цены'}</button>
         : <button type="button" className="portal-button" disabled={busy !== null} onClick={() => void setApproved(account, true)}>{busy === account.id ? 'Сохраняем…' : 'Открыть оптовые цены'}<Check size={16} aria-hidden="true" /></button>}
-        {(account.orders_count ?? 0) > 0 && <InvoiceDownload accountId={account.id} />}</div>
+        {(account.orders_count ?? 0) > 0 && <PeriodWaybillPicker customerId={account.id} label="Накладная" />}</div>
     </article>)}</div>}
   </section>;
 }
